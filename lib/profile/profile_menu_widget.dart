@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-// Import Pages (ඔයාගේ ෆෝල්ඩර් ටිකට අනුව මේ path ටික check කරගන්න)
+// Import Pages
 import '../personal/personal_info_page.dart';
 import '../personal/vehicle_info_page.dart';
 import '../finance/earning_page.dart';
@@ -25,42 +25,42 @@ class ProfileMenuWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
       child: Column(
         children: [
           _buildSection("Personal Information", [
-            _buildTile(Icons.person, "Personal Information", () => _nav(context, const PersonalInfoPage())),
-            _buildTile(Icons.directions_car, "Vehicle Information", () => _nav(context, const VehicleInfoPage())),
+            _buildTile(Icons.person_outline, "Personal Information", () => _nav(context, const PersonalInfoPage())),
+    _buildTile(
+    Icons.directions_car_outlined,
+    "Vehicle Information",
+    () => _nav(
+    context,
+    const VehicleInfoPage(membershipNo: "AIAPRTD-25-0001") // මෙතනට ඔයාගේ User ගේ membershipNo එක දෙන්න
+    )
+    ),
           ]),
           _buildSection("My Finance", [
-            _buildTile(Icons.attach_money, "Earning", () => _nav(context, const EarningPage())),
-            _buildTile(Icons.card_membership, "AIAPRTD Membership Fee", () => _nav(context, const MembershipFeePage())),
-            _buildTile(Icons.receipt_long, "App Usage Charge", () => _nav(context, const AppUsagePage())),
-            _buildTile(Icons.savings, "Saving", () => _nav(context, const SavingPage())),
+            _buildTile(Icons.account_balance_wallet_outlined, "Earning", () => _nav(context, const EarningPage())),
+            _buildTile(Icons.card_membership_outlined, "Membership Fee", () => _nav(context, const MembershipFeePage())),
+            _buildTile(Icons.receipt_long_outlined, "App Usage Charge", () => _nav(context, const AppUsagePage())),
+            _buildTile(Icons.savings_outlined, "Saving", () => _nav(context, const SavingPage())),
           ]),
           _buildSection("General", [
             _buildTile(Icons.history, "Ride History", () => _nav(context, const RideHistoryPage())),
-            _buildTile(Icons.star, "Member Benefits", () => _nav(context, const MemberBenefitsPage())),
+            _buildTile(Icons.star_outline, "Member Benefits", () => _nav(context, const MemberBenefitsPage())),
             _buildTile(Icons.support_agent, "Support Tickets", () => _nav(context, const SupportTicketsPage())),
             _buildTile(Icons.how_to_vote, "Votes", () => _nav(context, const VotesPage())),
             _buildTile(Icons.ads_click, "Ads", () => _nav(context, const AdsPage())),
-            _buildTile(Icons.notifications, "Notification", () => _nav(context, const NotificationPage())),
+            _buildTile(Icons.notifications_none, "Notification", () => _nav(context, const NotificationPage())),
           ]),
-          _buildSection("App Setting", [
-            _buildTile(Icons.dark_mode, "Dark Mode", () => _nav(context, const DarkModePage())),
-            _buildTile(Icons.volume_up, "App Volume", () => _nav(context, const AppVolumePage())),
-            _buildTile(Icons.language, "Language", () => _nav(context, const LanguagePage())),
-            _buildTile(Icons.help_outline, "Help Center", () => _nav(context, const HelpCenterPage())),
-            _buildTile(Icons.privacy_tip, "Privacy Policy", () => _nav(context, const PrivacyPolicyPage())),
-            _buildTile(Icons.description, "Terms & Conditions", () => _nav(context, const TermsConditionsPage())),
-          ]),
+          _buildSettingsSection(context),
         ],
       ),
     );
   }
 
-  // Navigation එකට පොඩි helper එකක්
   void _nav(BuildContext context, Widget page) {
     Navigator.push(context, MaterialPageRoute(builder: (context) => page));
   }
@@ -70,12 +70,18 @@ class ProfileMenuWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(top: 15, bottom: 5, left: 5),
-          child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue)),
+          padding: const EdgeInsets.only(top: 25, bottom: 12, left: 10),
+          child: Text(title.toUpperCase(),
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.blueGrey.shade400, letterSpacing: 1.5)),
         ),
-        Card(
-          elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        Container(
+          clipBehavior: Clip.hardEdge,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.grey.shade100),
+            boxShadow: [BoxShadow(color: Colors.blue.shade100.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 10))],
+          ),
           child: Column(children: children),
         ),
       ],
@@ -84,10 +90,56 @@ class ProfileMenuWidget extends StatelessWidget {
 
   Widget _buildTile(IconData icon, String title, VoidCallback onTap) {
     return ListTile(
-      leading: Icon(icon, color: Colors.blueGrey),
-      title: Text(title),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
       onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: [Colors.blue.shade300, Colors.blue.shade500]),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, size: 20, color: Colors.white),
+      ),
+      title: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+      trailing: Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey.shade400),
+    );
+  }
+
+  Widget _buildSettingsSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 25, bottom: 12, left: 10),
+          child: Text("APP SETTINGS", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.blueGrey, letterSpacing: 1.5)),
+        ),
+        Container(
+          clipBehavior: Clip.hardEdge,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.grey.shade100),
+            boxShadow: [BoxShadow(color: Colors.blue.shade100.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 10))],
+          ),
+          child: ExpansionTile(
+            tilePadding: const EdgeInsets.symmetric(horizontal: 20),
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(12)),
+              child: const Icon(Icons.settings_outlined, color: Colors.black87),
+            ),
+            title: const Text("App Configuration", style: TextStyle(fontWeight: FontWeight.w600)),
+            children: [
+              _buildTile(Icons.dark_mode_outlined, "Dark Mode", () => _nav(context, const DarkModePage())),
+              _buildTile(Icons.volume_up_outlined, "App Volume", () => _nav(context, const AppVolumePage())),
+              _buildTile(Icons.language, "Language", () => _nav(context, const LanguagePage())),
+              _buildTile(Icons.help_outline, "Help Center", () => _nav(context, const HelpCenterPage())),
+              _buildTile(Icons.privacy_tip_outlined, "Privacy Policy", () => _nav(context, const PrivacyPolicyPage())),
+              _buildTile(Icons.description_outlined, "Terms & Conditions", () => _nav(context, const TermsConditionsPage())),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

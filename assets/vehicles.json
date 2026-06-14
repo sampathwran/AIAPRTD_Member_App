@@ -1,0 +1,11 @@
+{
+  "Toyota": ["Axio", "Allion", "Premio", "Vitz", "Corolla", "Camry", "Land Cruiser", "Hilux", "Aqua", "C-HR", "Prius", "Rush"],
+  "Honda": ["Fit", "Vezel", "Civic", "Grace", "Insight", "Crider", "CR-V", "Accord"],
+  "Nissan": ["Leaf", "Sunny", "X-Trail", "Bluebird", "Note", "Caravan", "Sylphy", "Patrol"],
+  "Suzuki": ["Wagon R", "Alto", "Swift", "Celerio", "Ignis", "Vitara", "Carry"],
+  "Mitsubishi": ["Montero", "Lancer", "Outlander", "Mirage", "Canter"],
+  "Daihatsu": ["Mira", "Move", "Hijet", "Terios"],
+  "Mazda": ["Axela", "Demio", "Premacy", "CX-5"],
+  "Hyundai": ["Tucson", "Santa Fe", "Accent", "Elantra"],
+  "Kia": ["Picanto", "Sportage", "Sorento", "Rio"]
+}

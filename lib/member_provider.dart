@@ -1,10 +1,12 @@
 // ==========================================
 // 1. IMPORTS SECTION
 // ==========================================
-import 'dart:async'; // StreamSubscription පාවිච්චි කරන්න අවශ්‍යයි
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 // ==========================================
 // 2. MEMBER PROVIDER CLASS SECTION
@@ -13,64 +15,71 @@ class MemberProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // මෙම්බර්ගේ දත්ත සහ Loading ස්ටේට් එක
   Map<String, dynamic>? _memberData;
   bool _isLoading = false;
 
-  // Real-time updates අහගෙන ඉන්න Stream සබ්ස්ක්‍රිප්ෂන් එක
   StreamSubscription<QuerySnapshot>? _memberStreamSubscription;
 
   // ==========================================
-  // 3. GETTERS SECTION (ඇප් එකේ ඕනෑම තැනකට දත්ත දෙන ඒවා)
+  // 3. GETTERS SECTION
   // ==========================================
   Map<String, dynamic>? get memberData => _memberData;
   bool get isLoading => _isLoading;
 
-  // මෙම්බර්ගේ දැනට තියෙන Active/Inactive ස්ටේටස් එක කෙලින්ම ගන්න Getter එකක්
   String get memberStatus => _memberData?['status'] ?? 'inactive';
-
-  // මෙම්බර්ගේ නම කෙලින්ම ගන්න Getter එකක්
   String get memberFullName => _memberData?['fullName'] ?? 'Member';
 
+  String get profileImageUrl {
+    String url = _memberData?['profileImageUrl'] ?? '';
+    debugPrint("DEBUG: පින්තූරයේ URL එක: $url");
+    return url;
+  }
+
   // ==========================================
-  // 4. DATA FETCH & AUTO SYNC LOGIC SECTION
+  // 4. DATA FETCH & AUTO SYNC LOGIC
   // ==========================================
 
-  /// 🔄 Firestore එකෙන් දත්ත අරන් ස්ටෑන්ඩ්බයි තියාගන්න සහ Auto Sync (Real-time) කරන්න
   Future<bool> fetchAndStoreMemberData() async {
     _isLoading = true;
     notifyListeners();
 
-    // කලින් තිබ්බ සබ්ස්ක්‍රිප්ෂන් එකක් තියෙනවා නම් ඒක අයින් කරනවා
     await _cancelActiveStream();
 
     try {
       User? currentUser = _auth.currentUser;
 
       if (currentUser != null && currentUser.email != null) {
-        // Completer එකක් පාවිච්චි කරන්නේ මුල්ම පාර දත්ත ටික එනකන් Splash Screen එකට බලාගෙන ඉන්න ඉඩ දෙන්න
         final Completer<bool> completer = Completer<bool>();
 
-        // 🔎 Email එක හරහා Firestore එකේ 'member' collection එකට 'Stream' එකක් දානවා (Real-time Sync)
         _memberStreamSubscription = _firestore
             .collection('member')
             .where('user_email', isEqualTo: currentUser.email)
             .limit(1)
-            .snapshots() // 👈 මෙතනින් තමයි ඩේටා බේස් එක වෙනස් වෙද්දීම ඇප් එකටත් ලයිව් අප්ඩේට් එවන්නේ
+            .snapshots()
             .listen(
-              (querySnapshot) {
+              (querySnapshot) async { // async එකතු කරන ලදී
             if (querySnapshot.docs.isNotEmpty) {
-              // 💾 දත්ත ලැබුණා! ඒ ටික ස්ටෑන්ඩ්බයි සේව් කරගන්නවා
-              _memberData = querySnapshot.docs.first.data();
+              var memberDoc = querySnapshot.docs.first;
+              _memberData = Map<String, dynamic>.from(memberDoc.data());
+
+              // requests collection එකෙන් අදාළ පින්තූරය පරීක්ෂා කිරීම
+              try {
+                String memNo = _memberData!['membershipNo'] ?? 'N/A';
+                var requestDoc = await _firestore.collection('requests').doc(memNo).get();
+
+                if (requestDoc.exists && requestDoc.data() != null) {
+                  // requests එකේ පින්තූරය තිබේ නම් එය තාවකාලිකව පෙන්වීම සඳහා memberData එකට දාගන්න
+                  _memberData!['profileImageUrl'] = requestDoc.data()!['newImageUrl'];
+                }
+              } catch (e) {
+                debugPrint("Error fetching request image: $e");
+              }
+
               _isLoading = false;
               notifyListeners();
 
-              // මුල්ම පාර සාර්ථකව දත්ත ආවා කියලා Splash Screen එකට දන්වනවා
-              if (!completer.isCompleted) {
-                completer.complete(true);
-              }
+              if (!completer.isCompleted) completer.complete(true);
             } else {
-              // යූසර් කෙනෙක් ඉන්නවා හැබැයි Firestore එකේ දත්ත නැත්නම්
               _isLoading = false;
               notifyListeners();
               if (!completer.isCompleted) completer.complete(false);
@@ -83,7 +92,6 @@ class MemberProvider extends ChangeNotifier {
           },
         );
 
-        // පළමු දත්ත හුවමාරුව ඉවර වෙනකන් මෙතනින් රඳවා තබා ගන්නවා
         return await completer.future;
       }
 
@@ -91,6 +99,7 @@ class MemberProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     } catch (e) {
+      debugPrint("Error fetching member: $e");
       _isLoading = false;
       notifyListeners();
       return false;
@@ -98,10 +107,47 @@ class MemberProvider extends ChangeNotifier {
   }
 
   // ==========================================
-  // 5. CLEANUP & LOGOUT LOGIC SECTION
+  // 5. PROFILE IMAGE REQUEST LOGIC
+  // ==========================================
+  Future<bool> submitProfileImageRequest(String memNo, File imageFile) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+      Reference ref = FirebaseStorage.instance
+          .ref()
+          .child('pending_profiles')
+          .child(memNo)
+          .child(fileName);
+
+      UploadTask uploadTask = ref.putFile(imageFile);
+      TaskSnapshot snapshot = await uploadTask;
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+
+      // requests collection එකට Document ID එක membershipNo ලෙස දීම
+      await _firestore.collection('requests').doc(memNo).set({
+        'membershipNo': memNo,
+        'newImageUrl': downloadUrl,
+        'status': 'pending',
+        'requestType': 'profile_update',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      return true;
+    } catch (e) {
+      debugPrint("Error in submitProfileImageRequest: $e");
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ==========================================
+  // 6. CLEANUP & LOGOUT LOGIC
   // ==========================================
 
-  /// 🚪 ලොග් අවුට් වෙද්දී හෝ ඇප් එක වහද්දී දත්ත Clear කරලා Stream නවත්වන්න
   Future<void> clearMemberData() async {
     await _cancelActiveStream();
     _memberData = null;
@@ -109,7 +155,6 @@ class MemberProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 🔐 බැක්ග්‍රවුන්ඩ් එකෙන් දත්ත අහගෙන ඉන්න එක නවත්වන රහස් ෆන්ක්ෂන් එක
   Future<void> _cancelActiveStream() async {
     if (_memberStreamSubscription != null) {
       await _memberStreamSubscription!.cancel();
@@ -119,7 +164,7 @@ class MemberProvider extends ChangeNotifier {
 
   @override
   void dispose() {
-    _cancelActiveStream(); // Provider එක මැරුණොත් Stream එකත් වහනවා
+    _cancelActiveStream();
     super.dispose();
   }
 }

@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../member_provider.dart';
 import 'profile_menu_widget.dart';
-import 'profile_image_widget.dart';
 import 'achievement_badge_widget.dart';
 import 'status_badge_widget.dart';
-
-// මචං, මේ අලුත් පේජ් දෙක දැනට හිස්ව හදලා තියෙන්නේ, පස්සේ උඹ ඒ ටික edit කරපන්
 import 'rank_page.dart';
 import 'image_upload_page.dart';
+import 'widgets/rating_widget.dart';
+import 'widgets/trip_count_widget.dart';
+import 'widgets/tenure_widget.dart';
+import 'profile_header_info_widget.dart'; // අලුත් Widget එක import කරන්න
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -29,8 +30,8 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(title: const Text("Profile"), centerTitle: true, elevation: 0),
       body: Consumer<MemberProvider>(
         builder: (context, memberProvider, child) {
           if (memberProvider.isLoading) {
@@ -38,18 +39,36 @@ class _ProfilePageState extends State<ProfilePage> {
           }
 
           final data = memberProvider.memberData;
-          if (data == null) return const Center(child: Text("Data not found!"));
+          if (data == null) {
+            return const Center(child: Text("Data not found!"));
+          }
 
-          return ListView(
+          return Stack(
             children: [
-              _buildCoverAndProfile(data),
-              _buildStatsRow(data),
-              _buildAchievementBadge(data),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: ProfileMenuWidget(),
+              ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _buildCoverAndProfile(data, memberProvider),
+                  _buildStatsRow(data),
+                  _buildAchievementBadge(data),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: ProfileMenuWidget(),
+                  ),
+                  const SizedBox(height: 20),
+                ],
               ),
-              const SizedBox(height: 20),
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 5,
+                left: 10,
+                child: IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.black.withValues(alpha: 0.3),
+                  ),
+                ),
+              ),
             ],
           );
         },
@@ -57,43 +76,54 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildCoverAndProfile(Map<String, dynamic> data) {
+  Widget _buildCoverAndProfile(Map<String, dynamic> data, MemberProvider provider) {
     return Column(
       children: [
         Container(
-          height: 120,
-          decoration: BoxDecoration(
-            color: Colors.blue.shade400,
-            image: const DecorationImage(
-              image: NetworkImage("https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2070&auto=format&fit=crop"),
+          height: 180,
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: NetworkImage("https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2070&auto=format&fit=cover"),
               fit: BoxFit.cover,
             ),
           ),
         ),
         Transform.translate(
-          offset: const Offset(0, -40),
+          offset: const Offset(0, -50),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                // Profile Image එක Click කළාම ImageUploadPage එකට යනවා
                 GestureDetector(
-                  onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const ImageUploadPage()));
+                  onTap: () async {
+                    final String memNo = data['membershipNo'] ?? 'N/A';
+                    await Navigator.push(context, MaterialPageRoute(builder: (context) => ImageUploadPage(membershipNo: memNo)));
+                    if (!mounted) return;
+                    Provider.of<MemberProvider>(context, listen: false).fetchAndStoreMemberData();
                   },
-                  child: ProfileImageWidget(imageUrl: data['profile_url'], radius: 40),
+                  child: CircleAvatar(
+                    radius: 45,
+                    backgroundColor: Colors.white,
+                    child: CircleAvatar(
+                      radius: 42,
+                      backgroundColor: Colors.grey.shade200,
+                      backgroundImage: provider.profileImageUrl.isNotEmpty ? NetworkImage(provider.profileImageUrl) : null,
+                      child: provider.profileImageUrl.isEmpty ? const Icon(Icons.person, size: 45, color: Colors.blue) : null,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 15),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 40),
+                    padding: const EdgeInsets.only(top: 50),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(data['fullName'] ?? "No Name",
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                        Text("#${data['membershipNo'] ?? 'N/A'}",
-                            style: TextStyle(color: Colors.grey.shade600)),
+                        ProfileHeaderInfoWidget(
+                          fullName: data['fullName'] ?? "No Name",
+                          membershipNo: data['membershipNo'] ?? 'N/A',
+                        ),
                         const SizedBox(height: 5),
                         StatusBadgeWidget(
                           status: data['status'] ?? 'inactive',
@@ -118,35 +148,27 @@ class _ProfilePageState extends State<ProfilePage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
-        boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 10, spreadRadius: 2)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5))
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildStatColumn("Rating", data['rating']?.toString() ?? "0"),
-          _buildStatColumn("Trips", data['payment_history']?.length.toString() ?? "0"),
-          _buildStatColumn("Tenure", "2 Years"),
+          RatingWidget(rating: data['rating']?.toString() ?? "0"),
+          TripCountWidget(trips: data['payment_history']?.length.toString() ?? "0"),
+          const TenureWidget(years: "2 Years"),
         ],
       ),
     );
   }
 
-  // Achievement Badge එක Click කළාම RankPage එකට යනවා
   Widget _buildAchievementBadge(Map<String, dynamic> data) {
     return AchievementBadgeWidget(
       rank: data['rank'] ?? "Member",
       onTap: () {
         Navigator.push(context, MaterialPageRoute(builder: (context) => const RankPage()));
       },
-    );
-  }
-
-  Widget _buildStatColumn(String label, String value) {
-    return Column(
-      children: [
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-      ],
     );
   }
 }

@@ -12,19 +12,24 @@ class ProfileImageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // URL එක වලංගු දැයි සහ http වලින් ආරම්භ වේදැයි පරීක්ෂා කිරීම
+    final bool hasImage = imageUrl != null &&
+        imageUrl!.isNotEmpty &&
+        imageUrl!.startsWith('http');
+
     return CircleAvatar(
-      radius: radius + 5, // වටේ සුදු පාට බෝඩරේ සඳහා
-      backgroundColor: Colors.white,
+      radius: radius + 5,
+      backgroundColor: Colors.blue.shade100, // බාහිර Border වර්ණය
       child: CircleAvatar(
         radius: radius,
-        backgroundColor: Colors.grey.shade300,
-        // Image URL එකක් තියෙනවා නම් NetworkImage එකෙන් පෙන්වනවා
-        backgroundImage: (imageUrl != null && imageUrl!.isNotEmpty)
-            ? NetworkImage(imageUrl!)
-            : null,
-        // Image එකක් නැත්නම් පර්සන් අයිකන් එක පෙන්වනවා
-        child: (imageUrl == null || imageUrl!.isEmpty)
-            ? Icon(Icons.person, size: radius, color: Colors.grey.shade600)
+        backgroundColor: Colors.grey.shade200, // පින්තූරය පූරණය වන විට පෙනෙන පසුබිම් වර්ණය
+
+        // foregroundImage භාවිතා කිරීමෙන් පින්තූරය නොමැති විට child එක පෙන්වීම පහසු වේ
+        foregroundImage: hasImage ? NetworkImage(imageUrl!) : null,
+
+        // පින්තූරයක් නොමැති විට හෝ URL එක invalid විට icon එක පෙන්වීම
+        child: !hasImage
+            ? Icon(Icons.person, size: radius, color: Colors.grey.shade500)
             : null,
       ),
     );
