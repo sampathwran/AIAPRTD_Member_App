@@ -1,3 +1,4 @@
+// ignore_for_file: spell_check_on_languages
 import 'package:flutter/material.dart';
 
 class VehicleOverviewSection extends StatelessWidget {
@@ -14,7 +15,7 @@ class VehicleOverviewSection extends StatelessWidget {
         data['frontImage']?.toString() ?? '';
 
     final String make =
-        data['brand']?.toString() ?? 'N/A';
+        data['make']?.toString() ?? 'N/A';
 
     final String model =
         data['model']?.toString() ?? 'N/A';
@@ -24,6 +25,11 @@ class VehicleOverviewSection extends StatelessWidget {
 
     final String category =
         data['selectedCategory']?.toString() ?? 'N/A';
+
+    // 💡 🎯 Firebase එකෙන් එන Make සහ Model එකතු කරලා වාහනයේ සම්පූර්ණ නම හදනවා
+    final String vehicleName = (make == 'N/A' && model == 'N/A')
+        ? 'N/A'
+        : '${make == 'N/A' ? '' : make} ${model == 'N/A' ? '' : model}'.trim();
 
     return Container(
       decoration: BoxDecoration(
@@ -38,25 +44,18 @@ class VehicleOverviewSection extends StatelessWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           // Vehicle Image
           ClipRRect(
-            borderRadius:
-            const BorderRadius.vertical(
-              top: Radius.circular(24),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             child: imageUrl.isNotEmpty
                 ? Image.network(
               imageUrl,
               height: 220,
               width: double.infinity,
               fit: BoxFit.cover,
-              errorBuilder:
-                  (_, __, ___) =>
-                  _imagePlaceholder(),
+              errorBuilder: (_, __, ___) => _imagePlaceholder(),
             )
                 : _imagePlaceholder(),
           ),
@@ -64,43 +63,26 @@ class VehicleOverviewSection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 const Text(
                   "Vehicle Overview",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight:
-                    FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-
                 const SizedBox(height: 20),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: _infoCard(
-                        Icons.directions_car,
-                        "Make",
-                        make,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _infoCard(
-                        Icons.car_rental,
-                        "Model",
-                        model,
-                      ),
-                    ),
-                  ],
+                // ==========================================================
+                // 🚗 🎯 FIXED ROW: Brand & Model දෙක එකතු කරපු තනි Full Width කාඩ් එක
+                // ==========================================================
+                _infoCard(
+                  Icons.directions_car,
+                  "Vehicle Brand & Model",
+                  vehicleName,
                 ),
 
                 const SizedBox(height: 12),
 
+                // Plate Number සහ Category පේලිය (බෙදිලා පෙනෙන්න)
                 Row(
                   children: [
                     Expanded(
@@ -149,18 +131,17 @@ class VehicleOverviewSection extends StatelessWidget {
       String value,
       ) {
     return Container(
+      width: double.infinity, // මුළු පළලම ගන්න මචං
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
-        borderRadius:
-        BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Colors.grey.shade200,
         ),
       ),
       child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
             icon,

@@ -6,7 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-import 'member_provider.dart';
+
+// 💡 FIXED: පරණ MemberProvider එක අයින් කරලා අලුත් ProfileProvider එක ඇඩ් කළා
+import 'providers/profile_provider.dart';
+
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 import 'privacy_policy_screen.dart';
@@ -53,6 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       String targetEmail = input;
 
+      // 🔍 ඊමේල් එකක් නැතුව Membership No එකක් ගැහුවොත් ඒකෙන් ඊමේල් එක හොයනවා
       if (!input.contains('@')) {
         var querySnapshot = await FirebaseFirestore.instance
             .collection('member')
@@ -75,16 +79,26 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
+      // 🔐 Firebase එකට ලොග් වෙනවා (මේකෙන් Session එක ඔටෝම ෆෝන් එකේ සේව් වෙනවා)
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: targetEmail,
         password: password,
       );
 
-      if (userCredential.user != null && mounted) {
-        final memberProvider = Provider.of<MemberProvider>(context, listen: false);
-        bool dataLoaded = await memberProvider.fetchAndStoreMemberData();
+      // 💡 FIXED: අලුත් Flutter එකට ගැලපෙන විදියට mounted චෙක් එක දැම්මා
+      if (!mounted) return;
 
-        if (dataLoaded && mounted) {
+      if (userCredential.user != null) {
+        // 💡 FIXED: ProfileProvider එක පාවිච්චි කරනවා
+        final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+
+        // 🔄 Provider එකට ඩේටා ටික ගන්නවා
+        bool dataLoaded = await profileProvider.fetchAndStoreMemberData();
+
+        if (!mounted) return; // 💡 FIXED: Async gap warning එකට
+
+        if (dataLoaded) {
+          // 🚀 ඩේටා ලෝඩ් වුණා නම් කෙලින්ම HomePage එකට!
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const HomePage()),
           );
@@ -129,16 +143,16 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // ⚪ පිරිසිදු සුදු පසුබිම
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Center( // 👈 මැදට ගන්න Center එකක් දැම්මා මචං, UI එක ලස්සනට තියෙන්න
+        child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 20.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center, // 👈 මැදට පෙළගැස්වීම
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // 🖼️ සංගමයේ ලෝගෝ එක (ස්ප්ලෑෂ් එකේ තිබ්බ සයිස් එකටම ගැලපෙන්න 130 කලා)
+                // 🖼️ සංගමයේ ලෝගෝ එක
                 Image.asset(
                   'assets/images/logo.png',
                   width: 130,
@@ -154,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E3A8A), // 🔵 ස්ප්ලෑෂ් එකේ පාටටම ගැලපුවා මචං
+                    color: Color(0xFF1E3A8A),
                     letterSpacing: 1.5,
                   ),
                 ),
@@ -299,7 +313,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                   child: const Text(
                     'First time login? Click here',
-                    style: TextStyle(color: Colors.blueGrey, decoration: TextDecoration.underline, fontWeight: Alignment.center == null ? FontWeight.normal : FontWeight.w600),
+                    style: TextStyle(color: Colors.blueGrey, decoration: TextDecoration.underline, fontWeight: FontWeight.w600),
                   ),
                 ),
                 const SizedBox(height: 15),

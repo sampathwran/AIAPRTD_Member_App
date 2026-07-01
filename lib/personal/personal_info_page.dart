@@ -1,7 +1,10 @@
+// ignore_for_file: spell_check_on_languages
 import 'package:flutter/material.dart';
-// මෙතන අනිවාර්යයෙන් ඔයාගේ අලුත් ෆයිල්ස් දෙක හරියට Import කරන්න
+import 'package:provider/provider.dart';
+import '../providers/profile_provider.dart'; // 💡 අලුත් ProfileProvider එකට හැරෙව්වා
 import 'personal_details_tab.dart';
-import 'bank_details_tab.dart';
+import '../finance/member_bank_details_tab.dart';
+import 'member_registration_tab.dart';
 
 class PersonalInfoPage extends StatelessWidget {
   const PersonalInfoPage({super.key});
@@ -13,7 +16,8 @@ class PersonalInfoPage extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Colors.grey.shade50,
         appBar: AppBar(
-          title: const Text("Personal Information", style: TextStyle(fontWeight: FontWeight.bold)),
+          title: const Text("Personal Information",
+              style: TextStyle(fontWeight: FontWeight.bold)),
           centerTitle: true,
           elevation: 0,
           backgroundColor: Colors.white,
@@ -29,11 +33,32 @@ class PersonalInfoPage extends StatelessWidget {
             ],
           ),
         ),
-        body: const TabBarView(
-          children: [
-            PersonalDetailsTab(), // මෙතනට වෙනම ෆයිල් එකේ තියෙන class එක
-            BankDetailsTab(),     // මෙතනට වෙනම ෆයිල් එකේ තියෙන class එක
-          ],
+        body: Consumer<ProfileProvider>( // 💡 ProfileProvider ලෙස වෙනස් කළා
+          builder: (context, profileProvider, child) {
+            final data = profileProvider.memberData;
+
+            if (data == null) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final String status = data['status'] ?? 'inactive';
+            final bool isApproved = (status.toLowerCase() == 'active');
+
+            final String membershipNo = data['membershipNo'] ??
+                data['membership_number'] ??
+                "MB-001";
+
+            return TabBarView(
+              children: [
+                isApproved
+                    ? const PersonalDetailsTab()
+                    : const MemberRegistrationTab(),
+
+                // Bank Details Tab (membershipNo pass කරනවා)
+                BankDetailsTab(membershipNo: membershipNo),
+              ],
+            );
+          },
         ),
       ),
     );

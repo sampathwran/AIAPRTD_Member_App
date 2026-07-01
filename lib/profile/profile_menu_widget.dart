@@ -1,12 +1,17 @@
+// ignore_for_file: spell_check_on_languages, spell_check_on_word
 import 'package:flutter/material.dart';
 
-// Import Pages
+// 💡 අලුතින් හදපු AuthService එක මෙතනට Import කරගන්න මචං
+import '/auth_service.dart';
+
 import '../personal/personal_info_page.dart';
 import '../personal/vehicle_info_page.dart';
 import '../finance/earning_page.dart';
 import '../finance/membership_fee_page.dart';
 import '../finance/app_usage_page.dart';
 import '../finance/saving_page.dart';
+// 💡 අලුතින් හදපු My Booking Page එක Import කළා
+import 'my_booking_page.dart';
 import '../general/ride_history_page.dart';
 import '../general/member_benefits_page.dart';
 import '../general/support_tickets_page.dart';
@@ -32,14 +37,7 @@ class ProfileMenuWidget extends StatelessWidget {
         children: [
           _buildSection("Personal Information", [
             _buildTile(Icons.person_outline, "Personal Information", () => _nav(context, const PersonalInfoPage())),
-    _buildTile(
-    Icons.directions_car_outlined,
-    "Vehicle Information",
-    () => _nav(
-    context,
-    const VehicleInfoPage(membershipNo: "AIAPRTD-25-0001") // මෙතනට ඔයාගේ User ගේ membershipNo එක දෙන්න
-    )
-    ),
+            _buildTile(Icons.directions_car_outlined, "Vehicle Information", () => _nav(context, const VehicleInfoPage(membershipNo: "AIAPRTD-25-0001"))),
           ]),
           _buildSection("My Finance", [
             _buildTile(Icons.account_balance_wallet_outlined, "Earning", () => _nav(context, const EarningPage())),
@@ -48,6 +46,8 @@ class ProfileMenuWidget extends StatelessWidget {
             _buildTile(Icons.savings_outlined, "Saving", () => _nav(context, const SavingPage())),
           ]),
           _buildSection("General", [
+            // 💡 අලුතින් දාපු My Bookings Menu එක (Ride History එකට උඩින්)
+            _buildTile(Icons.library_books_outlined, "My Bookings", () => _nav(context, const MyBookingPage())),
             _buildTile(Icons.history, "Ride History", () => _nav(context, const RideHistoryPage())),
             _buildTile(Icons.star_outline, "Member Benefits", () => _nav(context, const MemberBenefitsPage())),
             _buildTile(Icons.support_agent, "Support Tickets", () => _nav(context, const SupportTicketsPage())),
@@ -56,8 +56,64 @@ class ProfileMenuWidget extends StatelessWidget {
             _buildTile(Icons.notifications_none, "Notification", () => _nav(context, const NotificationPage())),
           ]),
           _buildSettingsSection(context),
+
+          // ACCOUNT Section
+          _buildAccountSection(context),
         ],
       ),
+    );
+  }
+
+  Future<void> _showLogoutDialog(BuildContext context) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          title: const Text('Confirm Logout', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: const Text('Are you sure you want to log out? All active sessions will be closed.'),
+          actions: <Widget>[
+            TextButton(
+                child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                onPressed: () => Navigator.of(dialogContext).pop()
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+              child: const Text('Logout', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                AuthService.logout(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildAccountSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 25, bottom: 12, left: 10),
+          child: Text("ACCOUNT", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.blueGrey, letterSpacing: 1.5)),
+        ),
+        Container(
+          clipBehavior: Clip.hardEdge,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.red.shade100),
+          ),
+          child: ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text("Logout", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            onTap: () => _showLogoutDialog(context),
+          ),
+        ),
+      ],
     );
   }
 

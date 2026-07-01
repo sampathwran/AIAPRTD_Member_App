@@ -18,14 +18,23 @@ dependencies:
   google_maps_flutter: ^2.17.0
   geolocator: ^14.0.2
   flutter_compass: ^0.8.1
-  image_picker: ^1.1.2
   firebase_storage: ^13.4.2
-  intl: ^0.19.0
+  intl: ^0.20.3
+  cached_network_image: ^3.4.1
+  http: ^1.6.0
+  image_picker: ^1.2.2
+  camera: ^0.10.6
+  google_mlkit_face_detection: ^0.13.2
+  dash_bubble: ^2.0.0
+  app_to_foreground: ^0.0.3
+
+
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  flutter_launcher_icons: "^0.13.1"
 
 flutter:
   uses-material-design: true
@@ -36,4 +45,28 @@ flutter:
     - assets/sounds/intro.mp3
     - assets/sounds/go_sound.mp3
     - assets/sounds/off_sound.mp3
+    - assets/sounds/error_sound.mp3
     - assets/vehicles.json
+    - assets/front.png
+    - assets/back.png
+    - assets/left_side.png
+    - assets/right_side.png
+    - assets/interior.png
+    - assets/icons/app_icon.png # මේ පේළිය හැදුවා
+    - assets/images/budget.png
+    - assets/images/mini.png
+    - assets/images/sedan.png
+    - assets/images/6_seater.png
+    - assets/images/9_seater.png
+    - assets/images/14_seater.png
+
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icons/app_icon.png" # උඹේ අලුත් ලෝගෝ එක තියෙන තැන
+  min_sdk_android: 21
+
+dependency_overrides:
+  sqflite: 2.4.1
+  sqflite_android: 2.4.1 # අර ටයිප් වෙලා තිබ්බ ප්‍රශ්නෙ අයින් කරා

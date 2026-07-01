@@ -1,97 +1,170 @@
+// ignore_for_file: spell_check_on_languages
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/profile_provider.dart';
+import 'bank_details_tab.dart';
+import 'payment_history_tab.dart';
+import 'upload_slip_tab.dart';
 
 class MembershipFeePage extends StatelessWidget {
   const MembershipFeePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        title: const Text("Membership Fee", style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+    final ProfileProvider profileProvider =
+    Provider.of<ProfileProvider>(context, listen: false);
+
+
+    final String membershipNo = profileProvider.memberNo.trim();
+
+    return DefaultTabController(
+    length: 3,
+    child: Scaffold(
+    backgroundColor: const Color(0xFFF5F7FB),
+    appBar: AppBar(
+    title: const Text(
+    'Membership Fee',
+    style: TextStyle(
+    fontWeight: FontWeight.w800,
+    letterSpacing: 0.4,
+    ),
+    ),
+    centerTitle: true,
+    elevation: 0,
+    backgroundColor: Colors.white,
+    foregroundColor: Colors.black87,
+    ),
+    body: membershipNo.isEmpty
+    ? const Center(
+    child: Text(
+    'Membership number not found.',
+    style: TextStyle(
+    color: Colors.red,
+    fontWeight: FontWeight.w600,
+    ),
+    ),
+    )
+        : StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+    stream: FirebaseFirestore.instance
+        .collection('payments')
+        .doc(membershipNo)
+        .snapshots(),
+    builder: (context, snapshot) {
+    if (snapshot.connectionState ==
+    ConnectionState.waiting &&
+    !snapshot.hasData) {
+    return const Center(
+    child: CircularProgressIndicator(
+    color: Colors.blue,
+    ),
+    );
+    }
+
+    if (snapshot.hasError) {
+    return Center(
+    child: Padding(
+    padding: const EdgeInsets.all(24),
+    child: Text(
+    'Unable to load payment details.\n${snapshot.error}',
+    textAlign: TextAlign.center,
+    style: const TextStyle(
+    color: Colors.red,
+    fontWeight: FontWeight.w600,
+    ),
+    ),
+    ),
+    );
+    }
+
+    final Map<String, dynamic> paymentData =
+    snapshot.data?.data() ?? <String, dynamic>{};
+
+    return Column(
+    children: [
+    _buildTabBar(),
+    Expanded(
+    child: TabBarView(
+    physics: const BouncingScrollPhysics(),
+    children: [
+    PaymentHistoryTab(
+    memberData: paymentData,
+    ),
+    BankDetailsTab(
+    membershipNo: membershipNo,
+    ),
+    const UploadSlipTab(),
+    ],
+    ),
+    ),
+    ],
+    );
+    },
+    ),
+    ),
+    );
+
+
+  }
+
+  Widget _buildTabBar() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(24),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Status Card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.green.shade50,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.green.shade200),
-              ),
-              child: Column(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.green, size: 50),
-                  const SizedBox(height: 10),
-                  const Text("Active Member", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
-                  const SizedBox(height: 5),
-                  const Text("Next renewal: 12 July 2026", style: TextStyle(color: Colors.grey)),
-                ],
-              ),
+      child: TabBar(
+        dividerColor: Colors.transparent,
+        indicatorSize: TabBarIndicatorSize.tab,
+        labelColor: const Color(0xFF1565C0),
+        unselectedLabelColor: Colors.grey.shade600,
+        labelStyle: const TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
+        indicator: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.07),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
-
-            const SizedBox(height: 30),
-
-            // Fee Summary
-            _buildSection("Payment Summary", [
-              _buildTile(Icons.calendar_month, "Monthly Fee", "LKR 500.00"),
-              _buildTile(Icons.access_time, "Last Paid Date", "12 June 2026"),
-              _buildTile(Icons.receipt_long, "Payment Method", "Card (Visa ****1234)"),
-            ]),
-
-            const SizedBox(height: 20),
-
-            // History Section
-            _buildSection("Payment History", [
-              _buildTile(Icons.history, "June 2026", "Paid - LKR 500.00"),
-              _buildTile(Icons.history, "May 2026", "Paid - LKR 500.00"),
-              _buildTile(Icons.history, "April 2026", "Paid - LKR 500.00"),
-            ]),
           ],
         ),
-      ),
-    );
-  }
-
-  // Helper Widgets
-  Widget _buildSection(String title, List<Widget> children) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 10, bottom: 8),
-          child: Text(title.toUpperCase(),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blueGrey, letterSpacing: 1.2)),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5))],
+        tabs: const [
+          Tab(
+            icon: Icon(
+              Icons.history_rounded,
+              size: 19,
+            ),
+            text: 'History',
           ),
-          child: Column(children: children),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTile(IconData icon, String title, String subtitle) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-        child: Icon(icon, color: Colors.blue, size: 22),
+          Tab(
+            icon: Icon(
+              Icons.account_balance_rounded,
+              size: 19,
+            ),
+            text: 'Bank',
+          ),
+          Tab(
+            icon: Icon(
+              Icons.upload_file_rounded,
+              size: 19,
+            ),
+            text: 'Upload',
+          ),
+        ],
       ),
-      title: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
     );
   }
 }

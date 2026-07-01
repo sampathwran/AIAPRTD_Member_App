@@ -1,6 +1,7 @@
+// ignore_for_file: spell_check_on_languages
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'vehicle_info_provider.dart';
+import '../providers/vehicle_provider.dart'; // 💡 🎯 කලින් හදපු අපේ අලුත් Provider එක ඉම්පෝර්ට් කරා මචං
 import 'vehicle_overview_section.dart';
 import 'compliance_docs_section.dart';
 import 'vehicle_photos_section.dart';
@@ -24,16 +25,14 @@ class _VehicleInfoPageState extends State<VehicleInfoPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<VehicleInfoProvider>(
+      Provider.of<VehicleProvider>(
         context,
         listen: false,
       ).fetchVehicleData(widget.membershipNo);
     });
   }
 
-  void _showAddVehicleDialog(
-      VehicleInfoProvider provider,
-      ) {
+  void _showAddVehicleDialog(VehicleProvider provider) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -52,9 +51,7 @@ class _VehicleInfoPageState extends State<VehicleInfoPage> {
 
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text(
-                  "Request sent for approval. Refreshing...",
-                ),
+                content: Text("Request sent for approval. Refreshing..."),
                 backgroundColor: Colors.blue,
               ),
             );
@@ -72,8 +69,7 @@ class _VehicleInfoPageState extends State<VehicleInfoPage> {
         title: const Text("Vehicle Profile"),
         centerTitle: true,
         actions: [
-          // සෑම විටම 'Add New' බොත්තම පෙන්වයි
-          Consumer<VehicleInfoProvider>(
+          Consumer<VehicleProvider>(
             builder: (context, provider, _) {
               return TextButton.icon(
                 onPressed: () => _showAddVehicleDialog(provider),
@@ -84,7 +80,7 @@ class _VehicleInfoPageState extends State<VehicleInfoPage> {
           ),
         ],
       ),
-      body: Consumer<VehicleInfoProvider>(
+      body: Consumer<VehicleProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) {
             return const Center(
@@ -98,52 +94,67 @@ class _VehicleInfoPageState extends State<VehicleInfoPage> {
             return const Center(
               child: Padding(
                 padding: EdgeInsets.all(20.0),
-                child: Text(
-                  "No vehicle registered yet. Please click 'Add New'.",
-                ),
+                child: Text("No vehicle registered yet. Please click 'Add New'."),
               ),
             );
           }
 
-          // Vehicle Details
-          final Map<String, dynamic> vehicleDetails =
-          Map<String, dynamic>.from(
-            data['details'] ?? {},
-          );
-
-          // Documents
-          final List documents =
-          List.from(data['documents'] ?? []);
-
-          // Registration Book Data
-          Map<String, dynamic> regBookData = {};
-
-          if (documents.length > 2) {
-            regBookData =
-            Map<String, dynamic>.from(
-              documents[2]['reviewData'] ?? {},
-            );
+          // 🧠 Vehicle Details (Fallback එකක් ලෙස - මෙතන Firestore එකේ 'Make' කැපිටල්)
+          final Map<String, dynamic> vehicleDetails = {};
+          if (data['details'] != null) {
+            data['details'].forEach((key, value) {
+              vehicleDetails[key.toString()] = value;
+            });
           }
 
-          // Merge Data
+          // =========================================================================
+          // 🧠 SMART REG BOOK DETECTOR ENGINE (Type Safe Copying)
+          // =========================================================================
+          final List<dynamic> documents = data['documents'] != null ? List.from(data['documents']) : [];
+          Map<String, dynamic> regBookData = {};
+
+          for (var doc in documents) {
+            if (doc is Map && doc['reviewData'] != null) {
+              final Map<String, dynamic> reviewMap = {};
+              doc['reviewData'].forEach((k, v) {
+                reviewMap[k.toString()] = v;
+              });
+
+              // Reg Book එක අඳුරගන්න සුවිශේෂී Key එකක් චෙක් කරනවා මචං
+              if (reviewMap.containsKey('Plate Number') || reviewMap.containsKey('Chassis Number')) {
+                regBookData = reviewMap;
+                break;
+              }
+            }
+          }
+
+          // =========================================================================
+          // 🎯 MERGE DATA: පිටතට දෙන Keys හැමවිටම සිම්පල් විය යුතුයි (make, model)
+          // =========================================================================
           final Map<String, dynamic> mergedData = {
+            // 💡 Firestore එකේ 'Make' හෝ 'details' එකේ 'Make' කැපිටල් නිසා ඒවා එහෙමම අරන් අපේ 'make' (සිම්පල්) එකට දානවා
             'make': regBookData['Make'] ??
-                vehicleDetails['brand'] ??
+                vehicleDetails['Make'] ??
+                vehicleDetails['brand'] ?? // පැරණි fallback එකක් තිබුණොත්
                 "N/A",
+
+            // 💡 Firestore එකේ 'Model' කැපිටල් නිසා ඒක අරන් අපේ 'model' (සිම්පල්) එකට දානවා
             'model': regBookData['Model'] ??
+                vehicleDetails['Model'] ??
                 vehicleDetails['model'] ??
                 "N/A",
+
+            // 💡 'Plate Number' එක අරන් අපේ 'vehicleNumber' එකට මැප් කරනවා
             'vehicleNumber': regBookData['Plate Number'] ??
+                vehicleDetails['Plate Number'] ??
                 vehicleDetails['vehicleNumber'] ??
                 "N/A",
-            'selectedCategory': data['selectedCategory'] ??
-                "N/A",
-            'frontImage': data['vehiclePhotos']?['Front']?['url'] ??
-                '',
+
+            'selectedCategory': data['selectedCategory'] ?? "N/A",
+            'frontImage': data['vehiclePhotos']?['Front']?['url'] ?? '',
           };
 
-          final bool canEdit =
-              data['canEdit'] ?? false;
+          final bool canEdit = data['canEdit'] ?? false;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),

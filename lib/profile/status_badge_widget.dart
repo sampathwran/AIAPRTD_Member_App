@@ -1,77 +1,357 @@
-import 'package:flutter/material.dart';
+// ignore_for_file: spell_check_on_languages
 
-class StatusBadgeWidget extends StatelessWidget {
-  final String status;
-  final String? reason;
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'membership_fee_status_check.dart';
+import 'personal_kyc_checker.dart';
+import 'vehicle_status_check.dart';
+import '../providers/vehicle_provider.dart';
+
+class StatusBadgeWidget extends StatefulWidget {
+  final Map<String, dynamic> memberData;
+  final bool isProfileView;
 
   const StatusBadgeWidget({
     super.key,
-    required this.status,
-    this.reason,
+    required this.memberData,
+    this.isProfileView = false,
   });
 
   @override
+  State<StatusBadgeWidget> createState() => _StatusBadgeWidgetState();
+}
+
+class _StatusBadgeWidgetState extends State<StatusBadgeWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _opacityAnimation;
+
+  Timer? _blinkTimer;
+  Timer? _dismissTimer;
+
+  bool _showErrorBlock = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _opacityAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.4,
+    ).animate(_animationController);
+
+    _showErrorBlock = widget.isProfileView;
+
+    // 🚀 අලුතෙන් එකතු කරපු කොටස: Widget එක ලෝඩ් වෙද්දීම වාහනේ ඩේටා fetch කරනවා
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final String? membershipNo =
+      widget.memberData['membershipNo']?.toString();
+      if (membershipNo != null && membershipNo.trim().isNotEmpty) {
+        Provider.of<VehicleProvider>(context, listen: false)
+            .fetchVehicleData(membershipNo);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _blinkTimer?.cancel();
+    _dismissTimer?.cancel();
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  Map<String, dynamic> _mergeMemberData(
+      Map<String, dynamic>? vehicleData,
+      ) {
+    final Map<String, dynamic> activeData =
+    Map<String, dynamic>.from(widget.memberData);
+
+    if (vehicleData != null && vehicleData.isNotEmpty) {
+      activeData.addAll(vehicleData);
+    }
+
+    return activeData;
+  }
+
+  Map<String, dynamic> _calculateStatus(
+      Map<String, dynamic> activeData,
+      ) {
+    final Map<String, dynamic> feeCheck =
+    checkMembershipFeeStatus(activeData);
+
+    if (feeCheck['isFeePaidValid'] == false) {
+      return {
+        'isActive': false,
+        'reason': feeCheck['reason'] ??
+            'Membership fee verification required.',
+        'source': 'fee',
+      };
+    }
+
+    final Map<String, dynamic> kycCheck =
+    PersonalKYCChecker.checkKYCStatus(activeData);
+
+    if (kycCheck['isVerified'] == false) {
+      return {
+        'isActive': false,
+        'reason': kycCheck['reason'] ??
+            'Personal profile or face verification pending.',
+        'source': 'kyc',
+      };
+    }
+
+    final Map<String, dynamic> vehicleCheck =
+    checkMemberSystemStatus(activeData);
+
+    return {
+      ...vehicleCheck,
+      'source': 'vehicle',
+    };
+  }
+
+  void triggerReasonVisibility() {
+    if (widget.isProfileView) {
+      return;
+    }
+
+    _blinkTimer?.cancel();
+    _dismissTimer?.cancel();
+
+    setState(() {
+      _showErrorBlock = true;
+    });
+
+    _animationController.repeat(reverse: true);
+
+    _blinkTimer = Timer(
+      const Duration(seconds: 3),
+          () {
+        if (!mounted) {
+          return;
+        }
+
+        _animationController.stop();
+        _animationController.reset();
+      },
+    );
+
+    _dismissTimer = Timer(
+      const Duration(seconds: 10),
+          () {
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          _showErrorBlock = false;
+        });
+      },
+    );
+  }
+
+  @override
+  void didUpdateWidget(
+      covariant StatusBadgeWidget oldWidget,
+      ) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.isProfileView && !_showErrorBlock) {
+      setState(() {
+        _showErrorBlock = true;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    bool isActive = status.toLowerCase() == 'active';
+    return Consumer<VehicleProvider>(
+      builder: (
+          context,
+          vehicleProvider,
+          child,
+          ) {
+        // 🚀 අලුතෙන් එකතු කරපු කොටස: ඩේටා ටික එනකම් බොරුවට එරර් පෙන්නන්නේ නෑ
+        if (vehicleProvider.isLoading && vehicleProvider.vehicleData == null) {
+          if (widget.isProfileView) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Status Badge එක
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            // වඩා තද වර්ණ සහ Shadow එකක් භාවිතයෙන් කැපී පෙනෙන පෙනුමක්
-            color: isActive ? Colors.green.shade100 : Colors.red.shade100,
-            borderRadius: BorderRadius.circular(20), // වඩා රවුම් හැඩයක්
-            border: Border.all(
-              color: isActive ? Colors.green.shade400 : Colors.red.shade400,
-              width: 1,
+        final Map<String, dynamic> activeData =
+        _mergeMemberData(vehicleProvider.vehicleData);
+
+        final Map<String, dynamic> statusResult =
+        _calculateStatus(activeData);
+
+        final bool isActive = statusResult['isActive'] == true;
+        final String reason = statusResult['reason']?.toString() ?? '';
+
+        if (!widget.isProfileView) {
+          if (isActive || !_showErrorBlock) {
+            return const SizedBox.shrink();
+          }
+        }
+
+        return FadeTransition(
+          opacity: widget.isProfileView
+              ? const AlwaysStoppedAnimation<double>(1)
+              : _opacityAnimation,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isActive && widget.isProfileView) _buildActiveBadge(),
+                if (!isActive && _showErrorBlock) ...[
+                  _buildInactiveBadge(),
+                  const SizedBox(height: 8),
+                  if (reason.isNotEmpty) _buildReasonBox(reason),
+                ],
+              ],
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                isActive ? Icons.verified_rounded : Icons.cancel_rounded,
-                size: 14,
-                color: isActive ? Colors.green.shade800 : Colors.red.shade800,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                isActive ? "ACTIVE MEMBER" : "INACTIVE MEMBER",
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8,
-                  color: isActive ? Colors.green.shade900 : Colors.red.shade900,
-                ),
-              ),
-            ],
-          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActiveBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 8,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.green.shade50,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.green.shade300,
         ),
-
-        // හේතුව (Inactive නම් විතරක් පේන්න - වඩා හොඳ Text Style එකක්)
-        if (!isActive && reason != null && reason!.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 8, left: 4),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                "Reason: $reason",
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.red.shade700,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.verified_rounded,
+            size: 16,
+            color: Colors.green.shade700,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'ACTIVE MEMBER',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+              color: Colors.green.shade900,
             ),
           ),
-      ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInactiveBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 6,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.red.shade200,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.dangerous_rounded,
+            size: 14,
+            color: Colors.red.shade700,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'INACTIVE MEMBER',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+              color: Colors.red.shade900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReasonBox(String reason) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 10,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF1F2),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.red.shade100,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.error_outline_rounded,
+            size: 20,
+            color: Colors.red.shade700,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Action Required:',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.red.shade400,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  reason,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.red.shade900,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

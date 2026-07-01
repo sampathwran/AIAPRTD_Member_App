@@ -1,29 +1,37 @@
+// ignore_for_file: spell_check_on_languages, spell_check_on_word
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
-// ඔබේ Providers
-import 'member_provider.dart';
-import 'personal/vehicle_info_provider.dart';
+// ==========================================
+// 🎯 PROVIDERS
+// ==========================================
+import 'providers/profile_provider.dart';
+import 'providers/kyc_provider.dart';
+import 'providers/auth_provider.dart';
+import 'providers/vehicle_provider.dart';
+import 'providers/payment_provider.dart';
+import 'providers/booking_provider.dart'; // 💡 අලුත් BookingProvider එක මෙතනට දැම්මා
 
-// ඔබේ Pages
+// ==========================================
+// 📄 PAGES
+// ==========================================
 import 'splash_screen.dart';
 import 'login_screen.dart';
 import 'home/home_page.dart';
-import 'home/scheduled_page.dart';
+import 'home/booking_dashboard_page.dart'; // 💡 Dashboard එක Import කරලා තියෙනවා
 import 'home/create_job_page.dart';
 import 'home/road_pickup_page.dart';
 import 'home/sos_page.dart';
 import 'profile/profile_page.dart';
 import 'parking/parking_page.dart';
-import 'incom/income_page.dart';
+import 'income/income_page.dart';
 
 void main() async {
-  // Flutter bindings නිවැරදිව ආරම්භ කිරීම
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Firebase දෝෂය මගහැරීමට මෙය වඩාත් ආරක්ෂිත ක්‍රමයයි
+  // Firebase initialization
   try {
     if (Firebase.apps.isEmpty) {
       await Firebase.initializeApp(
@@ -34,12 +42,15 @@ void main() async {
     debugPrint("Firebase initialization error: $e");
   }
 
-  // ඇප් එකේ ප්‍රධාන කොටස ධාවනය කිරීම
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => MemberProvider()),
-        ChangeNotifierProvider(create: (_) => VehicleInfoProvider()),
+        ChangeNotifierProvider(create: (_) => ProfileProvider()),
+        ChangeNotifierProvider(create: (_) => KYCProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => VehicleProvider()),
+        ChangeNotifierProvider(create: (_) => PaymentProvider()),
+        ChangeNotifierProvider(create: (_) => BookingProvider()), // 💡 BookingProvider එක MultiProvider එකට ඇතුලත් කළා
       ],
       child: const MyApp(),
     ),
@@ -55,15 +66,18 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'AIAPRTD Member',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true, // මෙය මගින් UI එක නවීන පෙනුමක් ලබාගන්නවා
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
       ),
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomePage(),
-        '/scheduled': (context) => const ScheduledPage(),
+
+        // 💡 🎯 මෙතන තමයි Error එක හැදුවේ (ScheduledPage වෙනුවට BookingDashboardPage දැම්මා)
+        '/scheduled': (context) => const BookingDashboardPage(),
+
         '/create-job': (context) => const CreateJobPage(),
         '/road-pickup': (context) => const RoadPickupPage(),
         '/sos': (context) => const SosPage(),
