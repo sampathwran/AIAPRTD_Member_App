@@ -83,8 +83,7 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
+                Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
               },
               child: const Text("OK", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ),

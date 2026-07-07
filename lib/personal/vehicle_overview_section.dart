@@ -24,7 +24,7 @@ class VehicleOverviewSection extends StatelessWidget {
         data['vehicleNumber']?.toString() ?? 'N/A';
 
     final String category =
-        data['selectedCategory']?.toString() ?? 'N/A';
+        (data['vehicle_category'] ?? data['selectedCategory'])?.toString() ?? 'N/A';
 
     // 💡 🎯 Firebase එකෙන් එන Make සහ Model එකතු කරලා වාහනයේ සම්පූර්ණ නම හදනවා
     final String vehicleName = (make == 'N/A' && model == 'N/A')

@@ -15,6 +15,8 @@ import '../providers/profile_provider.dart';
 import 'home_header.dart';
 import 'home_footer.dart';
 import 'online_button_widget.dart';
+import 'widgets/meter/mini_meter_widget.dart';
+import 'passenger_active_trip_banner.dart';
 
 // 💡 ගොඩක් අඳුරු නැති, ඇහැට අමාරු නැති Neutral Grey Theme එක
 const String _mapStyle = '''
@@ -291,6 +293,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             markers: _markers,
           ),
           Positioned(top: 50, left: 16, right: 16, child: HomeHeader(user: _user)),
+          const Positioned(top: 130, left: 0, right: 0, child: MiniMeterWidget()),
+          const PassengerActiveTripBanner(),
           Positioned(
             bottom: 210, // 💡 SOS Button එකත් අනුපාතයට උඩට ගත්තා
             right: 20,

@@ -1,7 +1,9 @@
 // ignore_for_file: spell_check_on_languages
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:local_auth/local_auth.dart'; // 💡 NEW: Local Auth package
 
 import '../providers/payment_provider.dart';
 import '../providers/profile_provider.dart';
@@ -23,6 +25,8 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
   final TextEditingController _branchCodeController = TextEditingController();
   final TextEditingController _accountNoController = TextEditingController();
   final TextEditingController _holderNameController = TextEditingController();
+
+  final LocalAuthentication auth = LocalAuthentication(); // 💡 NEW: Auth instance
 
   bool _isEditing = false;
 
@@ -67,15 +71,86 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
     return "XXXX XXXX $last4";
   }
 
+  // 💡 NEW: Face ID / Fingerprint Auth Function
+  Future<void> _authenticateAndEdit() async {
+    if (_isEditing) {
+      // If already editing, just cancel without auth
+      setState(() {
+        _isEditing = false;
+      });
+      return;
+    }
+
+    bool authenticated = false;
+    try {
+      final bool isSupported = await auth.isDeviceSupported();
+      if (!isSupported) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Security Warning: Your device does not support screen lock. You cannot edit bank details."),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      authenticated = await auth.authenticate(
+        localizedReason: 'Verify your identity to edit bank details',
+        biometricOnly: false, // Allows PIN/Pattern as fallback
+        persistAcrossBackgrounding: true, 
+      );
+    } on PlatformException catch (e) {
+      debugPrint("Auth Error: $e");
+      if (!mounted) return;
+      
+      String errorMessage = "Security verification failed.";
+      
+      // Checking common error codes for missing screen lock
+      if (e.code == 'NotEnrolled' || e.code == 'PasscodeNotSet' || e.code == 'NotAvailable') {
+        errorMessage = "Please set up a Screen Lock (PIN, Password, or Fingerprint) in your phone settings to edit bank details securely.";
+      } else {
+        errorMessage = "Error: ${e.message} (${e.code}).";
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+      return;
+    }
+
+    if (authenticated) {
+      if (!mounted) return;
+      setState(() {
+        _isEditing = true;
+      });
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Authentication required to edit details."),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final paymentProvider = Provider.of<PaymentProvider>(context);
     final bankData = paymentProvider.bankData;
 
-    final String bankUpdateStatus =
-        bankData?['bankUpdateStatus']?.toString().toLowerCase() ?? 'approved';
+    // 💡 ඩේටා දැනටමත් තියෙනවද කියලා බලනවා
+    final bool hasData = bankData != null &&
+        bankData['accountNumber'] != null &&
+        bankData['accountNumber'].toString().trim().isNotEmpty;
 
-    final bool isPending = bankUpdateStatus == 'pending';
+    // 💡 ෆෝම් එක පෙන්නන්නේ Edit ඔබලා තියෙනවා නම් හරි, ඩේටා නැත්නම් හරි විතරයි
+    final bool showForm = _isEditing || !hasData;
 
     final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
     final String documentId = profileProvider.documentId;
@@ -93,8 +168,6 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (isPending) _buildPendingBanner(),
-
             _buildBankCard(),
 
             const SizedBox(height: 25),
@@ -110,69 +183,67 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
                     color: Colors.black87,
                   ),
                 ),
-                if (!isPending)
+                // ඩේටා තියෙනවා නම් විතරක් Edit/Cancel බට්න් එක පෙන්නනවා (අලුත් කෙනෙක්ට මේක පේන්න ඕනේ නෑ)
+                if (hasData)
                   TextButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        _isEditing = !_isEditing;
-                      });
-                    },
-                    icon: Icon(_isEditing ? Icons.close : Icons.edit, size: 18),
-                    label: Text(_isEditing ? "Cancel" : "Edit"),
+                    onPressed: _authenticateAndEdit, // 💡 FIXED: Auth කරලා තමයි දැන් Edit වෙන්නේ
+                    icon: Icon(_isEditing ? Icons.close : Icons.security_rounded, size: 18),
+                    label: Text(_isEditing ? "Cancel" : "Verify & Edit"),
                   ),
               ],
             ),
 
             const SizedBox(height: 10),
 
-            _buildTextField(
-              controller: _holderNameController,
-              label: "Account Holder Name",
-              icon: Icons.person_outline,
-              enabled: _isEditing,
-            ),
+            // 💡 ෆෝම් එක පෙන්නන්න ඕනෙ වෙලාවට විතරක් මේ ටික Load වෙනවා
+            if (showForm) ...[
+              _buildTextField(
+                controller: _holderNameController,
+                label: "Account Holder Name",
+                icon: Icons.person_outline,
+                enabled: true, // පෙන්නනවා නම් අනිවාර්යයෙන්ම Type කරන්න පුළුවන් වෙන්න ඕනේ
+              ),
 
-            const SizedBox(height: 15),
+              const SizedBox(height: 15),
 
-            _buildTextField(
-              controller: _bankNameController,
-              label: "Bank Name",
-              icon: Icons.account_balance_outlined,
-              enabled: _isEditing,
-            ),
+              _buildTextField(
+                controller: _bankNameController,
+                label: "Bank Name",
+                icon: Icons.account_balance_outlined,
+                enabled: true,
+              ),
 
-            const SizedBox(height: 15),
+              const SizedBox(height: 15),
 
-            _buildTextField(
-              controller: _branchController,
-              label: "Branch Name",
-              icon: Icons.location_on_outlined,
-              enabled: _isEditing,
-            ),
+              _buildTextField(
+                controller: _branchController,
+                label: "Branch Name",
+                icon: Icons.location_on_outlined,
+                enabled: true,
+              ),
 
-            const SizedBox(height: 15),
+              const SizedBox(height: 15),
 
-            _buildTextField(
-              controller: _branchCodeController,
-              label: "Branch Code",
-              icon: Icons.numbers_rounded,
-              enabled: _isEditing,
-              keyboardType: TextInputType.number,
-            ),
+              _buildTextField(
+                controller: _branchCodeController,
+                label: "Branch Code",
+                icon: Icons.numbers_rounded,
+                enabled: true,
+                keyboardType: TextInputType.number,
+              ),
 
-            const SizedBox(height: 15),
+              const SizedBox(height: 15),
 
-            _buildTextField(
-              controller: _accountNoController,
-              label: "Account Number",
-              icon: Icons.pin_outlined,
-              enabled: _isEditing,
-              keyboardType: TextInputType.number,
-            ),
+              _buildTextField(
+                controller: _accountNoController,
+                label: "Account Number",
+                icon: Icons.pin_outlined,
+                enabled: true,
+                keyboardType: TextInputType.number,
+              ),
 
-            const SizedBox(height: 25),
+              const SizedBox(height: 25),
 
-            if (_isEditing)
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -207,9 +278,9 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
-                            "Bank details submitted for admin review! ⏳",
+                            "Bank details updated successfully! ✅",
                           ),
-                          backgroundColor: Colors.orange,
+                          backgroundColor: Colors.green,
                         ),
                       );
 
@@ -219,7 +290,7 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text("Failed to submit update request"),
+                          content: Text("Failed to update bank details"),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -228,7 +299,7 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
                   child: paymentProvider.isLocalLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
-                    "Submit for Admin Approval",
+                    "Save Bank Details",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -236,37 +307,9 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
                   ),
                 ),
               ),
+            ],
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildPendingBanner() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.hourglass_top_rounded,
-              color: Colors.orange, size: 28),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              "Your new bank details are under admin review. You cannot edit again until approved or rejected.",
-              style: TextStyle(
-                color: Colors.orange.shade800,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

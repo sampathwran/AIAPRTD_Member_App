@@ -6,6 +6,8 @@ import '/auth_service.dart';
 
 import '../personal/personal_info_page.dart';
 import '../personal/vehicle_info_page.dart';
+import 'package:provider/provider.dart';
+import '../providers/profile_provider.dart';
 import '../finance/earning_page.dart';
 import '../finance/membership_fee_page.dart';
 import '../finance/app_usage_page.dart';
@@ -37,7 +39,10 @@ class ProfileMenuWidget extends StatelessWidget {
         children: [
           _buildSection("Personal Information", [
             _buildTile(Icons.person_outline, "Personal Information", () => _nav(context, const PersonalInfoPage())),
-            _buildTile(Icons.directions_car_outlined, "Vehicle Information", () => _nav(context, const VehicleInfoPage(membershipNo: "AIAPRTD-25-0001"))),
+            _buildTile(Icons.directions_car_outlined, "Vehicle Information", () {
+              final String memberNo = Provider.of<ProfileProvider>(context, listen: false).memberNo;
+              _nav(context, VehicleInfoPage(membershipNo: memberNo == 'N/A' ? Provider.of<ProfileProvider>(context, listen: false).documentId : memberNo));
+            }),
           ]),
           _buildSection("My Finance", [
             _buildTile(Icons.account_balance_wallet_outlined, "Earning", () => _nav(context, const EarningPage())),

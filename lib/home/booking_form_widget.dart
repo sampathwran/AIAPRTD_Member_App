@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/booking_provider.dart';
+import 'route_preview_page.dart';
 
 import 'one_way_form_widget.dart';
 import 'round_form_widget.dart';
@@ -52,6 +53,39 @@ class BookingFormWidget extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: _buildFormContent(provider.tripType),
+              ),
+            ),
+          ),
+          
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            child: SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () {
+                  if (provider.currentPickupLatLng != null && provider.dropLatLngs.isNotEmpty && provider.dropLatLngs[0] != null) {
+                    provider.calculateRoute();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const RoutePreviewPage()),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Please fill all required locations (Pickup and at least one Drop).")),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  "Continue",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
               ),
             ),
           ),

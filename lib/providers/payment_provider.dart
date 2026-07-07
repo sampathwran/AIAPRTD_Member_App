@@ -47,10 +47,12 @@ class PaymentProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      final now = DateTime.now();
+      final dateStr = "${now.year}.${now.month.toString().padLeft(2, '0')}.${now.day.toString().padLeft(2, '0')}";
+      final timestamp = now.millisecondsSinceEpoch.toString();
 
       final Reference ref =
-      _storage.ref().child('payment_slips/${membershipNo}_$timestamp.jpg');
+      _storage.ref().child('payment_slip/$membershipNo/${dateStr}_$timestamp.jpg');
 
       final UploadTask uploadTask = ref.putFile(file);
       final TaskSnapshot snapshot = await uploadTask;
@@ -62,10 +64,10 @@ class PaymentProvider with ChangeNotifier {
         'fileName': fileName,
         'slipUrl': slipUrl,
         'status': 'pending',
-        'submittedAt': FieldValue.serverTimestamp(),
+        'submittedAt': DateTime.now().toIso8601String(),
       };
 
-      await _firestore.collection('payments').doc(membershipNo).set({
+      await _firestore.collection('payment_slip').doc(membershipNo).set({
         'membershipNo': membershipNo,
         'lastUpdated': FieldValue.serverTimestamp(),
         'payment_history': FieldValue.arrayUnion([newPaymentRecord]),
@@ -214,33 +216,38 @@ class PaymentProvider with ChangeNotifier {
       final DocumentReference bankRef =
       _firestore.collection('payments').doc('${membershipNo}_bank');
 
-      batch.set(verifyRef, {
-        'documentId': documentId,
+      final DocumentReference adminBankRef =
+      _firestore.collection('bank_details').doc(membershipNo);
+
+      // 1. Remove pending request if any
+      batch.delete(verifyRef);
+
+      // 2. Update Member App Payments Collection directly
+      batch.set(bankRef, {
         'membershipNo': membershipNo,
         'bankName': bankName,
         'branchName': branchName,
         'branchCode': branchCode,
         'accountNumber': accountNumber,
         'accountHolderName': accountHolderName,
-        'status': 'pending',
-        'bankUpdateStatus': 'pending',
-        'submittedAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        'approvedAt': null,
-        'approvedBy': null,
-        'rejectedAt': null,
-        'rejectedBy': null,
-        'rejectReason': null,
-      });
-
-      batch.set(bankRef, {
-        'membershipNo': membershipNo,
-        'bankUpdateStatus': 'pending',
+        'bankUpdateStatus': 'approved',
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
+      // 3. Update Admin Panel Bank Details Collection directly
+      batch.set(adminBankRef, {
+        'membershipNo': membershipNo,
+        'bankName': bankName,
+        'branchName': branchName,
+        'branchCode': branchCode,
+        'accountNumber': accountNumber,
+        'accountHolderName': accountHolderName,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // 4. Update Member Status
       batch.set(memberRef, {
-        'bankUpdateStatus': 'pending',
+        'bankUpdateStatus': 'approved',
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
@@ -249,18 +256,12 @@ class PaymentProvider with ChangeNotifier {
       _bankData = {
         ...?_bankData,
         'membershipNo': membershipNo,
-        'bankUpdateStatus': 'pending',
-        'pendingBankData': {
-          'documentId': documentId,
-          'membershipNo': membershipNo,
-          'bankName': bankName,
-          'branchName': branchName,
-          'branchCode': branchCode,
-          'accountNumber': accountNumber,
-          'accountHolderName': accountHolderName,
-          'status': 'pending',
-          'bankUpdateStatus': 'pending',
-        },
+        'bankName': bankName,
+        'branchName': branchName,
+        'branchCode': branchCode,
+        'accountNumber': accountNumber,
+        'accountHolderName': accountHolderName,
+        'bankUpdateStatus': 'approved',
       };
 
       _isLocalLoading = false;

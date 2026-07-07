@@ -237,7 +237,7 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
         final String mobile = data['mobile']?.toString() ?? 'No Mobile';
         final String address = data['address']?.toString() ?? 'No Address';
         final String membershipNo =
-            data['membershipNo']?.toString() ?? 'AIAPRTD-25-0001';
+            data['membershipNo']?.toString() ?? profileProvider.documentId;
         final String nic = data['nic']?.toString() ?? 'N/A';
         final String dob = data['dob']?.toString() ?? 'N/A';
         final String gender = data['gender']?.toString() ?? 'N/A';
@@ -259,16 +259,17 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
         final bool isDetailsSubmitted =
             data['isDetailsSubmitted'] == true ||
                 kycApprovalStatus == 'pending' ||
-                kycApprovalStatus == 'approved' ||
-                mainStatus == 'active';
+                kycApprovalStatus == 'approved';
 
         final bool isFaceApproved = faceStatus == 'approved';
+        final bool isFacePending = faceStatus == 'pending'; // 💡 NEW: Pending Face චෙක් කරන්න
 
         final bool isAdminApproved =
-            kycApprovalStatus == 'approved' || mainStatus == 'active';
+            kycApprovalStatus == 'approved';
 
+        // 💡 NEW: ඒක හරියටම Approve වෙලත් නැත්නම්, Pending වෙලත් නැත්නම් විතරක් "Action Required" පෙන්නනවා
         final bool showActionRequiredBanner =
-            !isDetailsSubmitted || !isFaceApproved;
+            (!isDetailsSubmitted) || (!isFaceApproved && !isFacePending);
 
         if (!_isEditingPhone && _phoneController.text != mobile) {
           _phoneController.text = mobile;
@@ -359,7 +360,10 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
                 _buildReadOnlyTile(
                   Icons.face_retouching_natural_rounded,
                   "Face Status",
-                  isFaceApproved ? "Verified Successfully ✅" : "Pending / Failed",
+                  // 💡 NEW: Face status එක Pending නම් "Pending Approval" කියලා පෙන්නනවා
+                  isFaceApproved
+                      ? "Verified Successfully ✅"
+                      : (isFacePending ? "Pending Approval ⏳" : "Failed ❌"),
                 ),
               ]),
             ],
@@ -477,7 +481,8 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              "Your face verification is complete. Personal details are waiting for admin approval.",
+              // 💡 NEW: පෙන්වන මැසේජ් එක ලස්සනට හැදුවා
+              "Your KYC details and Face Verification are pending admin approval. You will be notified once approved.",
               style: TextStyle(
                 color: Colors.orange.shade900,
                 fontSize: 13,

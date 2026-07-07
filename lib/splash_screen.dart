@@ -6,6 +6,8 @@ import 'package:audioplayers/audioplayers.dart'; // 💡 පරණ comment එ�
 import 'providers/profile_provider.dart';      // 💡 අලුත් ProfileProvider එක
 import 'home/home_page.dart';
 import 'login_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'home/active_booking_page.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -76,10 +78,44 @@ class _SplashScreenState extends State<SplashScreen> {
       bool dataLoaded = await profileProvider.fetchAndStoreMemberData();
 
       if (dataLoaded && mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
-        );
+        try {
+          String myMemberNo = profileProvider.memberNo;
+          QuerySnapshot activeTrips = await FirebaseFirestore.instance.collection('all_bookings')
+            .where('acceptedBy', isEqualTo: myMemberNo)
+            .get();
+          
+          DocumentSnapshot? activeTripDoc;
+          for (var doc in activeTrips.docs) {
+            var data = doc.data() as Map<String, dynamic>;
+            String status = data['status']?.toString().toLowerCase() ?? '';
+            if (status == 'accepted' || status == 'arrived' || status == 'started' || status == 'ongoing') {
+              activeTripDoc = doc;
+              break;
+            }
+          }
+          
+          if (activeTripDoc != null && mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ActiveBookingPage(
+                  bookingData: activeTripDoc!.data() as Map<String, dynamic>,
+                  bookingId: activeTripDoc.id,
+                ),
+              ),
+            );
+            return;
+          }
+        } catch (e) {
+          debugPrint("Error checking active trips: $e");
+        }
+
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomePage()),
+          );
+        }
       } else {
         await FirebaseAuth.instance.signOut();
         if (mounted) {
@@ -109,7 +145,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // UI එක එහෙම්මමයි...
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(

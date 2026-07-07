@@ -28,6 +28,10 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
   _sessionSubscription;
 
+  // 💡 NEW: Rating Sync එකට Subscription එකක්
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
+  _ratingSyncSubscription;
+
   // 💡 NEW: Constructor එකේදී App Lifecycle Observer එක Start කරනවා
   ProfileProvider() {
     WidgetsBinding.instance.addObserver(this);
@@ -91,20 +95,15 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       final Completer<bool> completer = Completer<bool>();
 
-      _memberStreamSubscription = _firestore
-          .collection('member')
-          .where(
-        Filter.or(
-          Filter(
-            'auth_uid',
-            isEqualTo: currentUser.uid,
-          ),
-          Filter(
-            'user_email',
-            isEqualTo: currentUser.email,
-          ),
-        ),
-      )
+      Query<Map<String, dynamic>> memberQuery = _firestore.collection('member');
+      
+      if (currentUser.email != null && currentUser.email!.isNotEmpty) {
+        memberQuery = memberQuery.where('user_email', isEqualTo: currentUser.email);
+      } else {
+        memberQuery = memberQuery.where('auth_uid', isEqualTo: currentUser.uid);
+      }
+
+      _memberStreamSubscription = memberQuery
           .limit(1)
           .snapshots()
           .listen(
@@ -122,6 +121,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
 
           final QueryDocumentSnapshot<Map<String, dynamic>> memberDocument =
               querySnapshot.docs.first;
+          debugPrint("🟢 ProfileProvider: Successfully found in 'member' collection!");
 
           _memberData = Map<String, dynamic>.from(
             memberDocument.data(),
@@ -129,11 +129,17 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
 
           _memberData!['docId'] = memberDocument.id;
 
+          // 💡 🎯 FIXED: member collection එකේ membershipNo field එක අඩු වුනොත් docId එක පාවිච්චි කරනවා
+          if (_memberData!['membershipNo'] == null || _memberData!['membershipNo'].toString().isEmpty) {
+            _memberData!['membershipNo'] = memberDocument.id;
+          }
+
           final String membershipNo =
               _memberData!['membershipNo']?.toString() ?? '';
 
           if (membershipNo.isNotEmpty) {
             await _loadPaymentData(membershipNo);
+            await _loadVehicleCategory(membershipNo);
             _listenToProfileImageRequest(membershipNo);
           }
 
@@ -194,6 +200,23 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _loadVehicleCategory(String membershipNo) async {
+    try {
+      final DocumentSnapshot<Map<String, dynamic>> vehicleDocument =
+          await _firestore.collection('vehicles').doc(membershipNo).get();
+
+      if (!vehicleDocument.exists || vehicleDocument.data() == null || _memberData == null) {
+        return;
+      }
+
+      final Map<String, dynamic> vehicleData = vehicleDocument.data()!;
+      _memberData!['vehicle_category'] = vehicleData['vehicle_category'] ?? vehicleData['selectedCategory'] ?? '';
+      _memberData!['selectedCategory'] = vehicleData['selectedCategory'] ?? vehicleData['vehicle_category'] ?? '';
+    } catch (e) {
+      debugPrint("Error loading vehicle category: $e");
+    }
+  }
+
   void _listenToProfileImageRequest(
       String membershipNo,
       ) {
@@ -228,6 +251,8 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
       },
     );
   }
+
+
 
   // 💡 🎯 UPDATED: Timeout සහ Error Handling දාලා හැදුවා
   Future<bool> toggleDriverStatus(
@@ -566,6 +591,9 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     await _sessionSubscription?.cancel();
     _sessionSubscription = null;
+
+    await _ratingSyncSubscription?.cancel();
+    _ratingSyncSubscription = null;
   }
 
   @override

@@ -91,11 +91,13 @@ class KYCProvider with ChangeNotifier {
       final DocumentReference memberRef =
       _firestore.collection('member').doc(documentId);
 
-      batch.update(memberRef, {
+      // 💡 NEW FIX: Update වෙනුවට Set පාවිච්චි කලා.
+      // එතකොට Document එක කලින් තිබුණේ නැතත් Error එකක් එන්නේ නෑ.
+      batch.set(memberRef, {
         'kycApprovalStatus': 'pending',
         'faceKycStatus': 'pending',
         'updatedAt': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
 
       await batch.commit();
 
@@ -114,7 +116,7 @@ class KYCProvider with ChangeNotifier {
   }
 
   // ==========================================================
-  // 📸 🎯 පියවර 2: FACE UPLOAD
+  // 📸 🎯 පියවර 2: FACE UPLOAD (Send to Admin for Approval)
   // ==========================================================
   Future<bool> saveFaceVerification(
       String membershipNo,
@@ -128,30 +130,41 @@ class KYCProvider with ChangeNotifier {
       final String path = 'kyc_selfies/$membershipNo.jpg';
       final String faceUrl = await _uploadToFirebaseStorage(faceFile, path);
 
+      // 💡 Fetch raw data from web_sync_member to include in the verify_kyc request
+      final QuerySnapshot<Map<String, dynamic>> webSyncSnapshot = await _firestore
+          .collection('web_sync_member')
+          .where('membershipNo', isEqualTo: membershipNo)
+          .limit(1)
+          .get();
+
+      Map<String, dynamic> rawData = {};
+      if (webSyncSnapshot.docs.isNotEmpty) {
+        rawData = webSyncSnapshot.docs.first.data();
+      }
+
       final WriteBatch batch = _firestore.batch();
 
+      // Send to verify_kyc for Admin Approval!
       batch.set(
         _firestore.collection('verify_kyc').doc(membershipNo),
         {
+          ...rawData, // Include all the synced details for admin to review
+          'membershipNo': membershipNo,
           'faceVerificationUrl': faceUrl,
-          'faceKycStatus': 'approved',
-          'faceVerifiedAt': FieldValue.serverTimestamp(),
+          'kycApprovalStatus': 'pending', // 🔴 Waiting for admin
+          'faceKycStatus': 'pending',     // 🔴 Waiting for admin
+          'submittedAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),
       );
 
+      // Update the app's member document so the UI knows it's pending
       batch.set(
         _firestore.collection('member').doc(documentId),
         {
-          'faceVerificationUrl': faceUrl,
-
-          // ✅ Admin approval නැතුව auto approve
-          'faceKycStatus': 'approved',
-          'faceVerifiedAt': FieldValue.serverTimestamp(),
-
-          // optional
-          'personalKycStatus': 'approved',
+          'kycApprovalStatus': 'pending',
+          'faceKycStatus': 'pending',
           'updatedAt': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),

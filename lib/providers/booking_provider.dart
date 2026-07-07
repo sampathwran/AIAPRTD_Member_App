@@ -49,7 +49,30 @@ class BookingProvider extends ChangeNotifier {
       dropControllers[index].dispose();
       dropControllers.removeAt(index);
       dropLatLngs.removeAt(index);
-      _markers.removeWhere((marker) => marker.markerId == MarkerId('drop_location_$index'));
+      
+      // Re-create all drop markers to ensure indices match
+      _markers.removeWhere((marker) => marker.markerId.value.startsWith('drop_location_'));
+      
+      for (int i = 0; i < dropLatLngs.length; i++) {
+        if (dropLatLngs[i] != null) {
+          _markers.add(
+            Marker(
+              markerId: MarkerId('drop_location_$i'),
+              position: dropLatLngs[i]!,
+              infoWindow: InfoWindow(title: 'Drop: ${dropControllers[i].text}'),
+              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+            ),
+          );
+        }
+      }
+
+      if (currentPickupLatLng != null && dropLatLngs.isNotEmpty && dropLatLngs[0] != null) {
+        calculateRoute();
+      } else {
+        _polylines.clear();
+        totalDistanceKm = 0.0;
+      }
+
       notifyListeners();
     }
   }
@@ -345,7 +368,67 @@ class BookingProvider extends ChangeNotifier {
         if (latLng.longitude < y0!) y0 = latLng.longitude;
       }
     }
-    return LatLngBounds(northeast: LatLng(x1!, y1!), southwest: LatLng(x0!, y0!));
+    if (x0 != null && x0 == x1) {
+      x0 = x0 - 0.005;
+      x1 = x1! + 0.005;
+    }
+    if (y0 != null && y0 == y1) {
+      y0 = y0 - 0.005;
+      y1 = y1! + 0.005;
+    }
+    return LatLngBounds(northeast: LatLng(x1 ?? 0, y1 ?? 0), southwest: LatLng(x0 ?? 0, y0 ?? 0));
+  }
+
+  Future<String> _generateTripId() async {
+    final docRef = FirebaseFirestore.instance.collection('system').doc('trip_counter');
+    final now = DateTime.now();
+    final currentYear = now.year % 100;
+
+    return await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapshot = await transaction.get(docRef);
+      int year = currentYear;
+      String prefix = 'A';
+      int count = 1;
+
+      if (snapshot.exists) {
+        final data = snapshot.data()!;
+        year = data['year'] ?? currentYear;
+        prefix = data['prefix'] ?? 'A';
+        count = data['count'] ?? 1;
+
+        if (year != currentYear) {
+          year = currentYear;
+          prefix = 'A';
+          count = 1;
+        } else {
+          count++;
+          if (count > 9999) {
+            count = 1;
+            prefix = _incrementPrefix(prefix);
+          }
+        }
+      }
+
+      transaction.set(docRef, {
+        'year': year,
+        'prefix': prefix,
+        'count': count,
+      });
+
+      return "$prefix-$year-${count.toString().padLeft(4, '0')}";
+    });
+  }
+
+  String _incrementPrefix(String prefix) {
+    if (prefix.length == 1) {
+      if (prefix == 'Z') return 'AA';
+      return String.fromCharCode(prefix.codeUnitAt(0) + 1);
+    }
+    String lastChar = prefix.substring(prefix.length - 1);
+    if (lastChar == 'Z') {
+      return "${_incrementPrefix(prefix.substring(0, prefix.length - 1))}A";
+    }
+    return prefix.substring(0, prefix.length - 1) + String.fromCharCode(lastChar.codeUnitAt(0) + 1);
   }
 
   Future<void> scheduleBooking({
@@ -356,14 +439,15 @@ class BookingProvider extends ChangeNotifier {
     required double estimateFare,
     required String paymentMethod,
   }) async {
-    String bookingId = "BKG-${DateTime.now().millisecondsSinceEpoch}";
+    String tripId = await _generateTripId();
 
     Map<String, dynamic> bookingData = {
-      'bookingId': bookingId,
+      'bookingId': tripId,
+      'tripId': tripId,
       'memberId': memberId,
       'memberName': memberName,
       'status': 'Pending',
-      'tripType': _tripType,
+      'tripType': 'Scheduled Booking',
       'pickupTime': pickupTime.toIso8601String(),
       'pickupLocation': {
         'address': pickupController.text,
@@ -375,27 +459,51 @@ class BookingProvider extends ChangeNotifier {
         'lat': dropLatLngs[0]?.latitude,
         'lng': dropLatLngs[0]?.longitude,
       },
+      'startAddress': pickupController.text,
+      'endAddress': dropControllers[0].text,
+      'additionalDrops': dropControllers
+          .asMap()
+          .entries
+          .where((entry) => entry.key > 0 && entry.value.text.isNotEmpty && dropLatLngs[entry.key] != null)
+          .map((entry) => {
+                'address': entry.value.text,
+                'lat': dropLatLngs[entry.key]?.latitude,
+                'lng': dropLatLngs[entry.key]?.longitude,
+              })
+          .toList(),
       'distanceKm': totalDistanceKm,
       'estimateFare': estimateFare,
+      'totalFare': estimateFare,
       'vehicle': {
         'id': selectedVehicle['id'],
         'name': selectedVehicle['name'],
       },
+      'vehicleCategory': selectedVehicle['name'],
       'paymentMethod': paymentMethod,
+      'paymentStatus': 'Pending',
       'createdAt': FieldValue.serverTimestamp(),
+      'timestamp': FieldValue.serverTimestamp(),
     };
 
     try {
       await FirebaseFirestore.instance
           .collection('all_bookings')
-          .doc(bookingId)
+          .doc(tripId)
           .set(bookingData);
 
       await FirebaseFirestore.instance
           .collection('members')
           .doc(memberId)
           .collection('my_bookings')
-          .doc(bookingId)
+          .doc(tripId)
+          .set(bookingData);
+
+      final dateStr = "${DateTime.now().year}.${DateTime.now().month.toString().padLeft(2, '0')}.${DateTime.now().day.toString().padLeft(2, '0')}";
+      await FirebaseFirestore.instance
+          .collection('dayly_trips')
+          .doc(dateStr)
+          .collection(memberId)
+          .doc(tripId)
           .set(bookingData);
 
     } catch (e) {

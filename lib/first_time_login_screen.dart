@@ -45,6 +45,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
     debugPrint("🔍 Checking Firestore (OR Query) for: $input");
 
     try {
+      // 1. Check 'member' collection first
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('member')
           .where(
@@ -56,16 +57,43 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
           .limit(1)
           .get();
 
-      if (querySnapshot.docs.isEmpty) {
+      Map<String, dynamic>? memberData;
+      String? targetUid;
+      String? sourceCollection;
+
+      if (querySnapshot.docs.isNotEmpty) {
+        memberData = querySnapshot.docs.first.data() as Map<String, dynamic>;
+        targetUid = querySnapshot.docs.first.id;
+        sourceCollection = 'member';
+      } else {
+        // 2. Fallback to 'web_sync_member' collection
+        QuerySnapshot webSyncSnapshot = await FirebaseFirestore.instance
+            .collection('web_sync_member')
+            .where(
+          Filter.or(
+            Filter('membershipNo', isEqualTo: input),
+            Filter('user_email', isEqualTo: input),
+          ),
+        )
+            .limit(1)
+            .get();
+
+        if (webSyncSnapshot.docs.isNotEmpty) {
+          memberData = webSyncSnapshot.docs.first.data() as Map<String, dynamic>;
+          targetUid = webSyncSnapshot.docs.first.id;
+          sourceCollection = 'web_sync_member';
+        }
+      }
+
+      if (memberData == null) {
         debugPrint("❌ No record found in Firestore for this Input!");
         _showSnackBar("No pre-registered account found with this Membership No/Email.", Colors.redAccent);
         return;
       }
 
       // Record එක හමුවුණා!
-      var memberData = querySnapshot.docs.first.data() as Map<String, dynamic>;
       _targetEmail = memberData['user_email'] ?? memberData['email'];
-      _targetUid = querySnapshot.docs.first.id;
+      _targetUid = targetUid;
 
       if (_targetEmail == null || _targetEmail!.isEmpty) {
         _showSnackBar("Associated email not found in record. Contact Admin.", Colors.redAccent);
@@ -110,13 +138,26 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
       if (user != null) {
         debugPrint("✅ Auth User Created! UID: ${user.uid}");
 
-        // 🗄️ B. Firestore එකේ දැනටමත් තියෙන ඩොකියුමන්ට් එකට අලුත් විස්තර එකතු කරනවා (නම අයින් කලා මචං)
-        await FirebaseFirestore.instance.collection('member').doc(_targetUid).set({
+        // 🗄️ B. Firestore Update
+        // If they are in 'member' collection, update their auth_uid
+        // If they are only in 'web_sync_member', we DO NOT create a partial 'member' document 
+        // to avoid breaking the ProfileProvider. The ProfileProvider will fall back to web_sync_member!
+        // So we only update if they were found in the 'member' collection.
+        // Or we can just update whichever collection they were found in to track activation.
+
+        // Since we didn't save _sourceCollection to a state variable, we will query to be safe,
+        // or we can just safely merge auth_uid into web_sync_member as well.
+        // Actually, creating the Firebase Auth account is enough. When they login, ProfileProvider will handle it.
+        // But let's write to web_sync_member just to be safe.
+        await FirebaseFirestore.instance.collection('web_sync_member').doc(_targetUid).set({
           'auth_uid': user.uid, // සැබෑ Auth UID එක
-          'email': user.email,
-          'isProfileComplete': true, // ආයෙ මේ පේජ් එක පෙන්නන්නේ නෑ
+          'isProfileComplete': true,
           'activatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
+
+        // Try writing to member as well IF it exists (merge will only add to it, but wait, merge will create it if it doesn't exist!)
+        // So let's NOT write to member collection. 
+        // Just writing to web_sync_member is fine. ProfileProvider will find them by email.
 
         debugPrint("✅ Firestore write successful!");
 

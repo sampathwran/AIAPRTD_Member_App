@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../providers/booking_provider.dart'; // ඔයාගේ path එක දාගන්න
-import 'route_preview_page.dart'; // 💡 Auto Next Page යන්න මේකත් ඕනේ
 
 class LocationSearchSheet extends StatefulWidget {
   final bool isPickup;
@@ -39,17 +38,6 @@ class _LocationSearchSheetState extends State<LocationSearchSheet> {
         _searchResults = results;
         _isSearching = false;
       });
-    }
-  }
-
-  // 💡 Location තේරුවට පස්සේ දෙකම තියෙනවද බලලා Next page යවන function එක
-  void _checkAndNavigate(BuildContext context, BookingProvider provider) {
-    if (provider.currentPickupLatLng != null && provider.dropLatLngs.isNotEmpty && provider.dropLatLngs[0] != null) {
-      provider.calculateRoute(); // දුර සහ පාර (Route) ගණනය කරනවා
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const RoutePreviewPage()),
-      );
     }
   }
 
@@ -160,7 +148,7 @@ class _LocationSearchSheetState extends State<LocationSearchSheet> {
                 provider.setDropLocation(widget.dropIndex, latLng, loc['address']);
               }
               Navigator.pop(context);
-              _checkAndNavigate(context, provider); // 💡 Auto Navigate
+              
             },
           )),
           const Divider(),
@@ -183,7 +171,7 @@ class _LocationSearchSheetState extends State<LocationSearchSheet> {
                 provider.setDropLocation(widget.dropIndex, latLng, loc['address']);
               }
               Navigator.pop(context);
-              _checkAndNavigate(context, provider); // 💡 Auto Navigate
+              
             },
           )),
         ]
@@ -220,7 +208,6 @@ class _LocationSearchSheetState extends State<LocationSearchSheet> {
             if (!context.mounted) return;
 
             Navigator.pop(context);
-            _checkAndNavigate(context, provider); // 💡 Auto Navigate
           },
         );
       },

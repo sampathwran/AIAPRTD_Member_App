@@ -15,8 +15,6 @@ class CreateJobPage extends StatefulWidget {
 class _CreateJobPageState extends State<CreateJobPage> {
   GoogleMapController? _mapController;
 
-  bool _isDraggingMap = false;
-  LatLng? _currentMapCenter;
 
   static const CameraPosition _initialCameraPosition = CameraPosition(
     target: LatLng(6.9271, 79.8612), // Colombo
@@ -121,53 +119,13 @@ class _CreateJobPageState extends State<CreateJobPage> {
             markers: provider.markers,
             polylines: provider.polylines,
 
-            onCameraMoveStarted: () {
-              setState(() => _isDraggingMap = true);
-            },
 
-            onCameraMove: (CameraPosition position) {
-              _currentMapCenter = position.target;
-            },
-
-            onCameraIdle: () async {
-              setState(() => _isDraggingMap = false);
-
-              if (provider.isProgrammaticMove) {
-                provider.isProgrammaticMove = false;
-              } else {
-                if (_currentMapCenter != null) {
-                  await provider.getAddressFromLatLng(
-                    _currentMapCenter!,
-                    isPickup: true,
-                    animateCamera: false,
-                  );
-                }
-              }
-            },
 
             onTap: (LatLng location) async {
               provider.isProgrammaticMove = true;
               _mapController?.animateCamera(CameraUpdate.newLatLng(location));
               await provider.getAddressFromLatLng(location, isPickup: true, animateCamera: false);
             },
-          ),
-
-          Center(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: _isDraggingMap ? 40.0 : 25.0),
-              child: Icon(
-                Icons.location_on,
-                size: 50,
-                color: Colors.red,
-                shadows: [
-                  Shadow(
-                    blurRadius: 10.0,
-                    color: Colors.black.withValues(alpha: 0.3),
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-            ),
           ),
 
           Positioned(

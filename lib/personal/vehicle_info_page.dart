@@ -150,7 +150,7 @@ class _VehicleInfoPageState extends State<VehicleInfoPage> {
                 vehicleDetails['vehicleNumber'] ??
                 "N/A",
 
-            'selectedCategory': data['selectedCategory'] ?? "N/A",
+            'vehicle_category': data['vehicle_category'] ?? data['selectedCategory'] ?? "N/A",
             'frontImage': data['vehiclePhotos']?['Front']?['url'] ?? '',
           };
 

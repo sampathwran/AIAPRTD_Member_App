@@ -58,6 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // 🔍 ඊමේල් එකක් නැතුව Membership No එකක් ගැහුවොත් ඒකෙන් ඊමේල් එක හොයනවා
       if (!input.contains('@')) {
+        // 1. Try checking the member collection first
         var querySnapshot = await FirebaseFirestore.instance
             .collection('member')
             .where('membershipNo', isEqualTo: input)
@@ -67,9 +68,20 @@ class _LoginScreenState extends State<LoginScreen> {
         if (querySnapshot.docs.isNotEmpty) {
           targetEmail = querySnapshot.docs.first.data()['user_email'] ?? '';
         } else {
-          _showSnackBar("No member found with this Membership Number.");
-          setState(() => _isLoading = false);
-          return;
+          // 2. Not found in member, try checking web_sync_member
+          var webSyncSnapshot = await FirebaseFirestore.instance
+              .collection('web_sync_member')
+              .where('membershipNo', isEqualTo: input)
+              .limit(1)
+              .get();
+
+          if (webSyncSnapshot.docs.isNotEmpty) {
+            targetEmail = webSyncSnapshot.docs.first.data()['user_email'] ?? '';
+          } else {
+            _showSnackBar("No member found with this Membership Number.");
+            setState(() => _isLoading = false);
+            return;
+          }
         }
       }
 

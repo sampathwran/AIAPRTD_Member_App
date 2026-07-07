@@ -13,6 +13,7 @@ import 'providers/auth_provider.dart';
 import 'providers/vehicle_provider.dart';
 import 'providers/payment_provider.dart';
 import 'providers/booking_provider.dart'; // 💡 අලුත් BookingProvider එක මෙතනට දැම්මා
+import 'providers/meter_provider.dart';
 
 // ==========================================
 // 📄 PAGES
@@ -51,6 +52,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => VehicleProvider()),
         ChangeNotifierProvider(create: (_) => PaymentProvider()),
         ChangeNotifierProvider(create: (_) => BookingProvider()), // 💡 BookingProvider එක MultiProvider එකට ඇතුලත් කළා
+        ChangeNotifierProvider(create: (_) => MeterProvider()),
       ],
       child: const MyApp(),
     ),

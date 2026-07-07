@@ -12,8 +12,8 @@ const db = admin.firestore();
 const rekognition = new RekognitionClient({
     region: "us-east-1",
     credentials: {
-        accessKeyId: "YOUR_AWS_KEY",
-        secretAccessKey: "YOUR_AWS_KEY"
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID || "YOUR_ACCESS_KEY_HERE",
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "YOUR_SECRET_KEY_HERE"
     }
 });
 

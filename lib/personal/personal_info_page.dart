@@ -41,8 +41,14 @@ class PersonalInfoPage extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             }
 
-            final String status = data['status'] ?? 'inactive';
-            final bool isApproved = (status.toLowerCase() == 'active');
+            // 💡 NEW FIX: මුලින්ම ආපු කෙනෙක්ගේ Web status එක active වුණත්,
+            // KYC සහ Face verification Approve වෙලා නැත්නම් එයාව ෆෝම් එකට (MemberRegistrationTab) යවනවා.
+            final String kycStatus = data['kycApprovalStatus']?.toString().toLowerCase() ??
+                data['kycStatus']?.toString().toLowerCase() ?? 'none';
+            final String faceStatus = data['faceKycStatus']?.toString().toLowerCase() ?? 'none';
+
+            // Fully approved ONLY if they have done KYC and Face, and admin approved them.
+            final bool isApproved = (kycStatus == 'approved' && faceStatus == 'approved');
 
             final String membershipNo = data['membershipNo'] ??
                 data['membership_number'] ??
@@ -51,8 +57,8 @@ class PersonalInfoPage extends StatelessWidget {
             return TabBarView(
               children: [
                 isApproved
-                    ? const PersonalDetailsTab()
-                    : const MemberRegistrationTab(),
+                    ? const PersonalDetailsTab() // 🔴 Approve වුණාම මේක පෙන්නනවා (Edit බෑ)
+                    : const MemberRegistrationTab(), // 🔴 මුලින්ම ෆෝම් එක පෙන්නනවා. Submit කලාම මේකෙම "Pending" කියලා වැටෙනවා.
 
                 // Bank Details Tab (membershipNo pass කරනවා)
                 BankDetailsTab(membershipNo: membershipNo),

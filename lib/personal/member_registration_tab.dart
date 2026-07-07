@@ -288,8 +288,7 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
         final String mainStatus =
             data['status']?.toString().toLowerCase() ?? 'pending';
 
-        final bool isAdminApproved =
-            kycApprovalStatus == 'approved' || mainStatus == 'active';
+        final bool isAdminApproved = kycApprovalStatus == 'approved';
 
         final bool isPending =
             kycApprovalStatus == 'pending' ||
