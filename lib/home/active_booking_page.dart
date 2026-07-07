@@ -12,6 +12,7 @@ import '../providers/meter_provider.dart';
 import '../providers/profile_provider.dart';
 import 'chat_page.dart';
 import 'home_page.dart';
+import 'trip_summary_page.dart';
 import 'widgets/meter/meter_fare_display.dart';
 import 'widgets/meter/meter_metrics_row.dart';
 import 'widgets/meter/meter_status_card.dart';
@@ -44,11 +45,21 @@ class _ActiveBookingPageState extends State<ActiveBookingPage> {
   String _countdownText = "";
   bool _isSheetExpanded = true;
   bool _passengerCancelledAlertShown = false;
+  late Future<DocumentSnapshot> _passengerFuture;
 
   @override
   void initState() {
     super.initState();
     _tripState = widget.bookingData['tripState'] ?? 'accepted';
+    
+    String passengerId = widget.bookingData['memberId']?.toString() ?? '';
+    if (passengerId.isNotEmpty) {
+      _passengerFuture = FirebaseFirestore.instance.collection('member').doc(passengerId).get();
+    } else {
+      // Create a dummy future that returns an empty document if no passengerId (should not happen)
+      _passengerFuture = Future.value({} as DocumentSnapshot);
+    }
+
     _setupMapMarkers();
     _startLocationTracking();
     _listenToBookingChanges();
@@ -212,7 +223,9 @@ class _ActiveBookingPageState extends State<ActiveBookingPage> {
           updates['distanceKm'] = meter.totalDistanceKm;
           updates['waitingTimeSec'] = meter.waitingTimeSeconds;
         }
-        meter.resetMeter();
+        String membershipNo = Provider.of<ProfileProvider>(context, listen: false).memberData?['membershipNo'] ?? 'Unknown';
+        String category = widget.bookingData['vehicle_category'] ?? widget.bookingData['vehicleCategory'] ?? 'Mini';
+        await meter.stopMeter(membershipNo, category, tripType: 'App Booking');
       }
       updates['status'] = 'completed';
     }
@@ -243,54 +256,98 @@ class _ActiveBookingPageState extends State<ActiveBookingPage> {
       if (newState == 'completed') {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Trip Completed Successfully!"), backgroundColor: Colors.green));
-        Navigator.pop(context); // Go back to dashboard
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TripSummaryPage(
+              bookingId: widget.bookingId,
+              bookingData: widget.bookingData,
+            ),
+          ),
+        );
       }
     } catch (e) {
       debugPrint("State update error: $e");
     }
   }
 
+  void _showEndRideConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("End Trip"),
+        content: const Text("Are you sure you want to end this trip?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("CANCEL"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _updateTripState('completed');
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text("END RIDE", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _startCountdownIfNeeded() {
     String? pickupTimeStr = widget.bookingData['pickupTime']?.toString();
-    if (pickupTimeStr == null || pickupTimeStr.isEmpty) return;
+    DateTime scheduledTime;
 
-    try {
-      DateTime scheduledTime = DateTime.parse(pickupTimeStr);
-
-      _countdownTimer?.cancel();
-      _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        DateTime now = DateTime.now();
-        Duration diffFromScheduled = scheduledTime.difference(now);
-
-        if (diffFromScheduled.isNegative || diffFromScheduled.inSeconds <= 0) {
-          timer.cancel();
-          if (mounted && _tripState == 'arrived') {
-            setState(() {
-              _countdownText = "Starting...";
-            });
-            _startTrip();
-          }
-        } else if (diffFromScheduled.inMinutes < 10) {
-          // T-10 minutes countdown
-          if (mounted) {
-            setState(() {
-              String minutes = diffFromScheduled.inMinutes.toString().padLeft(2, '0');
-              String seconds = (diffFromScheduled.inSeconds % 60).toString().padLeft(2, '0');
-              _countdownText = "$minutes:$seconds";
-            });
-          }
-        } else {
-          // More than 10 mins away
-          if (mounted) {
-            setState(() {
-              _countdownText = "Waiting (starts at ${TimeOfDay.fromDateTime(scheduledTime).format(context)})";
-            });
-          }
-        }
-      });
-    } catch (e) {
-      debugPrint("Error parsing pickupTime: $e");
+    if (pickupTimeStr == null || pickupTimeStr.isEmpty) {
+      // Immediate booking: Start 10-minute free waiting countdown immediately
+      scheduledTime = DateTime.now();
+    } else {
+      try {
+        scheduledTime = DateTime.parse(pickupTimeStr);
+      } catch (e) {
+        debugPrint("Error parsing pickupTime: $e");
+        scheduledTime = DateTime.now(); // Fallback
+      }
     }
+
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted || _tripState != 'arrived') {
+        timer.cancel();
+        return;
+      }
+
+      DateTime now = DateTime.now();
+      Duration diffFromScheduled = now.difference(scheduledTime);
+
+      if (diffFromScheduled.isNegative) {
+        // Arrived early. Wait until scheduled time.
+        setState(() {
+          _countdownText = "Waiting (Count starts at ${TimeOfDay.fromDateTime(scheduledTime).format(context)})";
+        });
+      } else {
+        // Scheduled time reached. 10 mins (600s) free waiting.
+        int secondsPassed = diffFromScheduled.inSeconds;
+        int remainingSeconds = 600 - secondsPassed;
+
+        if (remainingSeconds <= 0) {
+          // Free waiting is over. Auto-start trip.
+          timer.cancel();
+          setState(() {
+            _countdownText = "Starting...";
+          });
+          _startTrip();
+        } else {
+          // Counting down free waiting minutes
+          setState(() {
+            String minutes = (remainingSeconds ~/ 60).toString().padLeft(2, '0');
+            String seconds = (remainingSeconds % 60).toString().padLeft(2, '0');
+            _countdownText = "Free Waiting: $minutes:$seconds";
+          });
+        }
+      }
+    });
   }
 
   Future<void> _startTrip() async {
@@ -591,14 +648,17 @@ class _ActiveBookingPageState extends State<ActiveBookingPage> {
           backgroundColor: Colors.white,
           elevation: 0,
           actions: [
-            IconButton(
-              icon: const Icon(Icons.warning_amber_rounded, color: Colors.red),
-              tooltip: "Emergency Cancel",
-              onPressed: _showEmergencyCancelDialog,
-            )
+            if (_tripState != 'started')
+              IconButton(
+                icon: const Icon(Icons.warning_amber_rounded, color: Colors.red),
+                tooltip: "Emergency Cancel",
+                onPressed: _showEmergencyCancelDialog,
+              )
           ],
         ),
-        body: Stack(
+        body: _tripState == 'started'
+            ? _buildStartedLayout()
+            : Stack(
         children: [
           // ==========================================
           // 🗺️ 1. Google Map (Background)
@@ -696,7 +756,7 @@ class _ActiveBookingPageState extends State<ActiveBookingPage> {
                     
                     // 👤 Passenger Info & Contact
                     FutureBuilder<DocumentSnapshot>(
-                    future: FirebaseFirestore.instance.collection('member').doc(passengerId).get(),
+                    future: _passengerFuture,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
@@ -974,10 +1034,114 @@ class _ActiveBookingPageState extends State<ActiveBookingPage> {
               ),
             ),
           ),
-          ),
-          ),
-        ],
+        ),
       ),
-    ));
+    ],
+  ),
+));
+}
+
+  Widget _buildStartedLayout() {
+    return Column(
+      children: [
+        Expanded(
+          child: Stack(
+            children: [
+              _pickupLatLng == null
+                  ? const Center(child: Text("Location not available"))
+                  : GoogleMap(
+                      initialCameraPosition: CameraPosition(target: _pickupLatLng!, zoom: 14),
+                      markers: _markers,
+                      polylines: _polylines,
+                      onMapCreated: _onMapCreated,
+                      myLocationEnabled: true,
+                      myLocationButtonEnabled: false,
+                      zoomControlsEnabled: false,
+                    ),
+              if (_dropLatLng != null)
+                Positioned(
+                  top: 20,
+                  right: 20,
+                  child: FloatingActionButton(
+                    heroTag: 'nav_drop_started',
+                    onPressed: () async {
+                      final Uri url = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=${_dropLatLng!.latitude},${_dropLatLng!.longitude}');
+                      if (await canLaunchUrl(url)) await launchUrl(url, mode: LaunchMode.externalApplication);
+                    },
+                    backgroundColor: Colors.blue,
+                    child: const Icon(Icons.navigation, color: Colors.white),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.only(left: 10, right: 10, top: 10, bottom: 15),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
+            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, -5))],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Consumer<MeterProvider>(
+                  builder: (context, meter, child) {
+                    return Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(16)),
+                      child: Column(
+                        children: [
+                          MeterStatusCard(meter: meter, category: widget.bookingData['vehicle_category'] ?? widget.bookingData['vehicleCategory'] ?? 'Mini'),
+                          const SizedBox(height: 16),
+                          MeterFareDisplay(totalFare: meter.totalFare),
+                          const SizedBox(height: 12),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: MeterMetricsRow(
+                                  distanceKm: meter.totalDistanceKm,
+                                  waitTimeSeconds: meter.waitingTimeSeconds,
+                                  speedKmh: meter.currentSpeedKmh,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade800,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: IconButton(
+                                  onPressed: meter.toggleWaitPause,
+                                  icon: Icon(
+                                    meter.isWaitingPaused ? Icons.play_arrow : Icons.pause, 
+                                    color: meter.isWaitingPaused ? Colors.greenAccent : Colors.orange,
+                                    size: 28,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _showEndRideConfirmation,
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red, minimumSize: const Size(double.infinity, 55), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+                  child: const Text("END RIDE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

@@ -1,6 +1,6 @@
 // ignore_for_file: spell_check_on_languages
 
-/// 💰 ඩ්‍රයිවර් කෙනෙක්ගේ 'payment_history' array එක පරික්ෂා කර,
+/// 💰 ඩ්රයිවර් කෙනෙක්ගේ 'payment_history' array එක පරික්ෂා කර,
 /// වත්මන් මාසයට අදාළ සාමාජික ගාස්තුව 5 වෙනිදාට පෙර ගෙවා ඇත්දැයි බලන සුපිරි ලොජික් එන්ජිම.
 Map<String, dynamic> checkMembershipFeeStatus(Map<String, dynamic>? data) {
 
@@ -13,7 +13,7 @@ Map<String, dynamic> checkMembershipFeeStatus(Map<String, dynamic>? data) {
   }
 
   // 🎯 2. 💡 CRITICAL FIX: Firestore එකෙන් තවම payment_history කියන Key එක ලැබිලා නැත්නම් (Data Loading පමාව),
-  // ඩ්‍රයිවර්ව බොරුවට බ්ලොක් කරන්නේ නැතුව ඩේටා එනකම් ඔන්ලයින් යාමට අවසර දෙනවා මචං!
+  // ඩ්රයිවර්ව බොරුවට බ්ලොක් කරන්නේ නැතුව ඩේටා එනකම් ඔන්ලයින් යාමට අවසර දෙනවා මචං!
   if (!data.containsKey('payment_history') || data['payment_history'] == null) {
     return {
       'isFeePaidValid': true, // 👈 ඇප් එක ඕපන් වෙච්ච ගමන්ම ඔන්ලයින් යන්න දෙන්නේ මෙන්න මේ ලයින් එක නිසයි මචං!
@@ -25,12 +25,13 @@ Map<String, dynamic> checkMembershipFeeStatus(Map<String, dynamic>? data) {
   final DateTime now = DateTime.now();
   final int currentDay = now.day; // මාසයේ වත්මන් දිනය (1 - 31)
 
-  // 🗓️ 4. වත්මන් මාසයේ නම ඉංග්‍රීසියෙන් ලබාගන්නවා
+  // 🗓️ 4. වත්මන් මාසයේ නම ඉංග්රීසියෙන් ලබාගන්නවා
   final List<String> monthNames = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
   ];
   final String currentMonthName = monthNames[now.month - 1]; // වත්මන් මාසයේ නම
+  final String currentYearStr = now.year.toString(); // වත්මන් අවුරුද්ද
 
   // 🔄 5. Firestore එකෙන් payment_history array එක ආරක්ෂිතව කියවා ගන්නවා
   final List<dynamic> paymentHistory = data['payment_history'];
@@ -41,10 +42,12 @@ Map<String, dynamic> checkMembershipFeeStatus(Map<String, dynamic>? data) {
   for (var payment in paymentHistory) {
     if (payment is Map) {
       final String pMonth = (payment['month'] ?? '').toString().toLowerCase();
+      final String pYear = (payment['year'] ?? '').toString();
       final String pReason = (payment['reason'] ?? '').toString().toLowerCase();
 
-      // 🎯 වත්මන් මාසය සමානද සහ reason එක 'monthly membership fee' ද කියා බලනවා
+      // 🎯 වත්මන් මාසය සමානද, අවුරුද්ද සමානද, සහ reason එක 'monthly membership fee' ද කියා බලනවා
       if (pMonth == currentMonthName.toLowerCase() &&
+          pYear == currentYearStr &&
           pReason.contains('monthly membership fee')) {
         hasPaidForCurrentMonth = true;
         break; // ගෙවීම හමු වූ නිසා ලූප් එක නතර කරනවා

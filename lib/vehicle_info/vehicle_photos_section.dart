@@ -76,6 +76,7 @@ class VehiclePhotosSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final List<String> photoLabels = ['Front', 'Back', 'Left Side', 'Right Side', 'Interior'];
 
     final Map<String, dynamic> photos = data['vehiclePhotos'] != null
@@ -93,14 +94,15 @@ class VehiclePhotosSection extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 6),
-          ),
+          if (!isDark)
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
         ],
       ),
       child: Padding(
@@ -110,11 +112,11 @@ class VehiclePhotosSection extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.camera_enhance_rounded, color: Colors.blue.shade700, size: 22),
+                Icon(Icons.camera_enhance_rounded, color: isDark ? Colors.blue.shade400 : Colors.blue.shade700, size: 22),
                 const SizedBox(width: 8),
-                const Text(
+                Text(
                   "Vehicle Inspection Photos",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Color(0xff1B2735)),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: isDark ? Colors.white : const Color(0xff1B2735)),
                 ),
               ],
             ),
@@ -168,7 +170,7 @@ class VehiclePhotosSection extends StatelessWidget {
                           width: double.infinity,
                           height: itemHeight,
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
+                            color: isDark ? Colors.blueGrey.shade900 : Colors.grey.shade50,
                             border: Border.all(color: borderColor, width: 2),
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -239,7 +241,7 @@ class VehiclePhotosSection extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         label,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xff1B2735)),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : const Color(0xff1B2735)),
                         textAlign: TextAlign.center,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

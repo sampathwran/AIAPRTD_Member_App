@@ -113,6 +113,7 @@ class VehicleProvider with ChangeNotifier {
         'vehiclePhotos.$label.url': imageUrl,
         'vehiclePhotos.$label.status': 'pending',
         'vehiclePhotos.$label.reason': '',
+        'status': 'pending', // 💡 Admin request queue එකට ආයෙත් යවන්න
       });
     } catch (error) {
       rethrow;
@@ -139,7 +140,10 @@ class VehicleProvider with ChangeNotifier {
       if (docIndex < 0 || docIndex >= documents.length) throw Exception('Invalid document index');
 
       documents[docIndex] = {'status': 'pending', 'reason': '', 'url': downloadUrl};
-      await reference.update({'documents': documents});
+      await reference.update({
+        'documents': documents,
+        'status': 'pending', // 💡 Admin request queue එකට ආයෙත් යවන්න
+      });
     } catch (error) {
       rethrow;
     }

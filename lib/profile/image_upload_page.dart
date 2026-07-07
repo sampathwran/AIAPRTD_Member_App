@@ -48,10 +48,42 @@ class _ImageUploadPageState extends State<ImageUploadPage> {
     }
   }
 
-  // 📸 මෙතන Source එක විදිහට එන්නේ Camera එක විතරයි!
-  Future<void> _pickImage() async {
+  Future<void> _showImageSourceDialog() async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: Color(0xFF1E3A8A)),
+                title: const Text("Take a Selfie"),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: Color(0xFF1E3A8A)),
+                title: const Text("Choose from Gallery"),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
     final XFile? pickedFile = await _picker.pickImage(
-      source: ImageSource.camera,
+      source: source,
       imageQuality: 70,
       preferredCameraDevice: CameraDevice.front,
     );
@@ -104,29 +136,6 @@ class _ImageUploadPageState extends State<ImageUploadPage> {
       ),
       body: Column(
         children: [
-          // ⚠️ යූසර්ට ඇඩ්මින් අපෲවල් එක ගැන පැහැදිලි කරන කොටස
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.orange.shade200)
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline_rounded, color: Colors.orange.shade800),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    "For security reasons, you must take a LIVE selfie. AI generated photos or gallery uploads are not allowed. Admin will review the photo.",
-                    style: TextStyle(fontSize: 13, color: Colors.orange.shade900),
-                  ),
-                )
-              ],
-            ),
-          ),
-
           Expanded(
             child: Center(
               child: _isVerifyingFace
@@ -157,9 +166,9 @@ class _ImageUploadPageState extends State<ImageUploadPage> {
                     ),
                   ),
 
-                  // 📸 කැමරාව ඔන් වෙන බටන් එක
+                  // 💡 ෆොටෝ එක වෙනස් කරන බටන් එක
                   GestureDetector(
-                    onTap: isUploading ? null : _pickImage,
+                    onTap: isUploading ? null : _showImageSourceDialog,
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(

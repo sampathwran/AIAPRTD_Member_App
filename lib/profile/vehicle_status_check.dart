@@ -7,9 +7,7 @@ const List<String> requiredComplianceDocs = [
   'Driving License',
 ];
 
-Map<String, dynamic> checkMemberSystemStatus(
-    Map<String, dynamic>? memberData,
-    ) {
+Map<String, dynamic> checkMemberSystemStatus(Map<String, dynamic>? memberData) {
   if (memberData == null || memberData.isEmpty) {
     return {
       'isActive': false,
@@ -18,120 +16,98 @@ Map<String, dynamic> checkMemberSystemStatus(
   }
 
   final dynamic rawDocuments =
-      memberData['documents'] ??
-          memberData['complianceDocuments'];
+      memberData['documents'] ?? memberData['complianceDocuments'];
 
   if (rawDocuments is List) {
-    if (rawDocuments.length < 4) {
-      return {
-        'isActive': false,
-        'reason': 'Please upload all vehicle documents',
-      };
+    for (final String requiredDoc in requiredComplianceDocs) {
+      // Find the document in the list by checking the title field
+      final item = rawDocuments.firstWhere(
+        (doc) => doc is Map && doc['title'] == requiredDoc,
+        orElse: () => null,
+      );
+
+      if (item == null) {
+        return {
+          'isActive': false,
+          'reason': '$requiredDoc not uploaded',
+        };
+      }
+
+      final String status =
+          item['status']?.toString().trim().toLowerCase() ?? 'empty';
+
+      if (status == 'pending') {
+        return {
+          'isActive': false,
+          'reason': '$requiredDoc pending admin approval',
+        };
+      }
+
+      if (status == 'rejected') {
+        return {
+          'isActive': false,
+          'reason': '$requiredDoc rejected',
+        };
+      }
+
+      if (status != 'approved') {
+        return {
+          'isActive': false,
+          'reason': '$requiredDoc not approved',
+        };
+      }
     }
 
-
-  for (int index = 0; index < 4; index++) {
-  final dynamic item = rawDocuments[index];
-
-  if (item is! Map) {
-  return {
-  'isActive': false,
-  'reason':
-  '${requiredComplianceDocs[index]} not uploaded',
-  };
-  }
-
-  final String status =
-  item['status']
-      ?.toString()
-      .trim()
-      .toLowerCase() ??
-  'empty';
-
-  if (status == 'pending') {
-  return {
-  'isActive': false,
-  'reason':
-  '${requiredComplianceDocs[index]} pending admin approval',
-  };
-  }
-
-  if (status == 'rejected') {
-  return {
-  'isActive': false,
-  'reason':
-  '${requiredComplianceDocs[index]} rejected',
-  };
-  }
-
-  if (status != 'approved') {
-  return {
-  'isActive': false,
-  'reason':
-  '${requiredComplianceDocs[index]} not uploaded',
-  };
-  }
-  }
-
-  return {
-  'isActive': true,
-  'reason': 'Success',
-  };
-
-
+    return {
+      'isActive': true,
+      'reason': 'Success',
+    };
   }
 
   if (rawDocuments is Map) {
-  for (final String title in requiredComplianceDocs) {
-  final dynamic item = rawDocuments[title];
+    for (final String title in requiredComplianceDocs) {
+      final dynamic item = rawDocuments[title];
 
+      if (item is! Map) {
+        return {
+          'isActive': false,
+          'reason': '$title not uploaded',
+        };
+      }
 
-  if (item is! Map) {
-  return {
-  'isActive': false,
-  'reason': '$title not uploaded',
-  };
-  }
+      final String status =
+          item['status']?.toString().trim().toLowerCase() ?? 'empty';
 
-  final String status =
-  item['status']
-      ?.toString()
-      .trim()
-      .toLowerCase() ??
-  'empty';
+      if (status == 'pending') {
+        return {
+          'isActive': false,
+          'reason': '$title pending admin approval',
+        };
+      }
 
-  if (status == 'pending') {
-  return {
-  'isActive': false,
-  'reason': '$title pending admin approval',
-  };
-  }
+      if (status == 'rejected') {
+        return {
+          'isActive': false,
+          'reason': '$title rejected',
+        };
+      }
 
-  if (status == 'rejected') {
-  return {
-  'isActive': false,
-  'reason': '$title rejected',
-  };
-  }
+      if (status != 'approved') {
+        return {
+          'isActive': false,
+          'reason': '$title not approved',
+        };
+      }
+    }
 
-  if (status != 'approved') {
-  return {
-  'isActive': false,
-  'reason': '$title not approved',
-  };
-  }
-  }
-
-  return {
-  'isActive': true,
-  'reason': 'Success',
-  };
-
-
+    return {
+      'isActive': true,
+      'reason': 'Success',
+    };
   }
 
   return {
-  'isActive': false,
-  'reason': 'Vehicle documents not found',
+    'isActive': false,
+    'reason': 'Vehicle documents not found',
   };
 }

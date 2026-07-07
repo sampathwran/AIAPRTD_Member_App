@@ -66,13 +66,16 @@ class _HomeFooterState extends State<HomeFooter> {
       minChildSize: 0.14,
       maxChildSize: 0.85,
       builder: (context, scrollController) {
+        final theme = Theme.of(context);
+        final isDarkMode = theme.brightness == Brightness.dark;
+
         return Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardColor,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
+                color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.08),
                 blurRadius: 20,
                 spreadRadius: 2,
                 offset: const Offset(0, -5),
@@ -144,22 +147,21 @@ class _HomeFooterState extends State<HomeFooter> {
                   margin: const EdgeInsets.symmetric(horizontal: 20),
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFF1F5F9)),
+                    border: Border.all(color: isDarkMode ? const Color(0xFF333333) : const Color(0xFFF1F5F9)),
                   ),
                   child: Consumer<ProfileProvider>(
                     builder: (context, profileProvider, child) {
-                      // 💡 මෙතනින් තමයි Data අරගෙන Widgets 3ට පාස් කරන්නේ
                       final memberData = profileProvider.memberData ?? {};
 
                       return Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           AcceptanceWidget(memberData: memberData),
-                          Container(width: 1, height: 30, color: const Color(0xFFE2E8F0)),
+                          Container(width: 1, height: 30, color: isDarkMode ? Colors.grey[700] : const Color(0xFFE2E8F0)),
                           RatingWidget(memberData: memberData),
-                          Container(width: 1, height: 30, color: const Color(0xFFE2E8F0)),
+                          Container(width: 1, height: 30, color: isDarkMode ? Colors.grey[700] : const Color(0xFFE2E8F0)),
                           CancellationWidget(memberData: memberData),
                         ],
                       );
@@ -168,20 +170,20 @@ class _HomeFooterState extends State<HomeFooter> {
                 ),
 
                 const SizedBox(height: 10),
-                const Divider(height: 30, thickness: 1, color: Color(0xFFF1F5F9)),
+                Divider(height: 30, thickness: 1, color: isDarkMode ? Colors.grey[800] : const Color(0xFFF1F5F9)),
 
-                const Padding(
-                  padding: EdgeInsets.only(left: 20, bottom: 12),
+                Padding(
+                  padding: const EdgeInsets.only(left: 20, bottom: 12),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text("Shortcuts", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                    child: Text("Shortcuts", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : const Color(0xFF0F172A))),
                   ),
                 ),
 
                 ScheduledButton(onTap: () => Navigator.pushNamed(context, '/scheduled')),
-                const Divider(indent: 20, endIndent: 20, color: Color(0xFFF8FAFC)),
+                Divider(indent: 20, endIndent: 20, color: isDarkMode ? Colors.grey[850] : const Color(0xFFF8FAFC)),
                 CreateJobButton(onTap: () => Navigator.pushNamed(context, '/create-job')),
-                const Divider(indent: 20, endIndent: 20, color: Color(0xFFF8FAFC)),
+                Divider(indent: 20, endIndent: 20, color: isDarkMode ? Colors.grey[850] : const Color(0xFFF8FAFC)),
                 RoadPickupButton(onTap: () => Navigator.pushNamed(context, '/road-pickup')),
 
                 Consumer<ProfileProvider>(

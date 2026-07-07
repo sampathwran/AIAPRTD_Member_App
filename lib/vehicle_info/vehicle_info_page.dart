@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/vehicle_provider.dart'; // 💡 🎯 කලින් හදපු අපේ අලුත් Provider එක ඉම්පෝර්ට් කරා මචං
 import 'vehicle_overview_section.dart';
-import 'compliance_docs_section.dart';
+import '../personal_info/compliance_docs_section.dart';
 import 'vehicle_photos_section.dart';
 import 'change_vehicle_section.dart';
 
@@ -63,8 +63,10 @@ class _VehicleInfoPageState extends State<VehicleInfoPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: isDark ? const Color(0xFF111827) : Colors.grey.shade100,
       appBar: AppBar(
         title: const Text("Vehicle Profile"),
         centerTitle: true,

@@ -175,12 +175,12 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   "Bank Account Information",
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87,
                   ),
                 ),
                 // ඩේටා තියෙනවා නම් විතරක් Edit/Cancel බට්න් එක පෙන්නනවා (අලුත් කෙනෙක්ට මේක පේන්න ඕනේ නෑ)

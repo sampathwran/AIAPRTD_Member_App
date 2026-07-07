@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 // 💡 අලුතින් හදපු AuthService එක මෙතනට Import කරගන්න මචං
 import '/auth_service.dart';
 
-import '../personal/personal_info_page.dart';
-import '../personal/vehicle_info_page.dart';
+import '../personal_info/personal_info_page.dart';
+import '../vehicle_info/vehicle_info_page.dart';
 import 'package:provider/provider.dart';
 import '../providers/profile_provider.dart';
 import '../finance/earning_page.dart';
@@ -18,7 +18,7 @@ import '../general/ride_history_page.dart';
 import '../general/member_benefits_page.dart';
 import '../general/support_tickets_page.dart';
 import '../general/votes_page.dart';
-import '../general/ads_page.dart';
+import '../ads/ads_page.dart';
 import '../general/notification_page.dart';
 import '../settings/dark_mode_page.dart';
 import '../settings/app_volume_page.dart';
@@ -37,20 +37,20 @@ class ProfileMenuWidget extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
       child: Column(
         children: [
-          _buildSection("Personal Information", [
+          _buildSection(context, "Personal Information", [
             _buildTile(Icons.person_outline, "Personal Information", () => _nav(context, const PersonalInfoPage())),
             _buildTile(Icons.directions_car_outlined, "Vehicle Information", () {
               final String memberNo = Provider.of<ProfileProvider>(context, listen: false).memberNo;
               _nav(context, VehicleInfoPage(membershipNo: memberNo == 'N/A' ? Provider.of<ProfileProvider>(context, listen: false).documentId : memberNo));
             }),
           ]),
-          _buildSection("My Finance", [
+          _buildSection(context, "My Finance", [
             _buildTile(Icons.account_balance_wallet_outlined, "Earning", () => _nav(context, const EarningPage())),
             _buildTile(Icons.card_membership_outlined, "Membership Fee", () => _nav(context, const MembershipFeePage())),
             _buildTile(Icons.receipt_long_outlined, "App Usage Charge", () => _nav(context, const AppUsagePage())),
             _buildTile(Icons.savings_outlined, "Saving", () => _nav(context, const SavingPage())),
           ]),
-          _buildSection("General", [
+          _buildSection(context, "General", [
             // 💡 අලුතින් දාපු My Bookings Menu එක (Ride History එකට උඩින්)
             _buildTile(Icons.library_books_outlined, "My Bookings", () => _nav(context, const MyBookingPage())),
             _buildTile(Icons.history, "Ride History", () => _nav(context, const RideHistoryPage())),
@@ -98,19 +98,22 @@ class ProfileMenuWidget extends StatelessWidget {
   }
 
   Widget _buildAccountSection(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 25, bottom: 12, left: 10),
-          child: Text("ACCOUNT", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.blueGrey, letterSpacing: 1.5)),
+        Padding(
+          padding: const EdgeInsets.only(top: 25, bottom: 12, left: 10),
+          child: Text("ACCOUNT", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: isDarkMode ? Colors.grey[400] : Colors.blueGrey, letterSpacing: 1.5)),
         ),
         Container(
           clipBehavior: Clip.hardEdge,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.red.shade100),
+            border: Border.all(color: isDarkMode ? Colors.red.withValues(alpha: 0.3) : Colors.red.shade100),
           ),
           child: ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
@@ -126,22 +129,25 @@ class ProfileMenuWidget extends StatelessWidget {
     Navigator.push(context, MaterialPageRoute(builder: (context) => page));
   }
 
-  Widget _buildSection(String title, List<Widget> children) {
+  Widget _buildSection(BuildContext context, String title, List<Widget> children) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 25, bottom: 12, left: 10),
           child: Text(title.toUpperCase(),
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.blueGrey.shade400, letterSpacing: 1.5)),
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: isDarkMode ? Colors.grey[400] : Colors.blueGrey.shade400, letterSpacing: 1.5)),
         ),
         Container(
           clipBehavior: Clip.hardEdge,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.grey.shade100),
-            boxShadow: [BoxShadow(color: Colors.blue.shade100.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 10))],
+            border: Border.all(color: isDarkMode ? Colors.grey[800]! : Colors.grey.shade100),
+            boxShadow: [BoxShadow(color: isDarkMode ? Colors.black.withValues(alpha: 0.3) : Colors.blue.shade100.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 10))],
           ),
           child: Column(children: children),
         ),
@@ -167,27 +173,30 @@ class ProfileMenuWidget extends StatelessWidget {
   }
 
   Widget _buildSettingsSection(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 25, bottom: 12, left: 10),
-          child: Text("APP SETTINGS", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.blueGrey, letterSpacing: 1.5)),
+        Padding(
+          padding: const EdgeInsets.only(top: 25, bottom: 12, left: 10),
+          child: Text("APP SETTINGS", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: isDarkMode ? Colors.grey[400] : Colors.blueGrey, letterSpacing: 1.5)),
         ),
         Container(
           clipBehavior: Clip.hardEdge,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.grey.shade100),
-            boxShadow: [BoxShadow(color: Colors.blue.shade100.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 10))],
+            border: Border.all(color: isDarkMode ? Colors.grey[800]! : Colors.grey.shade100),
+            boxShadow: [BoxShadow(color: isDarkMode ? Colors.black.withValues(alpha: 0.3) : Colors.blue.shade100.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 10))],
           ),
           child: ExpansionTile(
             tilePadding: const EdgeInsets.symmetric(horizontal: 20),
             leading: Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(12)),
-              child: const Icon(Icons.settings_outlined, color: Colors.black87),
+              decoration: BoxDecoration(color: isDarkMode ? Colors.grey[700] : Colors.grey.shade100, borderRadius: BorderRadius.circular(12)),
+              child: Icon(Icons.settings_outlined, color: isDarkMode ? Colors.white : Colors.black87),
             ),
             title: const Text("App Configuration", style: TextStyle(fontWeight: FontWeight.w600)),
             children: [

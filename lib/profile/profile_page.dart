@@ -56,9 +56,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Consumer<ProfileProvider>(
         builder: (context, profileProvider, child) {
           if (profileProvider.isLoading) {
@@ -145,10 +148,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
               Text(
                 data['fullName'] ?? "No Name",
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A),
                   letterSpacing: 0.3,
                 ),
                 textAlign: TextAlign.center,
@@ -156,9 +159,9 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: 4),
               Text(
                 "Membership ID: ${data['membershipNo'] ?? 'N/A'}",
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: Color(0xFF64748B),
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : const Color(0xFF64748B),
                   fontWeight: FontWeight.w600,
                 ),
                 textAlign: TextAlign.center,
@@ -178,24 +181,33 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildStatsRow(Map<String, dynamic> data) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5))
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          RatingWidget(memberData: data),
-          TripCountWidget(memberData: data),
-          TenureWidget(memberData: data),
-        ],
-      ),
+    return Builder(
+      builder: (context) {
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              )
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              RatingWidget(memberData: data),
+              TripCountWidget(memberData: data),
+              TenureWidget(memberData: data),
+            ],
+          ),
+        );
+      }
     );
   }
 

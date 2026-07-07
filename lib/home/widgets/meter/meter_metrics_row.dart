@@ -14,35 +14,31 @@ class MeterMetricsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       children: [
-        Row(
-          children: [
-            Expanded(child: _buildMetricCard("DISTANCE", "${distanceKm.toStringAsFixed(2)} km", Icons.route)),
-            const SizedBox(width: 16),
-            Expanded(child: _buildMetricCard("WAITING", "${(waitTimeSeconds / 60).floor()}:${(waitTimeSeconds % 60).toString().padLeft(2, '0')}", Icons.timer)),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildMetricCard("CURRENT SPEED", "${speedKmh.toStringAsFixed(1)} km/h", Icons.speed),
+        Expanded(child: _buildMetricCard("DIST", "${distanceKm.toStringAsFixed(1)} km", Icons.route)),
+        const SizedBox(width: 8),
+        Expanded(child: _buildMetricCard("WAIT", "${(waitTimeSeconds / 60).floor()}:${(waitTimeSeconds % 60).toString().padLeft(2, '0')}", Icons.timer)),
+        const SizedBox(width: 8),
+        Expanded(child: _buildMetricCard("SPEED", "${speedKmh.toStringAsFixed(1)} km/h", Icons.speed)),
       ],
     );
   }
 
   Widget _buildMetricCard(String title, String value, IconData icon) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       decoration: BoxDecoration(
         color: Colors.grey.shade800,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         children: [
-          Icon(icon, color: Colors.grey, size: 24),
-          const SizedBox(height: 8),
-          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 12, letterSpacing: 1)),
+          Icon(icon, color: Colors.grey, size: 16),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 10, letterSpacing: 0.5)),
+          const SizedBox(height: 2),
+          Text(value, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
         ],
       ),
     );

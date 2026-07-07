@@ -275,6 +275,8 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
           _phoneController.text = mobile;
         }
 
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
         return ListView(
           padding: const EdgeInsets.all(16),
           physics: const BouncingScrollPhysics(),
@@ -290,32 +292,32 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
               _buildPendingApprovalBanner(),
 
             _buildSection("Basic Info", [
-              _buildReadOnlyTile(Icons.person_outline, "Full Name", fullName),
-              const Divider(
+              _buildReadOnlyTile(Icons.person_outline, "Full Name", fullName, isDark),
+              Divider(
                 height: 1,
                 indent: 55,
                 endIndent: 15,
-                color: Color(0xFFF1F5F9),
+                color: isDark ? Colors.grey[800] : const Color(0xFFF1F5F9),
               ),
-              _buildReadOnlyTile(Icons.email_outlined, "Email", email),
-            ]),
+              _buildReadOnlyTile(Icons.email_outlined, "Email", email, isDark),
+            ], isDark),
 
             const SizedBox(height: 20),
 
             _buildSection("Identity Info", [
-              _buildReadOnlyTile(Icons.badge_outlined, "NIC Number", nic),
-              const Divider(
+              _buildReadOnlyTile(Icons.badge_outlined, "NIC Number", nic, isDark),
+              Divider(
                 height: 1,
                 indent: 55,
                 endIndent: 15,
-                color: Color(0xFFF1F5F9),
+                color: isDark ? Colors.grey[800] : const Color(0xFFF1F5F9),
               ),
-              _buildReadOnlyTile(Icons.cake_outlined, "Date of Birth", dob),
-              const Divider(
+              _buildReadOnlyTile(Icons.cake_outlined, "Date of Birth", dob, isDark),
+              Divider(
                 height: 1,
                 indent: 55,
                 endIndent: 15,
-                color: Color(0xFFF1F5F9),
+                color: isDark ? Colors.grey[800] : const Color(0xFFF1F5F9),
               ),
               _buildReadOnlyTile(
                 gender.toLowerCase() == 'male'
@@ -323,19 +325,21 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
                     : Icons.female_outlined,
                 "Gender",
                 gender,
+                isDark,
               ),
-              const Divider(
+              Divider(
                 height: 1,
                 indent: 55,
                 endIndent: 15,
-                color: Color(0xFFF1F5F9),
+                color: isDark ? Colors.grey[800] : const Color(0xFFF1F5F9),
               ),
               _buildReadOnlyTile(
                 Icons.auto_awesome_outlined,
                 "Religion",
                 religion,
+                isDark,
               ),
-            ]),
+            ], isDark),
 
             const SizedBox(height: 20),
 
@@ -344,15 +348,16 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
                 documentId: documentId,
                 membershipNo: membershipNo,
                 mobile: mobile,
+                isDark: isDark,
               ),
-              const Divider(
+              Divider(
                 height: 1,
                 indent: 55,
                 endIndent: 15,
-                color: Color(0xFFF1F5F9),
+                color: isDark ? Colors.grey[800] : const Color(0xFFF1F5F9),
               ),
-              _buildReadOnlyTile(Icons.location_on_outlined, "Address", address),
-            ]),
+              _buildReadOnlyTile(Icons.location_on_outlined, "Address", address, isDark),
+            ], isDark),
 
             if (faceUrl.isNotEmpty) ...[
               const SizedBox(height: 20),
@@ -364,8 +369,9 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
                   isFaceApproved
                       ? "Verified Successfully ✅"
                       : (isFacePending ? "Pending Approval ⏳" : "Failed ❌"),
+                  isDark,
                 ),
-              ]),
+              ], isDark),
             ],
 
             const SizedBox(height: 10),
@@ -500,6 +506,7 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
     required String documentId,
     required String membershipNo,
     required String mobile,
+    required bool isDark,
   }) {
     return ListTile(
       leading: Container(
@@ -521,10 +528,10 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
           controller: _phoneController,
           keyboardType: TextInputType.phone,
           autofocus: true,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: Colors.black87,
+            color: isDark ? Colors.white : Colors.black87,
           ),
           decoration: const InputDecoration(
             isDense: true,
@@ -537,10 +544,10 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
       )
           : Text(
         mobile,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w600,
-          color: Colors.black87,
+          color: isDark ? Colors.white : Colors.black87,
         ),
       ),
       trailing: _isSaving
@@ -639,7 +646,7 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
     );
   }
 
-  Widget _buildSection(String title, List<Widget> children) {
+  Widget _buildSection(String title, List<Widget> children, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -656,14 +663,15 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
         ),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
+              if (!isDark)
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
             ],
           ),
           child: Column(children: children),
@@ -672,7 +680,7 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
     );
   }
 
-  Widget _buildReadOnlyTile(IconData icon, String title, String subtitle) {
+  Widget _buildReadOnlyTile(IconData icon, String title, String subtitle, bool isDark) {
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
@@ -688,10 +696,10 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
       ),
       subtitle: Text(
         subtitle,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: Colors.black87,
+          color: isDark ? Colors.white : Colors.black87,
         ),
       ),
     );

@@ -108,20 +108,36 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
           .snapshots()
           .listen(
             (querySnapshot) async {
-          if (querySnapshot.docs.isEmpty) {
-            _memberData = null;
-            _isLoading = false;
-            notifyListeners();
+          QueryDocumentSnapshot<Map<String, dynamic>>? memberDocument;
+          String collectionSource = 'member';
 
-            if (!completer.isCompleted) {
-              completer.complete(false);
+          if (querySnapshot.docs.isEmpty) {
+            // Fallback to web_sync_member
+            Query<Map<String, dynamic>> webSyncQuery = _firestore.collection('web_sync_member');
+            if (currentUser.email != null && currentUser.email!.isNotEmpty) {
+              webSyncQuery = webSyncQuery.where('user_email', isEqualTo: currentUser.email);
+            } else {
+              webSyncQuery = webSyncQuery.where('auth_uid', isEqualTo: currentUser.uid);
             }
-            return;
+            var webSyncSnapshot = await webSyncQuery.limit(1).get();
+            
+            if (webSyncSnapshot.docs.isEmpty) {
+              _memberData = null;
+              _isLoading = false;
+              notifyListeners();
+
+              if (!completer.isCompleted) {
+                completer.complete(false);
+              }
+              return;
+            }
+            memberDocument = webSyncSnapshot.docs.first;
+            collectionSource = 'web_sync_member';
+          } else {
+            memberDocument = querySnapshot.docs.first;
           }
 
-          final QueryDocumentSnapshot<Map<String, dynamic>> memberDocument =
-              querySnapshot.docs.first;
-          debugPrint("🟢 ProfileProvider: Successfully found in 'member' collection!");
+          debugPrint("🟢 ProfileProvider: Successfully found in '$collectionSource' collection!");
 
           _memberData = Map<String, dynamic>.from(
             memberDocument.data(),

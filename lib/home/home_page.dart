@@ -16,7 +16,6 @@ import 'home_header.dart';
 import 'home_footer.dart';
 import 'online_button_widget.dart';
 import 'widgets/meter/mini_meter_widget.dart';
-import 'passenger_active_trip_banner.dart';
 
 // 💡 ගොඩක් අඳුරු නැති, ඇහැට අමාරු නැති Neutral Grey Theme එක
 const String _mapStyle = '''
@@ -39,6 +38,32 @@ const String _mapStyle = '''
   { "featureType": "transit.station", "elementType": "geometry", "stylers": [{"color": "#e0e0e0"}] },
   { "featureType": "water", "elementType": "geometry", "stylers": [{"color": "#b8cce4"}] },
   { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{"color": "#9e9e9e"}] }
+]
+''';
+
+const String _darkMapStyle = '''
+[
+  { "elementType": "geometry", "stylers": [{"color": "#212121"}] },
+  { "elementType": "labels.icon", "stylers": [{"visibility": "off"}] },
+  { "elementType": "labels.text.fill", "stylers": [{"color": "#757575"}] },
+  { "elementType": "labels.text.stroke", "stylers": [{"color": "#212121"}] },
+  { "featureType": "administrative", "elementType": "geometry", "stylers": [{"color": "#757575"}] },
+  { "featureType": "administrative.country", "elementType": "labels.text.fill", "stylers": [{"color": "#9e9e9e"}] },
+  { "featureType": "administrative.land_parcel", "stylers": [{"visibility": "off"}] },
+  { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [{"color": "#bdbdbd"}] },
+  { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{"color": "#757575"}] },
+  { "featureType": "poi.park", "elementType": "geometry", "stylers": [{"color": "#181818"}] },
+  { "featureType": "poi.park", "elementType": "labels.text.fill", "stylers": [{"color": "#616161"}] },
+  { "featureType": "poi.park", "elementType": "labels.text.stroke", "stylers": [{"color": "#1b1b1b"}] },
+  { "featureType": "road", "elementType": "geometry.fill", "stylers": [{"color": "#2c2c2c"}] },
+  { "featureType": "road", "elementType": "labels.text.fill", "stylers": [{"color": "#8a8a8a"}] },
+  { "featureType": "road.arterial", "elementType": "geometry", "stylers": [{"color": "#373737"}] },
+  { "featureType": "road.highway", "elementType": "geometry", "stylers": [{"color": "#3c3c3c"}] },
+  { "featureType": "road.highway.controlled_access", "elementType": "geometry", "stylers": [{"color": "#4e4e4e"}] },
+  { "featureType": "road.local", "elementType": "labels.text.fill", "stylers": [{"color": "#616161"}] },
+  { "featureType": "transit", "elementType": "labels.text.fill", "stylers": [{"color": "#757575"}] },
+  { "featureType": "water", "elementType": "geometry", "stylers": [{"color": "#000000"}] },
+  { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{"color": "#3d3d3d"}] }
 ]
 ''';
 
@@ -268,6 +293,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    // Reactively update map style when theme changes
+    if (_mapController != null) {
+      _mapController!.setMapStyle(isDarkMode ? _darkMapStyle : _mapStyle);
+    }
+
     return Scaffold(
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -284,7 +316,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
             onMapCreated: (controller) {
               _mapController = controller;
-              _mapController!.setMapStyle(_mapStyle);
+              _mapController!.setMapStyle(isDarkMode ? _darkMapStyle : _mapStyle);
               if (_currentPosition != null) _updateCamera();
             },
             zoomControlsEnabled: false,
@@ -294,7 +326,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
           Positioned(top: 50, left: 16, right: 16, child: HomeHeader(user: _user)),
           const Positioned(top: 130, left: 0, right: 0, child: MiniMeterWidget()),
-          const PassengerActiveTripBanner(),
           Positioned(
             bottom: 210, // 💡 SOS Button එකත් අනුපාතයට උඩට ගත්තා
             right: 20,
@@ -312,10 +343,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               height: 56,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
+                  backgroundColor: Theme.of(context).cardColor,
                   shape: const CircleBorder(),
                   padding: EdgeInsets.zero,
-                  shadowColor: Colors.black.withValues(alpha: 0.2),
+                  shadowColor: Colors.black.withValues(alpha: isDarkMode ? 0.4 : 0.2),
                   elevation: 4,
                 ),
                 onPressed: _updateCamera,

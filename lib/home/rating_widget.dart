@@ -10,6 +10,9 @@ class RatingWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final dynamic rating = memberData['rating'];
     final String displayRating = (rating != null) ? rating.toString() : "0.0";
+    
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -19,7 +22,7 @@ class RatingWidget extends StatelessWidget {
           children: [
             const Icon(Icons.star, color: Colors.amber, size: 16),
             const SizedBox(width: 4),
-            Text(displayRating, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+            Text(displayRating, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : const Color(0xFF1E293B))),
           ],
         ),
         const SizedBox(height: 2),

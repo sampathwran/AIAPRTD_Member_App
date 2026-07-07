@@ -11,6 +11,8 @@ class VehicleOverviewSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final String imageUrl =
         data['frontImage']?.toString() ?? '';
 
@@ -33,14 +35,15 @@ class VehicleOverviewSection extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 15,
-            offset: const Offset(0, 6),
-          ),
+          if (!isDark)
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
         ],
       ),
       child: Column(
@@ -55,9 +58,9 @@ class VehicleOverviewSection extends StatelessWidget {
               height: 220,
               width: double.infinity,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _imagePlaceholder(),
+              errorBuilder: (_, __, ___) => _imagePlaceholder(isDark),
             )
-                : _imagePlaceholder(),
+                : _imagePlaceholder(isDark),
           ),
 
           Padding(
@@ -78,6 +81,7 @@ class VehicleOverviewSection extends StatelessWidget {
                   Icons.directions_car,
                   "Vehicle Brand & Model",
                   vehicleName,
+                  isDark,
                 ),
 
                 const SizedBox(height: 12),
@@ -90,6 +94,7 @@ class VehicleOverviewSection extends StatelessWidget {
                         Icons.pin,
                         "Plate Number",
                         plateNumber,
+                        isDark,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -98,6 +103,7 @@ class VehicleOverviewSection extends StatelessWidget {
                         Icons.category,
                         "Category",
                         category,
+                        isDark,
                       ),
                     ),
                   ],
@@ -110,16 +116,16 @@ class VehicleOverviewSection extends StatelessWidget {
     );
   }
 
-  Widget _imagePlaceholder() {
+  Widget _imagePlaceholder(bool isDark) {
     return Container(
       height: 220,
       width: double.infinity,
-      color: Colors.grey.shade200,
-      child: const Center(
+      color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+      child: Center(
         child: Icon(
           Icons.directions_car,
           size: 70,
-          color: Colors.grey,
+          color: isDark ? Colors.grey.shade600 : Colors.grey,
         ),
       ),
     );
@@ -129,15 +135,16 @@ class VehicleOverviewSection extends StatelessWidget {
       IconData icon,
       String title,
       String value,
+      bool isDark,
       ) {
     return Container(
       width: double.infinity, // මුළු පළලම ගන්න මචං
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: isDark ? Colors.blueGrey.shade900 : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.grey.shade200,
+          color: isDark ? Colors.blueGrey.shade800 : Colors.grey.shade200,
         ),
       ),
       child: Column(
@@ -153,7 +160,7 @@ class VehicleOverviewSection extends StatelessWidget {
             title,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey.shade600,
+              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
             ),
           ),
           const SizedBox(height: 4),

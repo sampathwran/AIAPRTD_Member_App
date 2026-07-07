@@ -169,6 +169,13 @@ class _StatusBadgeWidgetState extends State<StatusBadgeWidget>
         _showErrorBlock = true;
       });
     }
+
+    // 🚀 අලුත් කෑල්ල: Member වෙනස් උනොත් ආයෙත් Vehicle Data ගන්නවා
+    final oldNo = oldWidget.memberData['membershipNo']?.toString();
+    final newNo = widget.memberData['membershipNo']?.toString();
+    if (newNo != null && newNo.trim().isNotEmpty && newNo != oldNo) {
+      Provider.of<VehicleProvider>(context, listen: false).fetchVehicleData(newNo);
+    }
   }
 
   @override

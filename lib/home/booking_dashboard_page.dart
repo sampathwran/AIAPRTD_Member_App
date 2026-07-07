@@ -59,9 +59,12 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
       
       String category = (data['vehicleCategory'] ?? data['selectedCategory'] ?? '').toString().toLowerCase();
       
+      String normCategory = category.replaceAll(' ', '').replaceAll('_', '').replaceAll('van', '');
+      String normMyCat = myCategory.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('van', '');
+
       // 1. Category check
-      if (category.isEmpty) category = 'unknown';
-      if (category != myCategory.toLowerCase()) {
+      if (normCategory.isEmpty) normCategory = 'unknown';
+      if (normCategory != normMyCat) {
         continue;
       }
 
@@ -154,11 +157,14 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
             _filterBookings(snapshot.data!.docs, liveBookings, scheduledBookings, myCategory);
           }
 
+          final theme = Theme.of(context);
+          final isDarkMode = theme.brightness == Brightness.dark;
+
           return Scaffold(
-            backgroundColor: const Color(0xFFF8FAFC),
+            backgroundColor: theme.scaffoldBackgroundColor,
             appBar: AppBar(
-              title: const Text("Hires Dashboard", style: TextStyle(fontWeight: FontWeight.w800, color: Colors.black87)),
-              backgroundColor: Colors.white,
+              title: Text("Hires Dashboard", style: TextStyle(fontWeight: FontWeight.w800, color: isDarkMode ? Colors.white : Colors.black87)),
+              backgroundColor: theme.appBarTheme.backgroundColor,
               elevation: 0,
               centerTitle: true,
               bottom: TabBar(
@@ -178,14 +184,14 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
                 // 📍 RADIUS SLIDER SECTION
                 // ==========================================
                 Container(
-                  color: Colors.white,
+                  color: theme.cardColor,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   child: Column(
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text("Max Distance (Radius)", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+                          Text("Max Distance (Radius)", style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black87)),
                           Text("${_searchRadiusKm.toInt()} km", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue, fontSize: 16)),
                         ],
                       ),
@@ -205,7 +211,7 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
                     ],
                   ),
                 ),
-                const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                Divider(height: 1, color: isDarkMode ? Colors.grey[800] : const Color(0xFFE2E8F0)),
 
                 Expanded(
                   child: TabBarView(

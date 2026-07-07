@@ -159,21 +159,21 @@ return 'Expires in $remainingDays days';
 return 'Expiry Date: $expiryDate';
 }
 
-Color _getExpiryColor(int? remainingDays) {
-if (remainingDays == null) {
-return Colors.black54;
-}
+  Color _getExpiryColor(int? remainingDays, bool isDark) {
+    if (remainingDays == null) {
+      return isDark ? Colors.grey[400]! : Colors.black54;
+    }
 
-if (remainingDays <= 0) {
-return Colors.red;
-}
+    if (remainingDays <= 0) {
+      return Colors.red;
+    }
 
-if (remainingDays <= 20) {
-return Colors.orange;
-}
+    if (remainingDays <= 20) {
+      return Colors.orange;
+    }
 
-return Colors.black54;
-}
+    return isDark ? Colors.grey[400]! : Colors.black54;
+  }
 
 // =========================================================================
 // 🔐 CAMERA / LOCK
@@ -237,12 +237,13 @@ const SizedBox(height: 8),
 // =========================================================================
 // 📄 DOCUMENT TILE
 // =========================================================================
-Widget _buildDocumentTile(
-BuildContext context,
-String title,
-int index,
-) {
-final Map<String, dynamic> document = _documents[index];
+  Widget _buildDocumentTile(
+      BuildContext context,
+      String title,
+      int index,
+      ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final Map<String, dynamic> document = _documents[index];
 
 final String status =
 document['status']?.toString().trim().toLowerCase() ?? 'empty';
@@ -258,15 +259,15 @@ remainingDays: remainingDays,
 
 final Color statusColor = _statusColor(status);
 
-return Container(
-margin: const EdgeInsets.symmetric(
-horizontal: 12,
-vertical: 5,
-),
-decoration: BoxDecoration(
-color: Colors.grey.shade50,
-borderRadius: BorderRadius.circular(14),
-),
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 5,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(14),
+      ),
 child: ListTile(
 leading: Icon(
 Icons.description,
@@ -303,7 +304,7 @@ expiryDate,
 remainingDays,
 ),
 style: TextStyle(
-color: _getExpiryColor(remainingDays),
+color: _getExpiryColor(remainingDays, isDark),
 fontSize: 12,
 fontWeight:
 remainingDays != null && remainingDays <= 20

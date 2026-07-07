@@ -59,7 +59,16 @@ class MeterProvider with ChangeNotifier {
 
   Future<void> fetchRates(String categoryId) async {
     try {
-      final doc = await _firestore.collection('rates').doc(categoryId.toLowerCase()).get();
+      String norm = categoryId.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('van', '');
+      String docId = categoryId.toLowerCase();
+      if (norm.contains('budget')) docId = 'budget';
+      else if (norm.contains('mini')) docId = 'mini';
+      else if (norm.contains('sedan')) docId = 'sedan';
+      else if (norm.contains('6seater')) docId = '6_seater';
+      else if (norm.contains('9seater')) docId = '9_seater';
+      else if (norm.contains('14seater')) docId = '14_seater';
+
+      final doc = await _firestore.collection('rates').doc(docId).get();
       if (doc.exists) {
         final data = doc.data()!;
         _baseFare = (data['baseFare'] ?? 0.0).toDouble();

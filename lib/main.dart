@@ -14,6 +14,7 @@ import 'providers/vehicle_provider.dart';
 import 'providers/payment_provider.dart';
 import 'providers/booking_provider.dart'; // 💡 අලුත් BookingProvider එක මෙතනට දැම්මා
 import 'providers/meter_provider.dart';
+import 'providers/theme_provider.dart';
 
 // ==========================================
 // 📄 PAGES
@@ -28,6 +29,9 @@ import 'home/sos_page.dart';
 import 'profile/profile_page.dart';
 import 'parking/parking_page.dart';
 import 'income/income_page.dart';
+
+import 'home/global_chat_button.dart';
+import 'providers/ads_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,24 +57,82 @@ void main() async {
         ChangeNotifierProvider(create: (_) => PaymentProvider()),
         ChangeNotifierProvider(create: (_) => BookingProvider()), // 💡 BookingProvider එක MultiProvider එකට ඇතුලත් කළා
         ChangeNotifierProvider(create: (_) => MeterProvider()),
+        ChangeNotifierProvider(create: (_) => AdsProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
     ),
   );
 }
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'AIAPRTD Member',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          navigatorKey: navigatorKey,
+          debugShowCheckedModeBanner: false,
+          title: 'AIAPRTD Member',
+          themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          theme: ThemeData(
+            brightness: Brightness.light,
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.light),
+            scaffoldBackgroundColor: Colors.grey.shade50,
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              elevation: 0,
+            ),
+            cardTheme: const CardThemeData(
+              color: Colors.white,
+              surfaceTintColor: Colors.white,
+            ),
+            bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+              backgroundColor: Colors.white,
+              selectedItemColor: Colors.blue,
+              unselectedItemColor: Colors.grey,
+            ),
+            useMaterial3: true,
+          ),
+          darkTheme: ThemeData(
+            brightness: Brightness.dark,
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark),
+            scaffoldBackgroundColor: const Color(0xFF121212),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Color(0xFF1E1E1E),
+              foregroundColor: Colors.white,
+              elevation: 0,
+            ),
+            cardTheme: const CardThemeData(
+              color: Color(0xFF1E1E1E),
+              surfaceTintColor: Color(0xFF1E1E1E),
+            ),
+            bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+              backgroundColor: Color(0xFF1E1E1E),
+              selectedItemColor: Colors.blue,
+              unselectedItemColor: Colors.grey,
+            ),
+            dialogTheme: const DialogThemeData(
+              backgroundColor: Color(0xFF1E1E1E),
+            ),
+            useMaterial3: true,
+          ),
+          builder: (context, child) {
+        return Directionality(
+          textDirection: TextDirection.ltr,
+          child: Stack(
+            children: [
+              if (child != null) child,
+              const GlobalChatButton(),
+            ],
+          ),
+        );
+      },
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
@@ -86,6 +148,8 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => const ProfilePage(),
         '/parking': (context) => const ParkingPage(),
         '/income': (context) => const IncomePage(),
+      },
+    );
       },
     );
   }

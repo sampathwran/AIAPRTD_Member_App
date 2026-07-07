@@ -34,12 +34,14 @@ class _PassengerActiveTripBannerState extends State<PassengerActiveTripBanner> {
         // Find the active trip
         var activeDocs = snapshot.data!.docs.where((doc) {
           var data = doc.data() as Map<String, dynamic>;
-          String status = data['status'] ?? '';
-          String tripState = data['tripState'] ?? '';
-          if (status == 'Cancelled' || status == 'Completed' || tripState == 'completed') {
-            return false;
+          String status = data['status']?.toString().toLowerCase() ?? '';
+          String tripState = data['tripState']?.toString().toLowerCase() ?? '';
+          
+          // Only show for actively ongoing/accepted trips
+          if (status == 'ongoing' || status == 'accepted' || tripState == 'accepted' || tripState == 'arrived' || tripState == 'started') {
+            return true;
           }
-          return true;
+          return false;
         }).toList();
 
         if (activeDocs.isEmpty) return const SizedBox.shrink();

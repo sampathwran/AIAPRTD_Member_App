@@ -313,10 +313,12 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
           );
         }
 
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
         return GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
           child: Scaffold(
-            backgroundColor: const Color(0xFFF8FAFC),
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: Form(
               key: _formKey,
               child: ListView(
@@ -326,7 +328,7 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                   _buildHeaderCard(),
                   const SizedBox(height: 18),
 
-                  _sectionTitle("Step 1: Identity & Contact"),
+                  _sectionTitle("Step 1: Identity & Contact", isDark),
 
                   _buildCardSection([
                     _buildTextField(
@@ -334,57 +336,67 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                       label: "Full Name",
                       icon: Icons.person_outline,
                       validatorText: "Enter your full name",
+                      isDark: isDark,
                     ),
-                    _divider(),
+                    _divider(isDark),
                     _buildTextField(
                       controller: _nicController,
                       label: "NIC Number",
                       icon: Icons.badge_outlined,
                       validatorText: "Enter your NIC number",
+                      isDark: isDark,
                     ),
-                    _divider(),
+                    _divider(isDark),
                     _buildTextField(
                       controller: _mobileController,
                       label: "Mobile Number",
                       icon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
                       validatorText: "Enter your mobile number",
+                      isDark: isDark,
                     ),
-                    _divider(),
+                    _divider(isDark),
                     _buildTextField(
                       controller: _emailController,
                       label: "Email Address",
                       icon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
                       validatorText: "Enter your email",
+                      isDark: isDark,
                     ),
-                  ]),
+                  ], isDark),
 
                   const SizedBox(height: 22),
-                  _sectionTitle("Step 2: Personal Details"),
+                  _sectionTitle("Step 2: Personal Details", isDark),
 
                   _buildCardSection([
                     TextFormField(
                       controller: _dobController,
                       readOnly: true,
                       onTap: () => _selectDate(context),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                        color: isDark ? Colors.white : Colors.black87,
                       ),
                       decoration: _inputDecoration(
                         "Date of Birth",
                         Icons.calendar_month_outlined,
+                        isDark: isDark,
                         suffixIcon: Icons.touch_app_rounded,
                       ),
                       validator: (v) =>
                       v == null || v.isEmpty ? "Select your date of birth" : null,
                     ),
-                    _divider(),
+                    _divider(isDark),
 
                     DropdownButtonFormField<String>(
                       initialValue: _selectedGender,
-                      decoration: _dropdownDecoration("Select Gender"),
+                      dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                      decoration: _dropdownDecoration("Select Gender", isDark: isDark),
                       items: _genders
                           .map(
                             (g) => DropdownMenuItem(
@@ -398,11 +410,16 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                       },
                       validator: (v) => v == null ? "Select your gender" : null,
                     ),
-                    _divider(),
+                    _divider(isDark),
 
                     DropdownButtonFormField<String>(
                       initialValue: _selectedReligion,
-                      decoration: _dropdownDecoration("Select Religion"),
+                      dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                      decoration: _dropdownDecoration("Select Religion", isDark: isDark),
                       items: _religions
                           .map(
                             (r) => DropdownMenuItem(
@@ -416,7 +433,7 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                       },
                       validator: (v) => v == null ? "Select your religion" : null,
                     ),
-                    _divider(),
+                    _divider(isDark),
 
                     _buildTextField(
                       controller: _addressController,
@@ -424,11 +441,12 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                       icon: Icons.home_outlined,
                       maxLines: 2,
                       validatorText: "Enter your address",
+                      isDark: isDark,
                     ),
-                  ]),
+                  ], isDark),
 
                   const SizedBox(height: 22),
-                  _sectionTitle("Step 3: Upload Official Identity Cards"),
+                  _sectionTitle("Step 3: Upload Official Identity Cards", isDark),
 
                   _buildImageCaptureTile(
                     title: "Capture ID Card Front",
@@ -436,6 +454,7 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                     imageFile: _idFrontImage,
                     icon: Icons.credit_card_rounded,
                     onTap: () => _captureImage(1),
+                    isDark: isDark,
                   ),
 
                   const SizedBox(height: 15),
@@ -446,6 +465,7 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                     imageFile: _idBackImage,
                     icon: Icons.credit_card_rounded,
                     onTap: () => _captureImage(2),
+                    isDark: isDark,
                   ),
 
                   const SizedBox(height: 28),
@@ -496,6 +516,8 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
     required bool isRejected,
     String? rejectReason,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final Color mainColor = isFullyVerified
         ? Colors.green
         : isRejected
@@ -547,15 +569,15 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.shade50,
+                  color: isDark ? Colors.red.shade900.withValues(alpha: 0.3) : Colors.red.shade50,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red.shade100),
+                  border: Border.all(color: isDark ? Colors.red.shade800 : Colors.red.shade100),
                 ),
                 child: Text(
                   "Reason: $rejectReason",
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.red.shade700,
+                    color: isDark ? Colors.red.shade300 : Colors.red.shade700,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -564,14 +586,15 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
             const SizedBox(height: 30),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 12,
-                    offset: const Offset(0, 5),
-                  ),
+                  if (!isDark)
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
+                    ),
                 ],
               ),
               child: Column(
@@ -704,7 +727,7 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
     );
   }
 
-  Widget _sectionTitle(String text) {
+  Widget _sectionTitle(String text, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10, left: 4),
       child: Text(
@@ -712,24 +735,25 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
         style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 13,
-          color: Colors.blueGrey.shade700,
+          color: isDark ? Colors.blueGrey.shade300 : Colors.blueGrey.shade700,
         ),
       ),
     );
   }
 
-  Widget _buildCardSection(List<Widget> children) {
+  Widget _buildCardSection(List<Widget> children, bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(17),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
+          if (!isDark)
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 5),
+            ),
         ],
       ),
       child: Column(children: children),
@@ -741,6 +765,7 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
     required String label,
     required IconData icon,
     required String validatorText,
+    required bool isDark,
     TextInputType? keyboardType,
     int maxLines = 1,
   }) {
@@ -748,11 +773,11 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
-      style: const TextStyle(
+      style: TextStyle(
         fontWeight: FontWeight.w600,
-        color: Colors.black87,
+        color: isDark ? Colors.white : Colors.black87,
       ),
-      decoration: _inputDecoration(label, icon),
+      decoration: _inputDecoration(label, icon, isDark: isDark),
       validator: (v) => v == null || v.trim().isEmpty ? validatorText : null,
     );
   }
@@ -760,26 +785,29 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
   InputDecoration _inputDecoration(
       String label,
       IconData icon, {
+        required bool isDark,
         IconData suffixIcon = Icons.edit_rounded,
       }) {
     return InputDecoration(
       labelText: label,
-      prefixIcon: Icon(icon, color: Color(0xFF1E3A8A)),
+      labelStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+      prefixIcon: Icon(icon, color: isDark ? Colors.blue[300] : const Color(0xFF1E3A8A)),
       suffixIcon: Icon(suffixIcon, size: 16, color: Colors.grey),
       border: InputBorder.none,
     );
   }
 
-  InputDecoration _dropdownDecoration(String label) {
+  InputDecoration _dropdownDecoration(String label, {required bool isDark}) {
     return InputDecoration(
       labelText: label,
-      prefixIcon: const Icon(Icons.check_circle_outline, color: Color(0xFF1E3A8A)),
+      labelStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+      prefixIcon: Icon(Icons.check_circle_outline, color: isDark ? Colors.blue[300] : const Color(0xFF1E3A8A)),
       border: InputBorder.none,
     );
   }
 
-  Widget _divider() {
-    return const Divider(height: 1, color: Color(0xFFF1F5F9));
+  Widget _divider(bool isDark) {
+    return Divider(height: 1, color: isDark ? Colors.grey[800] : const Color(0xFFF1F5F9));
   }
 
   Widget _buildImageCaptureTile({
@@ -788,10 +816,11 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
     required File? imageFile,
     required IconData icon,
     required VoidCallback onTap,
+    required bool isDark,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(17),
         boxShadow: [
           BoxShadow(
@@ -824,12 +853,12 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(title,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 14)),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : Colors.black)),
                         const SizedBox(height: 3),
                         Text(subtitle,
-                            style: const TextStyle(
-                                fontSize: 11, color: Colors.grey)),
+                            style: TextStyle(
+                                fontSize: 11, color: isDark ? Colors.grey[400] : Colors.grey)),
                       ],
                     ),
                   ),
@@ -882,18 +911,18 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                   height: 62,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
+                    color: isDark ? Colors.grey[800] : Colors.grey.shade50,
                     borderRadius: BorderRadius.circular(13),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey.shade200),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.camera_alt_outlined, color: Colors.grey),
-                      SizedBox(width: 8),
+                      Icon(Icons.camera_alt_outlined, color: isDark ? Colors.grey[400] : Colors.grey),
+                      const SizedBox(width: 8),
                       Text(
                         "Tap to Open Camera",
-                        style: TextStyle(color: Colors.grey, fontSize: 13),
+                        style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey, fontSize: 13),
                       ),
                     ],
                   ),

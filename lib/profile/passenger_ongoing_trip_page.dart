@@ -294,6 +294,29 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
         await FirebaseFirestore.instance.collection('members').doc(passengerId).collection('my_bookings').doc(widget.bookingId).set({'driverRating': _rating}, SetOptions(merge: true));
       }
 
+      String driverId = widget.bookingData['driverId']?.toString() ?? '';
+      if (driverId.isNotEmpty) {
+        final driverRef = FirebaseFirestore.instance.collection('members').doc(driverId);
+        await FirebaseFirestore.instance.runTransaction((transaction) async {
+          final snapshot = await transaction.get(driverRef);
+          if (snapshot.exists) {
+            final data = snapshot.data()!;
+            double currentSum = (data['ratingSum'] ?? 0.0).toDouble();
+            int currentCount = (data['ratingCount'] ?? 0).toInt();
+            
+            currentSum += _rating;
+            currentCount += 1;
+            double newRating = currentSum / currentCount;
+            
+            transaction.update(driverRef, {
+              'ratingSum': currentSum,
+              'ratingCount': currentCount,
+              'rating': double.parse(newRating.toStringAsFixed(1)),
+            });
+          }
+        });
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Thanks for your feedback!"), backgroundColor: Colors.green));
         Navigator.pop(context); // Go back

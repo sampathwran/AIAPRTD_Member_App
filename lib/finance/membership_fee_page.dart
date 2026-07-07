@@ -49,7 +49,7 @@ class MembershipFeePage extends StatelessWidget {
     )
         : StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
     stream: FirebaseFirestore.instance
-        .collection('payments')
+        .collection('web_sync_membership_fee')
         .doc(membershipNo)
         .snapshots(),
     builder: (context, snapshot) {

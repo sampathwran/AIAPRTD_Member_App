@@ -6,11 +6,15 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/meter_provider.dart';
 import '../providers/profile_provider.dart';
 
 class TripSummaryPage extends StatefulWidget {
-  const TripSummaryPage({super.key});
+  final String? bookingId;
+  final Map<String, dynamic>? bookingData;
+  
+  const TripSummaryPage({super.key, this.bookingId, this.bookingData});
 
   @override
   State<TripSummaryPage> createState() => _TripSummaryPageState();
@@ -118,6 +122,137 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
     }
   }
 
+  Future<void> _collectCashAndRate(MeterProvider meter, String driverMembershipNo) async {
+    // 1. Mark as collected in meter provider
+    await meter.collectCash(driverMembershipNo);
+    
+    // 2. Save bill to passenger's booking history
+    String passengerId = widget.bookingData?['memberId']?.toString() ?? '';
+    if (passengerId.isNotEmpty && widget.bookingId != null) {
+      final billDetails = {
+        'tripId': meter.tripId,
+        'distanceKm': meter.totalDistanceKm,
+        'waitingTimeSec': meter.waitingTimeSeconds,
+        'totalFare': meter.totalFare,
+        'pickupTime': meter.startTime?.toIso8601String(),
+        'endTime': meter.endTime?.toIso8601String(),
+        'paymentStatus': 'Collected',
+        'billSavedAt': FieldValue.serverTimestamp(),
+      };
+      
+      try {
+        await FirebaseFirestore.instance.collection('members').doc(passengerId).collection('my_bookings').doc(widget.bookingId!).set(billDetails, SetOptions(merge: true));
+        await FirebaseFirestore.instance.collection('all_bookings').doc(widget.bookingId!).set(billDetails, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint("Error saving bill to passenger: $e");
+      }
+
+      // 3. Show Rating Dialog
+      if (!mounted) return;
+      _showRatingDialog(passengerId, meter);
+    } else {
+      meter.resetMeter();
+      if (mounted) Navigator.pop(context);
+    }
+  }
+
+  void _showRatingDialog(String passengerId, MeterProvider meter) {
+    int currentRating = 5;
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Text("Rate Passenger", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("How was your passenger?"),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < currentRating ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                          size: 36,
+                        ),
+                        onPressed: () {
+                          setStateDialog(() {
+                            currentRating = index + 1;
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                ],
+              ),
+              actions: [
+                if (isSubmitting)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  ElevatedButton(
+                    onPressed: () async {
+                      setStateDialog(() => isSubmitting = true);
+                      
+                      try {
+                        await FirebaseFirestore.instance.collection('all_bookings').doc(widget.bookingId!).set({
+                          'passengerRating': currentRating,
+                        }, SetOptions(merge: true));
+                        
+                        if (passengerId.isNotEmpty) {
+                          await FirebaseFirestore.instance.collection('members').doc(passengerId).collection('my_bookings').doc(widget.bookingId!).set({
+                            'passengerRating': currentRating,
+                          }, SetOptions(merge: true));
+                          
+                          // Transaction to update passenger's overall rating
+                          final memberRef = FirebaseFirestore.instance.collection('members').doc(passengerId);
+                          await FirebaseFirestore.instance.runTransaction((transaction) async {
+                            final snapshot = await transaction.get(memberRef);
+                            if (snapshot.exists) {
+                              final data = snapshot.data()!;
+                              double currentSum = (data['ratingSum'] ?? 0.0).toDouble();
+                              int currentCount = (data['ratingCount'] ?? 0).toInt();
+                              
+                              currentSum += currentRating;
+                              currentCount += 1;
+                              double newRating = currentSum / currentCount;
+                              
+                              transaction.update(memberRef, {
+                                'ratingSum': currentSum,
+                                'ratingCount': currentCount,
+                                'rating': double.parse(newRating.toStringAsFixed(1)),
+                              });
+                            }
+                          });
+                        }
+                      } catch (e) {
+                        debugPrint("Error updating passenger rating: $e");
+                      }
+                      
+                      meter.resetMeter();
+                      if (context.mounted) {
+                        Navigator.pop(context); // Close dialog
+                        Navigator.pop(context); // Go back to Home
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.black, minimumSize: const Size(double.infinity, 50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                    child: const Text("SUBMIT RATING", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  )
+              ],
+            );
+          }
+        );
+      }
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -195,11 +330,10 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
                       
                       // Metrics
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildSmallMetric("Distance", "${meter.totalDistanceKm.toStringAsFixed(2)} km"),
-                          _buildSmallMetric("Wait Time", "${(meter.waitingTimeSeconds / 60).floor()}m"),
-                          _buildSmallMetric("Fare", "LKR ${meter.totalFare.toStringAsFixed(2)}", isBold: true),
+                          Expanded(child: _buildSmallMetric("Distance", "${meter.totalDistanceKm.toStringAsFixed(2)} km")),
+                          Expanded(child: _buildSmallMetric("Wait Time", "${(meter.waitingTimeSeconds / 60).floor()}m")),
+                          Expanded(child: _buildSmallMetric("Fare", "LKR ${meter.totalFare.toStringAsFixed(2)}", isBold: true)),
                         ],
                       ),
                       
@@ -255,11 +389,7 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
                           padding: const EdgeInsets.symmetric(vertical: 20),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
-                        onPressed: () async {
-                          await meter.collectCash(membershipNo);
-                          meter.resetMeter();
-                          if (context.mounted) Navigator.pop(context); // Go back to home
-                        },
+                        onPressed: () => _collectCashAndRate(meter, membershipNo),
                         child: const Text("COLLECT CASH", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                       )
                     ],

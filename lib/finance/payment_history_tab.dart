@@ -25,44 +25,97 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
     return months[monthName.trim()] ?? 0;
   }
 
-  int _getLastPaidMonthNumber(List<dynamic> history) {
-    if (history.isEmpty) return 0;
-    int maxMonth = 0;
-    for (var record in history) {
-      int m = _getMonthNumber(record['month']?.toString() ?? "");
-      if (m > maxMonth) maxMonth = m;
-    }
-    return maxMonth;
-  }
+  DateTime _getPaidPeriod(Map<String, dynamic> record) {
+    int paidMonth = _getMonthNumber(record['month']?.toString() ?? "");
+    if (paidMonth == 0) return DateTime(2000, 1);
 
-  int _calculateArrears(int lastPaidMonth) {
-    if (lastPaidMonth == 0) return 0;
-
-    DateTime now = DateTime.now();
-    int currentMonth = now.month;
-    int targetMonth = currentMonth;
-
-    if (now.day <= 5) {
-      targetMonth -= 1;
+    // If an explicit year field exists, use it
+    if (record['year'] != null && record['year'].toString().isNotEmpty) {
+      int? explicitYear = int.tryParse(record['year'].toString());
+      if (explicitYear != null) {
+        return DateTime(explicitYear, paidMonth);
+      }
     }
 
-    int arrears = targetMonth - lastPaidMonth;
-    return arrears > 0 ? arrears : 0;
-  }
+    // Fallback: Infer year from the payment date
 
-  String _getNextPaymentDate(int lastPaidMonth) {
-    if (lastPaidMonth == 0) return "N/A";
+    String dateStr = record['date']?.toString() ?? "";
+    DateTime paymentDate = DateTime.now();
+    if (dateStr.isNotEmpty) {
+      try {
+        paymentDate = DateTime.parse(dateStr);
+      } catch (e) {
+        // ignore
+      }
+    }
 
-    DateTime now = DateTime.now();
-    int nextDueMonth = lastPaidMonth + 1;
-    int year = now.year;
+    int year = paymentDate.year;
 
-    if (nextDueMonth > 12) {
-      nextDueMonth = 1;
+    // If payment was made early in the year (Jan-Mar) for late last year (Oct-Dec)
+    if (paymentDate.month <= 3 && paidMonth >= 10) {
+      year -= 1;
+    }
+    // If payment was made late in the year (Oct-Dec) for early next year (Jan-Mar)
+    else if (paymentDate.month >= 10 && paidMonth <= 3) {
       year += 1;
     }
 
-    DateTime nextDate = DateTime(year, nextDueMonth, 5);
+    return DateTime(year, paidMonth);
+  }
+
+  DateTime? _getLastPaidPeriod(List<dynamic> history) {
+    if (history.isEmpty) return null;
+
+    DateTime? latestPeriod;
+
+    for (var rec in history) {
+      if (rec is Map<String, dynamic>) {
+        DateTime period = _getPaidPeriod(rec);
+        if (latestPeriod == null || period.isAfter(latestPeriod)) {
+          latestPeriod = period;
+        }
+      } else if (rec is Map) {
+        Map<String, dynamic> castedRec = Map<String, dynamic>.from(rec);
+        DateTime period = _getPaidPeriod(castedRec);
+        if (latestPeriod == null || period.isAfter(latestPeriod)) {
+          latestPeriod = period;
+        }
+      }
+    }
+    return latestPeriod;
+  }
+
+  int _calculateArrears(DateTime? lastPaidPeriod) {
+    if (lastPaidPeriod == null) return 0;
+
+    DateTime now = DateTime.now();
+    int currentYear = now.year;
+    int currentMonth = now.month;
+
+    if (now.day <= 5) {
+      currentMonth -= 1;
+      if (currentMonth == 0) {
+        currentMonth = 12;
+        currentYear -= 1;
+      }
+    }
+
+    int arrears = ((currentYear - lastPaidPeriod.year) * 12) + (currentMonth - lastPaidPeriod.month);
+    return arrears > 0 ? arrears : 0;
+  }
+
+  String _getNextPaymentDate(DateTime? lastPaidPeriod) {
+    if (lastPaidPeriod == null) return "N/A";
+
+    int nextDueMonth = lastPaidPeriod.month + 1;
+    int nextDueYear = lastPaidPeriod.year;
+
+    if (nextDueMonth > 12) {
+      nextDueMonth = 1;
+      nextDueYear += 1;
+    }
+
+    DateTime nextDate = DateTime(nextDueYear, nextDueMonth, 5);
     return DateFormat('MMM 05, yyyy').format(nextDate);
   }
 
@@ -72,9 +125,9 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
     final List<dynamic> paymentHistory = widget.memberData['payment_history'] ?? [];
     final List<dynamic> pendingPayments = widget.memberData['pending_payments'] ?? [];
 
-    int lastPaidMonthNum = _getLastPaidMonthNumber(paymentHistory);
-    int arrearsMonths = _calculateArrears(lastPaidMonthNum);
-    String nextPaymentDate = _getNextPaymentDate(lastPaidMonthNum);
+    DateTime? lastPaidPeriod = _getLastPaidPeriod(paymentHistory);
+    int arrearsMonths = _calculateArrears(lastPaidPeriod);
+    String nextPaymentDate = _getNextPaymentDate(lastPaidPeriod);
 
     String healthStatus;
     String healthEmoji;
@@ -190,6 +243,12 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
             _buildSectionTitle("Pending Approvals"),
             const SizedBox(height: 12),
             ...pendingPayments.map((pending) {
+              Map<String, dynamic> pendingMap = pending is Map<String, dynamic> 
+                  ? pending 
+                  : Map<String, dynamic>.from(pending as Map);
+              DateTime pendingPeriod = _getPaidPeriod(pendingMap);
+              String pendingMonth = pendingMap['month']?.toString() ?? 'Unknown';
+
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
@@ -199,7 +258,7 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
                 ),
                 child: ListTile(
                   leading: const Icon(Icons.hourglass_top, color: Colors.orange),
-                  title: Text("${pending['month'] ?? 'Unknown'} Verification", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  title: Text("$pendingMonth ${pendingPeriod.year} Verification", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                   subtitle: const Text("Awaiting admin approval...", style: TextStyle(color: Colors.orange, fontSize: 13)),
                   trailing: const Text("Pending", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
                 ),
@@ -236,12 +295,20 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
                     dataRowMaxHeight: 65,
                     columnSpacing: 28,
                     columns: const [
-                      DataColumn(label: Text("Month", style: TextStyle(fontWeight: FontWeight.w900, color: Colors.blueGrey))),
+                      DataColumn(label: Text("Period", style: TextStyle(fontWeight: FontWeight.w900, color: Colors.blueGrey))),
                       DataColumn(label: Text("Date", style: TextStyle(fontWeight: FontWeight.w900, color: Colors.blueGrey))),
                       DataColumn(label: Text("Amount", style: TextStyle(fontWeight: FontWeight.w900, color: Colors.blueGrey))),
                       DataColumn(label: Text("Method", style: TextStyle(fontWeight: FontWeight.w900, color: Colors.blueGrey))),
                     ],
                     rows: paymentHistory.reversed.map((record) {
+                      Map<String, dynamic> recordMap = record is Map<String, dynamic> 
+                          ? record 
+                          : Map<String, dynamic>.from(record as Map);
+                      
+                      // 💡 ALUTH: මාසයයි අවුරුද්දයි දෙකම හරියටම ගන්නවා (Fallback logic එකත් එක්කම)
+                      DateTime paidPeriod = _getPaidPeriod(recordMap);
+                      String periodText = "${recordMap['month']?.toString() ?? '-'} ${paidPeriod.year}";
+
                       return DataRow(
                         cells: [
                           DataCell(
@@ -252,14 +319,14 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                  record['month']?.toString() ?? '-',
+                                  periodText,
                                   style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)
                               ),
                             ),
                           ),
-                          DataCell(Text(record['date']?.toString() ?? '-', style: const TextStyle(color: Colors.black87))),
-                          DataCell(Text("Rs. ${record['amount']?.toString() ?? '0'}", style: const TextStyle(fontWeight: FontWeight.bold))),
-                          DataCell(Text(record['type']?.toString() ?? '-', style: const TextStyle(color: Colors.grey))),
+                          DataCell(Text(recordMap['date']?.toString() ?? '-', style: const TextStyle(color: Colors.black87))),
+                          DataCell(Text("Rs. ${recordMap['amount']?.toString() ?? '0'}", style: const TextStyle(fontWeight: FontWeight.bold))),
+                          DataCell(Text(recordMap['type']?.toString() ?? '-', style: const TextStyle(color: Colors.grey))),
                         ],
                       );
                     }).toList(),

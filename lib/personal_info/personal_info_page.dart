@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/profile_provider.dart'; // 💡 අලුත් ProfileProvider එකට හැරෙව්වා
 import 'personal_details_tab.dart';
-import '../finance/member_bank_details_tab.dart';
+import 'member_bank_details_tab.dart';
 import 'member_registration_tab.dart';
 
 class PersonalInfoPage extends StatelessWidget {
@@ -11,20 +11,22 @@ class PersonalInfoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: Colors.grey.shade50,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          title: const Text("Personal Information",
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          title: Text("Personal Information",
+              style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
           centerTitle: true,
           elevation: 0,
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          bottom: const TabBar(
+          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+          iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
+          bottom: TabBar(
             labelColor: Colors.blue,
-            unselectedLabelColor: Colors.grey,
+            unselectedLabelColor: isDark ? Colors.grey[400] : Colors.grey,
             indicatorColor: Colors.blue,
             indicatorWeight: 3,
             tabs: [

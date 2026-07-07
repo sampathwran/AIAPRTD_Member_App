@@ -12,6 +12,9 @@ class RatingWidget extends StatelessWidget {
     // 💡 🎯 FIXED: ඩේටාබේස් එකෙන් එන 'rating' field එක ගන්නවා
     final dynamic rating = memberData['rating'];
     final String displayRating = (rating != null) ? rating.toString() : "0.0";
+    
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -21,7 +24,7 @@ class RatingWidget extends StatelessWidget {
           children: [
             Text(
                 displayRating,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF0F172A))
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: isDarkMode ? Colors.white : const Color(0xFF0F172A))
             ),
             const SizedBox(width: 2),
             const Icon(Icons.star_rounded, color: Colors.amber, size: 20),

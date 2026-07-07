@@ -5,14 +5,15 @@ class AppVolumePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text("App Usage & Volume", style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -23,9 +24,9 @@ class AppVolumePage extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(25),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(24),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5))],
+                boxShadow: [BoxShadow(color: isDarkMode ? Colors.black38 : Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5))],
               ),
               child: Column(
                 children: [
@@ -44,18 +45,18 @@ class AppVolumePage extends StatelessWidget {
             const SizedBox(height: 30),
 
             // Statistics Summary
-            _buildSection("Usage Statistics", [
-              _buildTile(Icons.speed, "Processing Speed", "High (Optimal)"),
-              _buildTile(Icons.data_usage, "Data Volume", "1.2 GB / 5 GB"),
-              _buildTile(Icons.history, "Request Count", "450 Requests"),
+            _buildSection(context, "Usage Statistics", [
+              _buildTile(context, Icons.speed, "Processing Speed", "High (Optimal)"),
+              _buildTile(context, Icons.data_usage, "Data Volume", "1.2 GB / 5 GB"),
+              _buildTile(context, Icons.history, "Request Count", "450 Requests"),
             ]),
 
             const SizedBox(height: 20),
 
             // Logs / Recent Activity
-            _buildSection("Recent Logs", [
-              _buildTile(Icons.sync, "Sync Completed", "2 mins ago"),
-              _buildTile(Icons.cloud_upload, "Data Uploaded", "15 mins ago"),
+            _buildSection(context, "Recent Logs", [
+              _buildTile(context, Icons.sync, "Sync Completed", "2 mins ago"),
+              _buildTile(context, Icons.cloud_upload, "Data Uploaded", "15 mins ago"),
             ]),
           ],
         ),
@@ -65,19 +66,21 @@ class AppVolumePage extends StatelessWidget {
 
   // --- Helper Widgets ---
 
-  Widget _buildSection(String title, List<Widget> children) {
+  Widget _buildSection(BuildContext context, String title, List<Widget> children) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 10, bottom: 8),
-          child: Text(title.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blueGrey, letterSpacing: 1.2)),
+          child: Text(title.toUpperCase(), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: isDarkMode ? Colors.grey[400] : Colors.blueGrey, letterSpacing: 1.2)),
         ),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5))],
+            boxShadow: [BoxShadow(color: isDarkMode ? Colors.black38 : Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5))],
           ),
           child: Column(children: children),
         ),
@@ -85,14 +88,16 @@ class AppVolumePage extends StatelessWidget {
     );
   }
 
-  Widget _buildTile(IconData icon, String title, String subtitle) {
+  Widget _buildTile(BuildContext context, IconData icon, String title, String subtitle) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
         child: Icon(icon, color: Colors.blue, size: 22),
       ),
-      title: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)),
+      title: Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDarkMode ? Colors.white : Colors.black87)),
       trailing: Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold)),
     );
   }
