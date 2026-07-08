@@ -1,10 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:intl/intl.dart';
 import '../providers/ads_provider.dart';
 import 'post_ad_page.dart';
 import 'ad_details_page.dart';
+import 'my_ads_page.dart';
+import 'sponsor_ad_widget.dart';
 
 class AdsPage extends StatefulWidget {
   const AdsPage({super.key});
@@ -21,13 +25,43 @@ class _AdsPageState extends State<AdsPage> {
   
   String? _selectedCategory;
   String? _selectedSubCategory;
-  List<String> _currentSubcategories = [];
+  List<dynamic> _currentSubcategories = [];
 
   String _sortBy = "Newest First";
   double? _userLat;
   double? _userLng;
 
+  List<Map<String, dynamic>> _sponsorAds = [];
+  StreamSubscription? _sponsorSub;
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch Sponsor Ads
+    final provider = Provider.of<AdsProvider>(context, listen: false);
+    _sponsorSub = provider.getSponsorAdsStream().listen((snapshot) {
+      if (mounted) {
+        setState(() {
+          _sponsorAds = snapshot.docs.map((d) {
+            var data = d.data() as Map<String, dynamic>;
+            data['id'] = d.id;
+            return data;
+          }).toList();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _sponsorSub?.cancel();
+    super.dispose();
+  }
+
   void _showFilterSheet() {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     String tempLocation = _locationQuery;
     double tempMin = _minPrice;
     double tempMax = _maxPrice;
@@ -36,6 +70,7 @@ class _AdsPageState extends State<AdsPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: theme.scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
       builder: (context) {
         return StatefulBuilder(
@@ -105,7 +140,6 @@ class _AdsPageState extends State<AdsPage> {
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
                       onPressed: () async {
                         if (tempSortBy == "Nearest First" && _userLat == null) {
-                          // Try getting location
                           final provider = Provider.of<AdsProvider>(context, listen: false);
                           final res = await provider.getCurrentLocation();
                           if (res['success'] == true && mounted) {
@@ -114,7 +148,7 @@ class _AdsPageState extends State<AdsPage> {
                               _userLng = res['lng'];
                             });
                           } else if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Could not get location for Nearest First. ${res['error']}")));
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Could not get location. ${res['error']}")));
                             tempSortBy = "Newest First";
                           }
                         }
@@ -142,61 +176,6 @@ class _AdsPageState extends State<AdsPage> {
     );
   }
 
-  List<Map<String, dynamic>> _getDummyAds() {
-    return List.generate(10, (index) {
-      return {
-        'id': 'dummy_$index',
-        'title': 'Premium Item ${index + 1}',
-        'price': '${(index + 1) * 15000}',
-        'address': index % 2 == 0 ? 'Colombo, Sri Lanka' : 'Kandy, Sri Lanka',
-        'imageUrls': [
-          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=200',
-          'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=200'
-        ],
-        'category': 'Electronics',
-        'subcategory': index % 2 == 0 ? 'Computers' : 'Mobile Phones',
-        'lat': index % 2 == 0 ? 6.9271 : 7.2906, 
-        'lng': index % 2 == 0 ? 79.8612 : 80.6337,
-        'createdAt': Timestamp.fromDate(DateTime.now().subtract(Duration(days: index))),
-      };
-    });
-  }
-
-  List<Map<String, dynamic>> _getDummyCategories() {
-    return [
-      {
-        'name': 'Electronics',
-        'imageUrl': 'https://img.icons8.com/color/96/000000/electronics.png',
-        'subcategories': ['Mobile Phones', 'Computers', 'TVs', 'Audio']
-      },
-      {
-        'name': 'Vehicles',
-        'imageUrl': 'https://img.icons8.com/color/96/000000/car--v1.png',
-        'subcategories': ['Cars', 'Motorcycles', 'Three Wheelers', 'Vans']
-      },
-      {
-        'name': 'Property',
-        'imageUrl': 'https://img.icons8.com/color/96/000000/house.png',
-        'subcategories': ['Land', 'Houses', 'Apartments', 'Commercial']
-      },
-      {
-        'name': 'Services',
-        'imageUrl': 'https://img.icons8.com/color/96/000000/service.png',
-        'subcategories': ['Education', 'Repairs', 'Events', 'Health']
-      },
-      {
-        'name': 'Fashion',
-        'imageUrl': 'https://img.icons8.com/color/96/000000/t-shirt.png',
-        'subcategories': ['Men', 'Women', 'Kids', 'Watches']
-      },
-      {
-        'name': 'Sports',
-        'imageUrl': 'https://img.icons8.com/color/96/000000/dumbbell.png',
-        'subcategories': ['Fitness', 'Outdoor', 'Equipment', 'Bicycles']
-      },
-    ];
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -218,6 +197,15 @@ class _AdsPageState extends State<AdsPage> {
           ),
         ),
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const MyAdsPage()));
+            },
+            tooltip: "My Ads",
+          )
+        ],
       ),
       body: Column(
         children: [
@@ -264,9 +252,9 @@ class _AdsPageState extends State<AdsPage> {
 
           const SizedBox(height: 10),
 
-          // 2. Categories (2 Rows Horizontal Scroll)
+          // 2. Categories (Horizontal Scroll)
           SizedBox(
-            height: 220,
+            height: 120,
             child: StreamBuilder<QuerySnapshot>(
               stream: context.read<AdsProvider>().getCategoriesStream(),
               builder: (context, snapshot) {
@@ -277,26 +265,22 @@ class _AdsPageState extends State<AdsPage> {
                 List<Map<String, dynamic>> catList = [];
                 if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
                   catList = snapshot.data!.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
-                } else {
-                  // Fallback to dummy categories for UI testing
-                  catList = _getDummyCategories();
+                  catList.sort((a, b) => (a['order'] ?? 999).compareTo(b['order'] ?? 999));
                 }
 
-                return GridView.builder(
+                if (catList.isEmpty) {
+                  return const Center(child: Text("No categories found", style: TextStyle(color: Colors.grey)));
+                }
+
+                return ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2, 
-                    mainAxisSpacing: 15,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: 1.1, 
-                  ),
                   itemCount: catList.length,
                   itemBuilder: (context, index) {
                     final catData = catList[index];
                     final catName = catData['name'] ?? 'Unknown';
                     final catImage = catData['imageUrl'] ?? 'https://via.placeholder.com/100';
-                    final subCats = (catData['subcategories'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+                    final subCats = catData['subcategories'] as List<dynamic>? ?? [];
                     final isSelected = _selectedCategory == catName;
 
                     return GestureDetector(
@@ -313,38 +297,45 @@ class _AdsPageState extends State<AdsPage> {
                           }
                         });
                       },
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: isSelected ? Colors.purpleAccent : Colors.transparent,
-                                width: 3,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 15),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isSelected ? Colors.purpleAccent : Colors.transparent,
+                                  width: 3,
+                                ),
+                                boxShadow: [
+                                  if (!isSelected) BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 5)
+                                ]
                               ),
-                              boxShadow: [
-                                if (!isSelected) BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 5)
-                              ]
+                              child: CircleAvatar(
+                                radius: 30,
+                                backgroundImage: NetworkImage(catImage),
+                                backgroundColor: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
+                              ),
                             ),
-                            child: CircleAvatar(
-                              radius: 30,
-                              backgroundImage: NetworkImage(catImage),
-                              backgroundColor: Colors.grey.shade200,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            catName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              color: isSelected ? Colors.purpleAccent : theme.textTheme.bodyMedium?.color,
-                            ),
-                          )
-                        ],
+                            const SizedBox(height: 5),
+                            SizedBox(
+                              width: 70,
+                              child: Text(
+                                catName,
+                                maxLines: 1,
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  color: isSelected ? Colors.purpleAccent : theme.textTheme.bodyMedium?.color,
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -356,28 +347,39 @@ class _AdsPageState extends State<AdsPage> {
           // 3. Subcategories (Horizontal Scroll)
           if (_currentSubcategories.isNotEmpty)
             Container(
-              height: 50,
+              height: 60,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 itemCount: _currentSubcategories.length,
                 itemBuilder: (context, index) {
                   final sub = _currentSubcategories[index];
-                  final isSelected = _selectedSubCategory == sub;
+                  String name = '';
+                  String iconUrl = '';
+                  
+                  if (sub is String) {
+                    name = sub;
+                  } else if (sub is Map) {
+                    name = sub['name'] ?? '';
+                    iconUrl = sub['iconUrl'] ?? '';
+                  }
+
+                  final isSelected = _selectedSubCategory == name;
                   return Padding(
                     padding: const EdgeInsets.only(right: 10),
                     child: ChoiceChip(
-                      label: Text(sub),
+                      avatar: iconUrl.isNotEmpty ? Image.network(iconUrl, width: 24, height: 24) : null,
+                      label: Text(name),
                       selected: isSelected,
                       selectedColor: Colors.purpleAccent.withValues(alpha: 0.2),
                       checkmarkColor: Colors.purple,
                       labelStyle: TextStyle(
-                        color: isSelected ? Colors.purple : Colors.black87,
+                        color: isSelected ? Colors.purpleAccent : (isDarkMode ? Colors.white70 : Colors.black87),
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                       onSelected: (selected) {
                         setState(() {
-                          _selectedSubCategory = selected ? sub : null;
+                          _selectedSubCategory = selected ? name : null;
                         });
                       },
                     ),
@@ -399,39 +401,56 @@ class _AdsPageState extends State<AdsPage> {
                 
                 List<Map<String, dynamic>> adList = [];
                 
-                // Add Firebase Ads
                 if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
                   for (var doc in snapshot.data!.docs) {
                     var data = doc.data() as Map<String, dynamic>;
                     data['id'] = doc.id;
+                    
+                    // Filter out ads that were sold > 12 hours ago
+                    if (data['status'] == 'sold' && data['soldAt'] != null) {
+                      final soldAt = (data['soldAt'] as Timestamp).toDate();
+                      if (DateTime.now().difference(soldAt).inHours > 12) {
+                        continue; // Skip this ad
+                      }
+                    }
+                    
                     adList.add(data);
                   }
-                }
 
-                // Append Dummy Ads for UI Visualization if needed
-                if (adList.isEmpty) {
-                  adList.addAll(_getDummyAds());
+                  // Sort locally since we removed orderBy from Firestore to avoid composite index error
+                  adList.sort((a, b) {
+                    final aTime = a['createdAt'] as Timestamp?;
+                    final bTime = b['createdAt'] as Timestamp?;
+                    if (aTime == null && bTime == null) return 0;
+                    if (aTime == null) return 1;
+                    if (bTime == null) return -1;
+                    return bTime.compareTo(aTime);
+                  });
                 }
 
                 // Apply Local Filters
                 adList = adList.where((data) {
                   final title = (data['title'] ?? '').toString().toLowerCase();
                   final address = (data['address'] ?? '').toString().toLowerCase();
-                  final priceStr = data['price'] ?? '0';
-                  final price = double.tryParse(priceStr.toString()) ?? 0;
+                  final priceStr = data['price']?.toString() ?? '0';
+                  String formattedPrice = priceStr;
+                  try {
+                    formattedPrice = NumberFormat.decimalPattern().format(double.parse(priceStr));
+                  } catch (_) {}
+                  final price = double.tryParse(priceStr) ?? 0;
                   final category = data['category'] ?? '';
                   final subcategory = data['subcategory'] ?? '';
 
                   // Subcategory Match
                   if (_selectedSubCategory != null && subcategory != _selectedSubCategory) return false;
-                  // Selected Category Match (for dummy ads since stream already filters firebase ads)
-                  if (_selectedCategory != null && category != _selectedCategory) return false;
                   // Search Query
                   if (_searchQuery.isNotEmpty && !title.contains(_searchQuery)) return false;
                   // Location Query
                   if (_locationQuery.isNotEmpty && !address.contains(_locationQuery)) return false;
                   // Price Range
                   if (price < _minPrice || price > _maxPrice) return false;
+                    
+                  data['formattedPrice'] = formattedPrice;
 
                   return true;
                 }).toList();
@@ -465,7 +484,7 @@ class _AdsPageState extends State<AdsPage> {
 
                 if (adList.isEmpty) {
                   return const Center(
-                    child: Text("No ads matching your filters.", style: TextStyle(color: Colors.grey)),
+                    child: Text("No ads matching your criteria.", style: TextStyle(color: Colors.grey)),
                   );
                 }
 
@@ -477,10 +496,22 @@ class _AdsPageState extends State<AdsPage> {
                     mainAxisSpacing: 16,
                     childAspectRatio: 0.75, 
                   ),
-                  itemCount: adList.length,
+                  itemCount: adList.length + (adList.length ~/ 4), // Add space for Sponsor Ads (1 every 4)
                   itemBuilder: (context, index) {
-                    final ad = adList[index];
+                    // Determine if this index should be a sponsor ad
+                    if ((index + 1) % 5 == 0 && _sponsorAds.isNotEmpty) {
+                      // It's a sponsor ad! We cycle through the available sponsor ads.
+                      int sponsorIndex = ((index + 1) ~/ 5 - 1) % _sponsorAds.length;
+                      return SponsorAdWidget(sponsorAd: _sponsorAds[sponsorIndex]);
+                    }
+
+                    // Otherwise, calculate the actual ad index
+                    int adIndex = index - (index ~/ 5);
+                    if (adIndex >= adList.length) return const SizedBox.shrink();
+
+                    final ad = adList[adIndex];
                     final docId = ad['id'] as String;
+                    final isSold = ad['status'] == 'sold';
                     
                     // Handle image fallback
                     String thumbUrl = 'https://via.placeholder.com/150';
@@ -504,54 +535,90 @@ class _AdsPageState extends State<AdsPage> {
                             BoxShadow(color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.05), blurRadius: 10, offset: const Offset(0, 5))
                           ],
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Stack(
                           children: [
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-                                  image: DecorationImage(
-                                    image: NetworkImage(thumbUrl),
-                                    fit: BoxFit.cover,
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                                      image: DecorationImage(
+                                        image: NetworkImage(thumbUrl),
+                                        fit: BoxFit.cover,
+                                        colorFilter: isSold ? const ColorFilter.mode(Colors.grey, BlendMode.saturation) : null,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    ad['title'] ?? '',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    "Rs ${ad['price'] ?? ''}",
-                                    style: const TextStyle(color: Colors.purpleAccent, fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Row(
+                                Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Icon(Icons.location_on, size: 12, color: Colors.grey),
-                                      const SizedBox(width: 4),
-                                      Expanded(
+                                      Text(
+                                        ad['title'] ?? '',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(fontWeight: FontWeight.bold, decoration: isSold ? TextDecoration.lineThrough : null),
+                                      ),
+                                      const SizedBox(height: 5),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.green.withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
                                         child: Text(
-                                          ad['address'] ?? 'No Location',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(fontSize: 10, color: Colors.grey),
+                                          "Rs. ${ad['formattedPrice'] ?? ad['price']}",
+                                          style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 14),
                                         ),
                                       ),
+                                      const SizedBox(height: 5),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Row(
+                                              children: [
+                                                const Icon(Icons.location_on, size: 12, color: Colors.grey),
+                                                const SizedBox(width: 4),
+                                                Expanded(
+                                                  child: Text(
+                                                    ad['address'] ?? 'No Location',
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.visibility, size: 12, color: Colors.blueAccent),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                "${ad['views'] ?? 0}",
+                                                style: const TextStyle(fontSize: 10, color: Colors.blueAccent, fontWeight: FontWeight.bold),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      )
                                     ],
-                                  )
-                                ],
-                              ),
+                                  ),
+                                ),
+                              ],
                             ),
+                            if (isSold)
+                              Container(
+                                decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(15)),
+                                child: const Center(
+                                  child: Text("SOLD", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                                ),
+                              ),
                           ],
                         ),
                       ),

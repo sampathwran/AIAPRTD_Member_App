@@ -41,14 +41,19 @@ Map<String, dynamic> checkMembershipFeeStatus(Map<String, dynamic>? data) {
 
   for (var payment in paymentHistory) {
     if (payment is Map) {
-      final String pMonth = (payment['month'] ?? '').toString().toLowerCase();
-      final String pYear = (payment['year'] ?? '').toString();
-      final String pReason = (payment['reason'] ?? '').toString().toLowerCase();
+      final String pMonth = (payment['month'] ?? '').toString().trim().toLowerCase();
+      final String pYear = (payment['year'] ?? '').toString().trim();
+      final String pReason = (payment['reason'] ?? '').toString().trim().toLowerCase();
 
-      // 🎯 වත්මන් මාසය සමානද, අවුරුද්ද සමානද, සහ reason එක 'monthly membership fee' ද කියා බලනවා
+      // 🎯 වත්මන් මාසය සමානද, අවුරුද්ද සමානද, සහ reason එක membership එකට අදාලද කියලා බලනවා
+      bool isMembershipPayment = pReason.isEmpty || 
+                                 pReason.contains('membership') || 
+                                 pReason.contains('fee') || 
+                                 pReason.contains('monthly');
+
       if (pMonth == currentMonthName.toLowerCase() &&
           pYear == currentYearStr &&
-          pReason.contains('monthly membership fee')) {
+          isMembershipPayment) {
         hasPaidForCurrentMonth = true;
         break; // ගෙවීම හමු වූ නිසා ලූප් එක නතර කරනවා
       }

@@ -237,7 +237,7 @@ class _ActiveBookingPageState extends State<ActiveBookingPage> {
       if (passengerId.isNotEmpty) {
         await FirebaseFirestore.instance.collection('members').doc(passengerId).collection('my_bookings').doc(widget.bookingId).set(updates, SetOptions(merge: true));
         
-        // Update dayly_trips if completed
+        // Update booking_hires if completed
         if (newState == 'completed') {
           DateTime? createdAt;
           if (widget.bookingData['timestamp'] is Timestamp) {
@@ -247,8 +247,25 @@ class _ActiveBookingPageState extends State<ActiveBookingPage> {
           }
           if (createdAt != null) {
             String dateStr = "${createdAt.year}.${createdAt.month.toString().padLeft(2, '0')}.${createdAt.day.toString().padLeft(2, '0')}";
-            // ignore: spell_check
-            await FirebaseFirestore.instance.collection('dayly_trips').doc(dateStr).collection(passengerId).doc(widget.bookingId).set(updates, SetOptions(merge: true)).catchError((e) {});
+            
+            // Get driver's membership number
+            String? driverMembershipNo = Provider.of<ProfileProvider>(context, listen: false).memberData?['membershipNo'];
+            
+            if (driverMembershipNo != null && driverMembershipNo.isNotEmpty) {
+              // Combine full booking data with updates
+              Map<String, dynamic> fullCompletedData = Map.from(widget.bookingData);
+              updates.forEach((key, value) {
+                fullCompletedData[key] = value;
+              });
+              
+              await FirebaseFirestore.instance
+                  .collection('booking_hires')
+                  .doc(dateStr)
+                  .collection(driverMembershipNo)
+                  .doc(widget.bookingId)
+                  .set(fullCompletedData, SetOptions(merge: true))
+                  .catchError((e) => debugPrint("Error saving to booking_hires: $e"));
+            }
           }
         }
       }

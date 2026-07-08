@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'notification_service.dart';
 
 // ==========================================
 // 🎯 PROVIDERS
@@ -15,6 +16,7 @@ import 'providers/payment_provider.dart';
 import 'providers/booking_provider.dart'; // 💡 අලුත් BookingProvider එක මෙතනට දැම්මා
 import 'providers/meter_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/earnings_provider.dart';
 
 // ==========================================
 // 📄 PAGES
@@ -47,6 +49,9 @@ void main() async {
     debugPrint("Firebase initialization error: $e");
   }
 
+  // Initialize Local Notifications
+  await NotificationService().init();
+
   runApp(
     MultiProvider(
       providers: [
@@ -59,6 +64,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => MeterProvider()),
         ChangeNotifierProvider(create: (_) => AdsProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => EarningsProvider()),
       ],
       child: const MyApp(),
     ),

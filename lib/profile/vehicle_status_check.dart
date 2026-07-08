@@ -19,14 +19,19 @@ Map<String, dynamic> checkMemberSystemStatus(Map<String, dynamic>? memberData) {
       memberData['documents'] ?? memberData['complianceDocuments'];
 
   if (rawDocuments is List) {
-    for (final String requiredDoc in requiredComplianceDocs) {
-      // Find the document in the list by checking the title field
-      final item = rawDocuments.firstWhere(
-        (doc) => doc is Map && doc['title'] == requiredDoc,
-        orElse: () => null,
-      );
+    for (int i = 0; i < requiredComplianceDocs.length; i++) {
+      final String requiredDoc = requiredComplianceDocs[i];
 
-      if (item == null) {
+      if (i >= rawDocuments.length) {
+        return {
+          'isActive': false,
+          'reason': '$requiredDoc not uploaded',
+        };
+      }
+
+      final item = rawDocuments[i];
+
+      if (item == null || item is! Map) {
         return {
           'isActive': false,
           'reason': '$requiredDoc not uploaded',
@@ -35,6 +40,13 @@ Map<String, dynamic> checkMemberSystemStatus(Map<String, dynamic>? memberData) {
 
       final String status =
           item['status']?.toString().trim().toLowerCase() ?? 'empty';
+
+      if (status == 'empty') {
+        return {
+          'isActive': false,
+          'reason': '$requiredDoc not uploaded',
+        };
+      }
 
       if (status == 'pending') {
         return {

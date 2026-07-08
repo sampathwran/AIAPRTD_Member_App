@@ -67,10 +67,10 @@ class PaymentProvider with ChangeNotifier {
         'submittedAt': DateTime.now().toIso8601String(),
       };
 
-      await _firestore.collection('payment_slip').doc(membershipNo).set({
+      await _firestore.collection('app_membership_fee').doc(membershipNo).set({
         'membershipNo': membershipNo,
         'lastUpdated': FieldValue.serverTimestamp(),
-        'payment_history': FieldValue.arrayUnion([newPaymentRecord]),
+        'pending_payments': FieldValue.arrayUnion([newPaymentRecord]),
       }, SetOptions(merge: true));
 
       _isLoading = false;

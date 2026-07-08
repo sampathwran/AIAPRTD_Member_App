@@ -1,9 +1,11 @@
 // ignore_for_file: spell_check_on_languages, spell_check_on_word
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../profile/profile_image_widget.dart';
 import '../parking/parking_icon_widget.dart';
 import '../income/daily_income_widget.dart';
+import '../providers/theme_provider.dart';
 
 class HomeHeader extends StatefulWidget {
   final User? user;
@@ -18,6 +20,13 @@ class _HomeHeaderState extends State<HomeHeader> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
+    
+    // Premium Colors: Changed light mode from pure white to a sleek, slightly dark/glassy blue-grey
+    final bgColor = isDark ? const Color(0xff1B2735) : const Color(0xFFF0F3F8); // Very light greyish-blue instead of pure white
+    final shadowColor = isDark ? Colors.black.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.08);
+    final borderColor = isDark ? Colors.white12 : Colors.blueGrey.withValues(alpha: 0.1);
+
     return Container(
       margin: const EdgeInsets.only(top: 10),
       child: Row(
@@ -34,10 +43,11 @@ class _HomeHeaderState extends State<HomeHeader> {
               padding: const EdgeInsets.all(2.5), // 💡 ෆොටෝ එක වටේට ලස්සන සුදු රේඛාවක්
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white,
+                color: bgColor,
+                border: Border.all(color: borderColor),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
+                    color: shadowColor,
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -56,13 +66,14 @@ class _HomeHeaderState extends State<HomeHeader> {
           Expanded(
             child: Container(
               height: 54,
-              padding: const EdgeInsets.only(left: 6, right: 16),
+              padding: const EdgeInsets.only(left: 6, right: 6), // 💡 Padding වෙනස් කළා swipe කරන්න ලේසි වෙන්න
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: bgColor,
+                border: Border.all(color: borderColor),
                 borderRadius: BorderRadius.circular(30),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: shadowColor,
                     blurRadius: 12,
                     offset: const Offset(0, 5),
                   ),
@@ -76,14 +87,15 @@ class _HomeHeaderState extends State<HomeHeader> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
+                      color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.5),
                       shape: BoxShape.circle,
+                      border: Border.all(color: isDark ? Colors.white12 : Colors.white),
                     ),
                     child: IconButton(
                       padding: EdgeInsets.zero,
                       icon: Icon(
                         _isIncomeVisible ? Icons.visibility_rounded : Icons.visibility_off_rounded,
-                        color: Colors.grey.shade600,
+                        color: isDark ? Colors.grey.shade400 : Colors.blueGrey.shade600,
                         size: 20,
                       ),
                       onPressed: () {
@@ -93,21 +105,21 @@ class _HomeHeaderState extends State<HomeHeader> {
                       },
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 4),
 
                   Expanded(
-                    child: Center(
-                      child: _isIncomeVisible
-                          ? const DailyIncomeWidget()
-                          : const Text(
-                        "Rs. ••••••",
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF10B981) // 💡 ලස්සනම කොළ පාටක්
-                        ),
-                      ),
-                    ),
+                    child: _isIncomeVisible
+                        ? const DailyIncomeWidget()
+                        : Center(
+                            child: Text(
+                              "Rs. ••••••",
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  color: isDark ? const Color(0xFF34D399) : const Color(0xFF10B981) // 💡 ලස්සනම කොළ පාටක්
+                              ),
+                            ),
+                          ),
                   ),
                 ],
               ),
@@ -122,11 +134,12 @@ class _HomeHeaderState extends State<HomeHeader> {
             width: 54,
             height: 54,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: bgColor,
+              border: Border.all(color: borderColor),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.blue.withValues(alpha: 0.15), // 💡 Parking අයිකන් එකට ගැලපෙන ලා නිල් පාට Shadow එකක්
+                  color: isDark ? Colors.blue.withValues(alpha: 0.3) : Colors.blue.withValues(alpha: 0.15), 
                   blurRadius: 12,
                   offset: const Offset(0, 5),
                 ),
@@ -138,7 +151,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                   SnackBar(
                     content: const Text(
                         "Parking Feature Coming Soon! 🅿️",
-                        style: TextStyle(fontWeight: FontWeight.bold)
+                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)
                     ),
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -148,6 +161,10 @@ class _HomeHeaderState extends State<HomeHeader> {
               ),
             ),
           ),
+          // ==========================================================
+          // 🔔 4. NOTIFICATION BELL SECTION (REMOVED: Moved to bubble)
+          // ==========================================================
+          const SizedBox(width: 12),
         ],
       ),
     );

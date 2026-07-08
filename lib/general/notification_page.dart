@@ -1,68 +1,216 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+import '../providers/profile_provider.dart';
 
 class NotificationPage extends StatelessWidget {
   const NotificationPage({super.key});
 
+  String _formatTime(Timestamp? timestamp) {
+    if (timestamp == null) return "Just now";
+    final now = DateTime.now();
+    final date = timestamp.toDate();
+    final diff = now.difference(date);
+
+    if (diff.inDays > 0) {
+      if (diff.inDays == 1) return "Yesterday";
+      if (diff.inDays < 7) return "${diff.inDays} days ago";
+      return DateFormat('MMM dd').format(date);
+    } else if (diff.inHours > 0) {
+      return "${diff.inHours}h ago";
+    } else if (diff.inMinutes > 0) {
+      return "${diff.inMinutes}m ago";
+    } else {
+      return "Just now";
+    }
+  }
+
+  void _markAsRead(String docId, String memberId) {
+    FirebaseFirestore.instance.collection('notifications').doc(docId).update({
+      'readBy': FieldValue.arrayUnion([memberId])
+    }).catchError((e) => debugPrint("Failed to mark as read: $e"));
+  }
+
+  void _markAllAsRead(List<QueryDocumentSnapshot> docs, String memberId) {
+    final batch = FirebaseFirestore.instance.batch();
+    for (var doc in docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final readBy = List<String>.from(data['readBy'] ?? []);
+      if (!readBy.contains(memberId)) {
+        batch.update(doc.reference, {
+          'readBy': FieldValue.arrayUnion([memberId])
+        });
+      }
+    }
+    batch.commit().catchError((e) => debugPrint("Failed to mark all as read: $e"));
+  }
+
   @override
   Widget build(BuildContext context) {
-    // මේවා තමයි අපිට එන notification දත්ත (Backend එකෙන් එනවා නම් මේක List එකකින් ගන්න)
-    final List<Map<String, dynamic>> notifications = [
-      {"title": "New Ride Request", "body": "You have a new ride request from Colombo 07.", "time": "5m ago", "isRead": false},
-      {"title": "Membership Renewed", "body": "Your membership has been successfully renewed.", "time": "2h ago", "isRead": true},
-      {"title": "Payment Received", "body": "You received a payment of LKR 1,500.00.", "time": "1d ago", "isRead": true},
-      {"title": "App Update", "body": "A new version of the app is available.", "time": "2d ago", "isRead": true},
-    ];
+    final profileProv = context.watch<ProfileProvider>();
+    final memberId = profileProv.documentId;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    if (memberId.isEmpty) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: isDark ? theme.scaffoldBackgroundColor : Colors.grey.shade50,
       appBar: AppBar(
         title: const Text("Notifications", style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.done_all),
-            tooltip: "Mark all as read",
-          )
-        ],
+        backgroundColor: isDark ? theme.appBarTheme.backgroundColor : Colors.white,
+        foregroundColor: isDark ? Colors.white : Colors.black,
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        itemCount: notifications.length,
-        itemBuilder: (context, index) {
-          final note = notifications[index];
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: note['isRead'] ? Colors.white : Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: note['isRead'] ? Colors.grey.shade200 : Colors.blue.shade200),
-            ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              leading: CircleAvatar(
-                backgroundColor: note['isRead'] ? Colors.grey.shade200 : Colors.blue.shade100,
-                child: Icon(
-                  note['isRead'] ? Icons.notifications_none : Icons.notifications_active,
-                  color: note['isRead'] ? Colors.grey : Colors.blue,
-                ),
-              ),
-              title: Text(
-                note['title'],
-                style: TextStyle(fontWeight: note['isRead'] ? FontWeight.w500 : FontWeight.bold),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('notifications').snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+          if (snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}", style: TextStyle(color: isDark ? Colors.white : Colors.black)));
+
+          var docs = snapshot.data?.docs ?? [];
+          final now = DateTime.now();
+
+          // Filter documents
+          docs = docs.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            
+            // Check target
+            final targetType = data['targetType'];
+            final targetMembers = data['targetMembers'] as List<dynamic>? ?? [];
+            if (targetType != 'all' && !targetMembers.contains(memberId)) {
+              return false;
+            }
+
+            // Check if scheduled
+            final scheduledAt = data['scheduledAt'] as Timestamp?;
+            if (scheduledAt != null && scheduledAt.toDate().isAfter(now)) {
+              return false; // Not yet time to show
+            }
+
+            return true;
+          }).toList();
+
+          // Sort by effective date (scheduledAt or createdAt)
+          docs.sort((a, b) {
+            final dataA = a.data() as Map<String, dynamic>;
+            final dataB = b.data() as Map<String, dynamic>;
+            final timeA = (dataA['scheduledAt'] ?? dataA['createdAt']) as Timestamp?;
+            final timeB = (dataB['scheduledAt'] ?? dataB['createdAt']) as Timestamp?;
+            if (timeA == null || timeB == null) return 0;
+            return timeB.compareTo(timeA); // Descending
+          });
+
+          // Unread count check for Mark All As Read button
+          final hasUnread = docs.any((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final readBy = List<String>.from(data['readBy'] ?? []);
+            return !readBy.contains(memberId);
+          });
+
+          // Add Action manually to existing AppBar using Builder is tricky in Scaffold unless we re-build AppBar
+          // Instead we can just place a button if there are unread
+          
+          if (docs.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(note['body']),
-                  const SizedBox(height: 5),
-                  Text(note['time'], style: const TextStyle(fontSize: 11, color: Colors.blueGrey)),
+                  Icon(Icons.notifications_off_outlined, size: 80, color: isDark ? Colors.grey.shade700 : Colors.grey.shade300),
+                  const SizedBox(height: 16),
+                  Text("No Notifications", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.grey.shade400 : Colors.grey)),
+                  const SizedBox(height: 8),
+                  Text("You're all caught up!", style: TextStyle(color: isDark ? Colors.grey.shade500 : Colors.grey)),
                 ],
               ),
-            ),
+            );
+          }
+
+          return Column(
+            children: [
+              if (hasUnread)
+                Padding(
+                  padding: const EdgeInsets.only(right: 16, top: 8, bottom: 4),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () => _markAllAsRead(docs, memberId),
+                      icon: const Icon(Icons.done_all, size: 18, color: Colors.blue),
+                      label: const Text("Mark all as read", style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  itemCount: docs.length,
+                  itemBuilder: (context, index) {
+                    final doc = docs[index];
+                    final data = doc.data() as Map<String, dynamic>;
+                    
+                    final readBy = List<String>.from(data['readBy'] ?? []);
+                    final bool isRead = readBy.contains(memberId);
+                    final title = data['title'] ?? 'Notification';
+                    final body = data['body'] ?? '';
+                    final Timestamp? timeStamp = data['scheduledAt'] ?? data['createdAt'];
+
+                    return GestureDetector(
+                      onTap: () {
+                        if (!isRead) _markAsRead(doc.id, memberId);
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: isRead 
+                              ? (isDark ? theme.cardColor : Colors.white) 
+                              : (isDark ? Colors.blue.withOpacity(0.1) : Colors.blue.shade50),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isRead 
+                                ? (isDark ? Colors.grey.shade800 : Colors.grey.shade200) 
+                                : (isDark ? Colors.blue.shade800 : Colors.blue.shade200)
+                          ),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          leading: CircleAvatar(
+                            backgroundColor: isRead 
+                                ? (isDark ? Colors.grey.shade800 : Colors.grey.shade200) 
+                                : (isDark ? Colors.blue.shade800 : Colors.blue.shade100),
+                            child: Icon(
+                              isRead ? Icons.notifications_none : Icons.notifications_active,
+                              color: isRead 
+                                  ? (isDark ? Colors.grey.shade500 : Colors.grey) 
+                                  : (isDark ? Colors.blue.shade200 : Colors.blue),
+                            ),
+                          ),
+                          title: Text(
+                            title,
+                            style: TextStyle(
+                              fontWeight: isRead ? FontWeight.w500 : FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              Text(body, style: TextStyle(color: isDark ? Colors.grey.shade300 : Colors.black87)),
+                              const SizedBox(height: 8),
+                              Text(_formatTime(timeStamp), style: TextStyle(fontSize: 11, color: isDark ? Colors.grey.shade500 : Colors.blueGrey)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           );
         },
       ),

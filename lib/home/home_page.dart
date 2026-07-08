@@ -16,6 +16,8 @@ import 'home_header.dart';
 import 'home_footer.dart';
 import 'online_button_widget.dart';
 import 'widgets/meter/mini_meter_widget.dart';
+import 'notification_bell_widget.dart';
+import '../providers/theme_provider.dart';
 
 // 💡 ගොඩක් අඳුරු නැති, ඇහැට අමාරු නැති Neutral Grey Theme එක
 const String _mapStyle = '''

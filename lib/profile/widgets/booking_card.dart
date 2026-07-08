@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../../providers/theme_provider.dart';
 
 class BookingCard extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -9,6 +11,7 @@ class BookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
     String tripId = data['tripId'] ?? data['bookingId'] ?? 'N/A';
     String tripType = data['tripType'] ?? 'One way';
     String status = data['status'] ?? 'Unknown';
@@ -37,10 +40,13 @@ class BookingCard extends StatelessWidget {
     if (status.toLowerCase() == 'completed' || status.toLowerCase() == 'collected') statusColor = Colors.green;
     if (status.toLowerCase() == 'cancelled') statusColor = Colors.red;
 
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final secondaryTextColor = isDark ? Colors.grey.shade400 : Colors.grey.shade700;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xff1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -57,10 +63,14 @@ class BookingCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                tripId,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+              Expanded(
+                child: Text(
+                  tripId,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
@@ -79,33 +89,44 @@ class BookingCard extends StatelessWidget {
           
           // Date & Vehicle Row
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.calendar_month, size: 16, color: Colors.grey.shade600),
-                  const SizedBox(width: 4),
-                  Text(
-                    pickupTime != null ? DateFormat('MMM dd, yyyy - hh:mm a').format(pickupTime) : 'N/A',
-                    style: TextStyle(color: Colors.grey.shade700, fontSize: 13, fontWeight: FontWeight.w500),
-                  ),
-                ],
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_month, size: 16, color: isDark ? Colors.grey.shade500 : Colors.grey.shade600),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        pickupTime != null ? DateFormat('MMM dd, yyyy - hh:mm a').format(pickupTime) : 'N/A',
+                        style: TextStyle(color: secondaryTextColor, fontSize: 13, fontWeight: FontWeight.w500),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              Row(
-                children: [
-                  Icon(Icons.directions_car, size: 16, color: Colors.grey.shade600),
-                  const SizedBox(width: 4),
-                  Text(
-                    "$vehicleCategory ($tripType)",
-                    style: TextStyle(color: Colors.grey.shade700, fontSize: 13, fontWeight: FontWeight.w500),
-                  ),
-                ],
+              const SizedBox(width: 8),
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Icon(Icons.directions_car, size: 16, color: isDark ? Colors.grey.shade500 : Colors.grey.shade600),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        "$vehicleCategory ($tripType)",
+                        style: TextStyle(color: secondaryTextColor, fontSize: 13, fontWeight: FontWeight.w500),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Divider(height: 1, color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
           ),
           
           // Locations
@@ -115,7 +136,7 @@ class BookingCard extends StatelessWidget {
               Column(
                 children: [
                   const Icon(Icons.circle, color: Colors.blue, size: 12),
-                  Container(height: 20, width: 2, color: Colors.grey.shade300),
+                  Container(height: 20, width: 2, color: isDark ? Colors.grey.shade700 : Colors.grey.shade300),
                   const Icon(Icons.location_on, color: Colors.red, size: 14),
                 ],
               ),
@@ -126,14 +147,14 @@ class BookingCard extends StatelessWidget {
                   children: [
                     Text(
                       startAddress,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textColor),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 16),
                     Text(
                       endAddress,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textColor),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -148,14 +169,14 @@ class BookingCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text("Total Fare", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-                Text("LKR ${fare.toStringAsFixed(2)}", style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 16)),
+                Text("Total Fare", style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey, fontWeight: FontWeight.bold)),
+                Text("LKR ${fare.toStringAsFixed(2)}", style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 16)),
               ],
             ),
           ),

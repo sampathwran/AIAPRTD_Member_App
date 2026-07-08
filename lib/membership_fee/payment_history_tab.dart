@@ -2,10 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-// 💡 FIXED: අලුත් නම (PaymentHistoryTab) සහ StatefulWidget විදියට මාරු කළා
 class PaymentHistoryTab extends StatefulWidget {
   final Map<String, dynamic> memberData;
-  const PaymentHistoryTab({super.key, required this.memberData});
+  final bool isDark;
+  
+  const PaymentHistoryTab({super.key, required this.memberData, required this.isDark});
 
   @override
   State<PaymentHistoryTab> createState() => _PaymentHistoryTabState();
@@ -13,7 +14,7 @@ class PaymentHistoryTab extends StatefulWidget {
 
 class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
   // =========================================================================
-  // 💡 LOGIC & CALCULATION METHODS
+  // LOGIC & CALCULATION METHODS
   // =========================================================================
 
   int _getMonthNumber(String monthName) {
@@ -29,15 +30,12 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
     int paidMonth = _getMonthNumber(record['month']?.toString() ?? "");
     if (paidMonth == 0) return DateTime(2000, 1);
 
-    // If an explicit year field exists, use it
     if (record['year'] != null && record['year'].toString().isNotEmpty) {
       int? explicitYear = int.tryParse(record['year'].toString());
       if (explicitYear != null) {
         return DateTime(explicitYear, paidMonth);
       }
     }
-
-    // Fallback: Infer year from the payment date
 
     String dateStr = record['date']?.toString() ?? "";
     DateTime paymentDate = DateTime.now();
@@ -50,32 +48,19 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
     }
 
     int year = paymentDate.year;
-
-    // If payment was made early in the year (Jan-Mar) for late last year (Oct-Dec)
-    if (paymentDate.month <= 3 && paidMonth >= 10) {
-      year -= 1;
-    }
-    // If payment was made late in the year (Oct-Dec) for early next year (Jan-Mar)
-    else if (paymentDate.month >= 10 && paidMonth <= 3) {
-      year += 1;
-    }
+    if (paymentDate.month <= 3 && paidMonth >= 10) year -= 1;
+    else if (paymentDate.month >= 10 && paidMonth <= 3) year += 1;
 
     return DateTime(year, paidMonth);
   }
 
   DateTime? _getLastPaidPeriod(List<dynamic> history) {
     if (history.isEmpty) return null;
-
     DateTime? latestPeriod;
 
     for (var rec in history) {
-      if (rec is Map<String, dynamic>) {
-        DateTime period = _getPaidPeriod(rec);
-        if (latestPeriod == null || period.isAfter(latestPeriod)) {
-          latestPeriod = period;
-        }
-      } else if (rec is Map) {
-        Map<String, dynamic> castedRec = Map<String, dynamic>.from(rec);
+      if (rec is Map<String, dynamic> || rec is Map) {
+        Map<String, dynamic> castedRec = Map<String, dynamic>.from(rec as Map);
         DateTime period = _getPaidPeriod(castedRec);
         if (latestPeriod == null || period.isAfter(latestPeriod)) {
           latestPeriod = period;
@@ -87,7 +72,6 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
 
   int _calculateArrears(DateTime? lastPaidPeriod) {
     if (lastPaidPeriod == null) return 0;
-
     DateTime now = DateTime.now();
     int currentYear = now.year;
     int currentMonth = now.month;
@@ -106,7 +90,6 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
 
   String _getNextPaymentDate(DateTime? lastPaidPeriod) {
     if (lastPaidPeriod == null) return "N/A";
-
     int nextDueMonth = lastPaidPeriod.month + 1;
     int nextDueYear = lastPaidPeriod.year;
 
@@ -114,16 +97,15 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
       nextDueMonth = 1;
       nextDueYear += 1;
     }
-
     DateTime nextDate = DateTime(nextDueYear, nextDueMonth, 5);
     return DateFormat('MMM 05, yyyy').format(nextDate);
   }
 
   @override
   Widget build(BuildContext context) {
-    // 💡 FIXED: widget.memberData විදියට Data ගන්න ඕනේ
     final List<dynamic> paymentHistory = widget.memberData['payment_history'] ?? [];
     final List<dynamic> pendingPayments = widget.memberData['pending_payments'] ?? [];
+    final isDark = widget.isDark;
 
     DateTime? lastPaidPeriod = _getLastPaidPeriod(paymentHistory);
     int arrearsMonths = _calculateArrears(lastPaidPeriod);
@@ -156,20 +138,26 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
       healthPercent = 0.2;
     }
 
+    final sectionTitleColor = isDark ? Colors.blueGrey.shade300 : Colors.blueGrey;
+    final cardBgColor = isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white;
+    final cardBorderColor = isDark ? Colors.white12 : Colors.grey.shade200;
+    final textColor = isDark ? Colors.white : Colors.black87;
+
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ========================================================
-          // 🌟 PAYMENT BEHAVIOR CARD
+          // PAYMENT BEHAVIOR CARD
           // ========================================================
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardBgColor,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: cardBorderColor),
               boxShadow: [
                 BoxShadow(color: healthColor.withValues(alpha: 0.1), blurRadius: 15, offset: const Offset(0, 5))
               ],
@@ -180,7 +168,7 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("Payment Behavior", style: TextStyle(fontWeight: FontWeight.w900, color: Colors.blueGrey, fontSize: 13, letterSpacing: 1.0)),
+                    Text("Payment Behavior", style: TextStyle(fontWeight: FontWeight.w900, color: sectionTitleColor, fontSize: 13, letterSpacing: 1.0)),
                     Text(healthEmoji, style: const TextStyle(fontSize: 24)),
                   ],
                 ),
@@ -195,7 +183,7 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
                   child: LinearProgressIndicator(
                     value: healthPercent,
                     minHeight: 8,
-                    backgroundColor: Colors.grey.shade200,
+                    backgroundColor: isDark ? Colors.white12 : Colors.grey.shade200,
                     valueColor: AlwaysStoppedAnimation<Color>(healthColor),
                   ),
                 ),
@@ -206,7 +194,7 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
           const SizedBox(height: 20),
 
           // ========================================================
-          // 📊 DASHBOARD SECTION
+          // DASHBOARD SECTION
           // ========================================================
           Row(
             children: [
@@ -237,28 +225,46 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
           const SizedBox(height: 24),
 
           // ========================================================
-          // ⏳ PENDING PAYMENTS SECTION
+          // PENDING PAYMENTS SECTION
           // ========================================================
           if (pendingPayments.isNotEmpty) ...[
-            _buildSectionTitle("Pending Approvals"),
+            _buildSectionTitle("Pending Approvals", sectionTitleColor),
             const SizedBox(height: 12),
             ...pendingPayments.map((pending) {
-              Map<String, dynamic> pendingMap = pending is Map<String, dynamic> 
-                  ? pending 
-                  : Map<String, dynamic>.from(pending as Map);
-              DateTime pendingPeriod = _getPaidPeriod(pendingMap);
-              String pendingMonth = pendingMap['month']?.toString() ?? 'Unknown';
+              Map<String, dynamic> pendingMap = Map<String, dynamic>.from(pending as Map);
+              
+              String pendingMonthText = "";
+              String yearText = "";
+
+              if (pendingMap.containsKey('months')) {
+                List<dynamic> mList = pendingMap['months'] is List ? pendingMap['months'] : [];
+                pendingMonthText = mList.join(', ');
+                if (pendingMap.containsKey('paymentDate') && pendingMap['paymentDate'] != null) {
+                  try {
+                     DateTime pd = DateTime.parse(pendingMap['paymentDate'].toString());
+                     yearText = pd.year.toString();
+                  } catch (e) {
+                     yearText = DateTime.now().year.toString();
+                  }
+                } else {
+                  yearText = DateTime.now().year.toString();
+                }
+              } else {
+                DateTime pendingPeriod = _getPaidPeriod(pendingMap);
+                pendingMonthText = pendingMap['month']?.toString() ?? 'Unknown';
+                yearText = pendingPeriod.year.toString();
+              }
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
+                  color: isDark ? Colors.orange.withValues(alpha: 0.1) : Colors.orange.shade50,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.orange.shade200, width: 1.5),
                 ),
                 child: ListTile(
                   leading: const Icon(Icons.hourglass_top, color: Colors.orange),
-                  title: Text("$pendingMonth ${pendingPeriod.year} Verification", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  title: Text("$pendingMonthText $yearText Verification", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textColor)),
                   subtitle: const Text("Awaiting admin approval...", style: TextStyle(color: Colors.orange, fontSize: 13)),
                   trailing: const Text("Pending", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
                 ),
@@ -268,71 +274,74 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
           ],
 
           // ========================================================
-          // 📋 PAYMENT HISTORY TABLE
+          // PAYMENT HISTORY LIST
           // ========================================================
-          _buildSectionTitle("Payment History"),
+          _buildSectionTitle("Payment History", sectionTitleColor),
           const SizedBox(height: 12),
 
           if (paymentHistory.isEmpty)
-            _buildEmptyState()
+            _buildEmptyState(isDark)
           else
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 5))
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    headingRowColor: WidgetStateProperty.all(Colors.blue.shade50),
-                    dataRowMaxHeight: 65,
-                    columnSpacing: 28,
-                    columns: const [
-                      DataColumn(label: Text("Period", style: TextStyle(fontWeight: FontWeight.w900, color: Colors.blueGrey))),
-                      DataColumn(label: Text("Date", style: TextStyle(fontWeight: FontWeight.w900, color: Colors.blueGrey))),
-                      DataColumn(label: Text("Amount", style: TextStyle(fontWeight: FontWeight.w900, color: Colors.blueGrey))),
-                      DataColumn(label: Text("Method", style: TextStyle(fontWeight: FontWeight.w900, color: Colors.blueGrey))),
-                    ],
-                    rows: paymentHistory.reversed.map((record) {
-                      Map<String, dynamic> recordMap = record is Map<String, dynamic> 
-                          ? record 
-                          : Map<String, dynamic>.from(record as Map);
-                      
-                      // 💡 ALUTH: මාසයයි අවුරුද්දයි දෙකම හරියටම ගන්නවා (Fallback logic එකත් එක්කම)
-                      DateTime paidPeriod = _getPaidPeriod(recordMap);
-                      String periodText = "${recordMap['month']?.toString() ?? '-'} ${paidPeriod.year}";
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: paymentHistory.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                // Reverse the list
+                var record = paymentHistory[paymentHistory.length - 1 - index];
+                Map<String, dynamic> recordMap = Map<String, dynamic>.from(record as Map);
+                DateTime paidPeriod = _getPaidPeriod(recordMap);
+                String periodText = "${recordMap['month']?.toString() ?? '-'} ${paidPeriod.year}";
 
-                      return DataRow(
-                        cells: [
-                          DataCell(
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.shade50,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                  periodText,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)
-                              ),
-                            ),
-                          ),
-                          DataCell(Text(recordMap['date']?.toString() ?? '-', style: const TextStyle(color: Colors.black87))),
-                          DataCell(Text("Rs. ${recordMap['amount']?.toString() ?? '0'}", style: const TextStyle(fontWeight: FontWeight.bold))),
-                          DataCell(Text(recordMap['type']?.toString() ?? '-', style: const TextStyle(color: Colors.grey))),
-                        ],
-                      );
-                    }).toList(),
+                return Container(
+                  decoration: BoxDecoration(
+                    color: cardBgColor,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: cardBorderColor),
                   ),
-                ),
-              ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    leading: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.blue.withValues(alpha: 0.2) : Colors.blue.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.receipt_long, color: isDark ? Colors.blue.shade300 : Colors.blue),
+                    ),
+                    title: Text(
+                      periodText,
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textColor),
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Row(
+                        children: [
+                          Icon(Icons.calendar_today, size: 12, color: isDark ? Colors.grey.shade400 : Colors.grey),
+                          const SizedBox(width: 4),
+                          Text((recordMap['paymentDate']?.toString() ?? recordMap['date']?.toString() ?? '-').split('T').first.split(' ').first, style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "Rs. ${recordMap['amount']?.toString() ?? '0'}",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDark ? Colors.green.shade400 : Colors.green.shade700),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          recordMap['type']?.toString() ?? '-',
+                          style: TextStyle(fontSize: 11, color: isDark ? Colors.blueGrey.shade400 : Colors.blueGrey),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           const SizedBox(height: 20),
         ],
@@ -341,19 +350,19 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
   }
 
   // =========================================================================
-  // 💡 HELPER WIDGETS
+  // HELPER WIDGETS
   // =========================================================================
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, Color color) {
     return Text(
       title.toUpperCase(),
-      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Colors.blueGrey, letterSpacing: 1.2),
+      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: color, letterSpacing: 1.2),
     );
   }
 
   Widget _buildGradientCard({required String title, required String value, required IconData icon, required List<Color> colors}) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: colors, begin: Alignment.topLeft, end: Alignment.bottomRight),
         borderRadius: BorderRadius.circular(20),
@@ -369,31 +378,31 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
             decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
             child: Icon(icon, color: Colors.white, size: 24),
           ),
-          const SizedBox(height: 16),
-          Text(title, style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 12),
+          Text(title, style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+          Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(bool isDark) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200, style: BorderStyle.solid),
+        border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade200),
       ),
       child: Column(
         children: [
-          Icon(Icons.receipt_long, size: 60, color: Colors.grey.shade300),
+          Icon(Icons.receipt_long, size: 60, color: isDark ? Colors.grey.shade700 : Colors.grey.shade300),
           const SizedBox(height: 16),
-          const Text("No Payment History", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black54)),
+          Text("No Payment History", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : Colors.black54)),
           const SizedBox(height: 8),
-          const Text("Your payment records will appear here once approved.", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontSize: 13)),
+          Text("Your payment records will appear here once approved.", textAlign: TextAlign.center, style: TextStyle(color: isDark ? Colors.grey.shade500 : Colors.grey, fontSize: 13)),
         ],
       ),
     );

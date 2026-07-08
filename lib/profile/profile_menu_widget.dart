@@ -8,13 +8,12 @@ import '../personal_info/personal_info_page.dart';
 import '../vehicle_info/vehicle_info_page.dart';
 import 'package:provider/provider.dart';
 import '../providers/profile_provider.dart';
-import '../finance/earning_page.dart';
-import '../finance/membership_fee_page.dart';
+import '../earnings/earnings_page.dart';
+import '../membership_fee/membership_fee_page.dart';
 import '../finance/app_usage_page.dart';
 import '../finance/saving_page.dart';
 // 💡 අලුතින් හදපු My Booking Page එක Import කළා
 import 'my_booking_page.dart';
-import '../general/ride_history_page.dart';
 import '../general/member_benefits_page.dart';
 import '../general/support_tickets_page.dart';
 import '../general/votes_page.dart';
@@ -38,27 +37,26 @@ class ProfileMenuWidget extends StatelessWidget {
       child: Column(
         children: [
           _buildSection(context, "Personal Information", [
-            _buildTile(Icons.person_outline, "Personal Information", () => _nav(context, const PersonalInfoPage())),
-            _buildTile(Icons.directions_car_outlined, "Vehicle Information", () {
+            _buildTile(context, Icons.person_outline, "Personal Information", () => _nav(context, const PersonalInfoPage())),
+            _buildTile(context, Icons.directions_car_outlined, "Vehicle Information", () {
               final String memberNo = Provider.of<ProfileProvider>(context, listen: false).memberNo;
               _nav(context, VehicleInfoPage(membershipNo: memberNo == 'N/A' ? Provider.of<ProfileProvider>(context, listen: false).documentId : memberNo));
             }),
           ]),
           _buildSection(context, "My Finance", [
-            _buildTile(Icons.account_balance_wallet_outlined, "Earning", () => _nav(context, const EarningPage())),
-            _buildTile(Icons.card_membership_outlined, "Membership Fee", () => _nav(context, const MembershipFeePage())),
-            _buildTile(Icons.receipt_long_outlined, "App Usage Charge", () => _nav(context, const AppUsagePage())),
-            _buildTile(Icons.savings_outlined, "Saving", () => _nav(context, const SavingPage())),
+            _buildTile(context, Icons.account_balance_wallet_outlined, "Earning", () => _nav(context, const EarningsPage())),
+            _buildTile(context, Icons.card_membership_outlined, "Membership Fee", () => _nav(context, const MembershipFeePage())),
+            _buildTile(context, Icons.receipt_long_outlined, "App Usage Charge", () => _nav(context, const AppUsagePage())),
+            _buildTile(context, Icons.savings_outlined, "Saving", () => _nav(context, const SavingPage())),
           ]),
           _buildSection(context, "General", [
             // 💡 අලුතින් දාපු My Bookings Menu එක (Ride History එකට උඩින්)
-            _buildTile(Icons.library_books_outlined, "My Bookings", () => _nav(context, const MyBookingPage())),
-            _buildTile(Icons.history, "Ride History", () => _nav(context, const RideHistoryPage())),
-            _buildTile(Icons.star_outline, "Member Benefits", () => _nav(context, const MemberBenefitsPage())),
-            _buildTile(Icons.support_agent, "Support Tickets", () => _nav(context, const SupportTicketsPage())),
-            _buildTile(Icons.how_to_vote, "Votes", () => _nav(context, const VotesPage())),
-            _buildTile(Icons.ads_click, "Ads", () => _nav(context, const AdsPage())),
-            _buildTile(Icons.notifications_none, "Notification", () => _nav(context, const NotificationPage())),
+            _buildTile(context, Icons.library_books_outlined, "My Bookings", () => _nav(context, const MyBookingPage())),
+            _buildTile(context, Icons.star_outline, "Member Benefits", () => _nav(context, const MemberBenefitsPage())),
+            _buildTile(context, Icons.support_agent, "Support Tickets", () => _nav(context, const SupportTicketsPage())),
+            _buildTile(context, Icons.how_to_vote, "Votes", () => _nav(context, const VotesPage())),
+            _buildTile(context, Icons.ads_click, "Ads", () => _nav(context, const AdsPage())),
+            _buildTile(context, Icons.notifications_none, "Notification", () => _nav(context, const NotificationPage())),
           ]),
           _buildSettingsSection(context),
 
@@ -155,7 +153,8 @@ class ProfileMenuWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildTile(IconData icon, String title, VoidCallback onTap) {
+  Widget _buildTile(BuildContext context, IconData icon, String title, VoidCallback onTap) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
@@ -167,7 +166,7 @@ class ProfileMenuWidget extends StatelessWidget {
         ),
         child: Icon(icon, size: 20, color: Colors.white),
       ),
-      title: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+      title: Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDarkMode ? Colors.white : Colors.black87)),
       trailing: Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey.shade400),
     );
   }
@@ -200,12 +199,12 @@ class ProfileMenuWidget extends StatelessWidget {
             ),
             title: const Text("App Configuration", style: TextStyle(fontWeight: FontWeight.w600)),
             children: [
-              _buildTile(Icons.dark_mode_outlined, "Dark Mode", () => _nav(context, const DarkModePage())),
-              _buildTile(Icons.volume_up_outlined, "App Volume", () => _nav(context, const AppVolumePage())),
-              _buildTile(Icons.language, "Language", () => _nav(context, const LanguagePage())),
-              _buildTile(Icons.help_outline, "Help Center", () => _nav(context, const HelpCenterPage())),
-              _buildTile(Icons.privacy_tip_outlined, "Privacy Policy", () => _nav(context, const PrivacyPolicyPage())),
-              _buildTile(Icons.description_outlined, "Terms & Conditions", () => _nav(context, const TermsConditionsPage())),
+              _buildTile(context, Icons.dark_mode_outlined, "Dark Mode", () => _nav(context, const DarkModePage())),
+              _buildTile(context, Icons.volume_up_outlined, "App Volume", () => _nav(context, const AppVolumePage())),
+              _buildTile(context, Icons.language, "Language", () => _nav(context, const LanguagePage())),
+              _buildTile(context, Icons.help_outline, "Help Center", () => _nav(context, const HelpCenterPage())),
+              _buildTile(context, Icons.privacy_tip_outlined, "Privacy Policy", () => _nav(context, const PrivacyPolicyPage())),
+              _buildTile(context, Icons.description_outlined, "Terms & Conditions", () => _nav(context, const TermsConditionsPage())),
             ],
           ),
         ),

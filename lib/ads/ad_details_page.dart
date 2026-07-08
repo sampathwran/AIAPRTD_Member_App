@@ -3,6 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../providers/ads_provider.dart';
 import 'ad_chat_page.dart';
 
 class AdDetailsPage extends StatefulWidget {
@@ -18,6 +21,17 @@ class AdDetailsPage extends StatefulWidget {
 class _AdDetailsPageState extends State<AdDetailsPage> {
   final String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
   bool get isOwner => currentUserId == widget.adData['ownerId'];
+
+  @override
+  void initState() {
+    super.initState();
+    // Increment views only if it's not the owner viewing their own ad
+    if (!isOwner) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<AdsProvider>().incrementAdViews(widget.adId);
+      });
+    }
+  }
 
   void _showBidDialog(BuildContext context) {
     final bidController = TextEditingController();
@@ -71,7 +85,11 @@ class _AdDetailsPageState extends State<AdDetailsPage> {
   Widget build(BuildContext context) {
     final ad = widget.adData;
     final title = ad['title'] ?? 'No Title';
-    final price = ad['price'] ?? '0.00';
+    final priceStr = ad['price']?.toString() ?? '0';
+    String formattedPrice = priceStr;
+    try {
+      formattedPrice = NumberFormat.decimalPattern().format(double.parse(priceStr));
+    } catch (_) {}
     final description = ad['description'] ?? 'No Description';
     final category = ad['category'] ?? 'Category';
     final imageUrl = ad['imageUrl'] ?? 'https://via.placeholder.com/150';
@@ -81,14 +99,16 @@ class _AdDetailsPageState extends State<AdDetailsPage> {
     final ownerId = ad['ownerId'] ?? '';
     final allowBidding = ad['allowBidding'] == true;
 
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: isDarkMode ? Colors.grey.shade900 : Colors.grey.shade50,
       appBar: AppBar(
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: isDarkMode ? Colors.grey.shade900 : Colors.white,
+        foregroundColor: isDarkMode ? Colors.white : Colors.black,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -166,13 +186,68 @@ class _AdDetailsPageState extends State<AdDetailsPage> {
               ],
             ),
             const SizedBox(height: 5),
-            Text("LKR $price", style: const TextStyle(fontSize: 22, color: Colors.blue, fontWeight: FontWeight.w900)),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    "Rs. $formattedPrice",
+                    style: const TextStyle(fontSize: 22, color: Colors.green, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 15),
+
+            if (isOwner) ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withValues(alpha: 0.1), 
+                  borderRadius: BorderRadius.circular(15), 
+                  border: Border.all(color: Colors.blue.withValues(alpha: 0.3))
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Column(
+                      children: [
+                        const Icon(Icons.visibility, color: Colors.blue, size: 30),
+                        const SizedBox(height: 5),
+                        Text("${ad['views'] ?? 0} Views", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+                      ],
+                    ),
+                    if (allowBidding) ...[
+                      Container(width: 1, height: 40, color: Colors.blue.withValues(alpha: 0.3)),
+                      Column(
+                        children: [
+                          const Icon(Icons.gavel, color: Colors.blue, size: 30),
+                          const SizedBox(height: 5),
+                          StreamBuilder<QuerySnapshot>(
+                            stream: FirebaseFirestore.instance.collection('marketplace_ads').doc(widget.adId).collection('bids').snapshots(),
+                            builder: (context, snapshot) {
+                              final bidCount = snapshot.data?.docs.length ?? 0;
+                              return Text("$bidCount Bids", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue));
+                            }
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 25),
+            ],
 
             // Description
             const Text("Description", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 5),
-            Text(description, style: const TextStyle(color: Colors.black87, height: 1.4)),
+            Text(description, style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black87, height: 1.4)),
             const SizedBox(height: 25),
 
             // Contact Buttons
@@ -220,7 +295,7 @@ class _AdDetailsPageState extends State<AdDetailsPage> {
               if (isOwner) ...[
                 _buildSectionTitle("Live Bidding"),
                 Container(
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.grey.shade200)),
+                  decoration: BoxDecoration(color: isDarkMode ? Colors.grey.shade800 : Colors.white, borderRadius: BorderRadius.circular(15), border: Border.all(color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200)),
                   child: StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance.collection('marketplace_ads').doc(widget.adId).collection('bids').orderBy('createdAt', descending: true).snapshots(),
                     builder: (context, snapshot) {
@@ -263,7 +338,7 @@ class _AdDetailsPageState extends State<AdDetailsPage> {
               _buildSectionTitle("Location: $address"),
               Container(
                 height: 200,
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.grey.shade300)),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(15), border: Border.all(color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300)),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(15),
                   child: GoogleMap(
@@ -282,7 +357,7 @@ class _AdDetailsPageState extends State<AdDetailsPage> {
             // Warning Message
             Container(
               padding: const EdgeInsets.all(15),
-              decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.red.shade200)),
+              decoration: BoxDecoration(color: isDarkMode ? Colors.red.withOpacity(0.1) : Colors.red.shade50, borderRadius: BorderRadius.circular(10), border: Border.all(color: isDarkMode ? Colors.red.withOpacity(0.3) : Colors.red.shade200)),
               child: Row(
                 children: const [
                   Icon(Icons.warning_amber_rounded, color: Colors.red),

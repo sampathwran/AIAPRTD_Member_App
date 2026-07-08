@@ -296,7 +296,7 @@ class MeterProvider with ChangeNotifier {
 
       final dateStr = "${DateTime.now().year}.${DateTime.now().month.toString().padLeft(2, '0')}.${DateTime.now().day.toString().padLeft(2, '0')}";
       await _firestore
-          .collection('dayly_trips')
+          .collection('roadpickups_hires')
           .doc(dateStr)
           .collection(membershipNo)
           .doc(_tripId)
@@ -339,7 +339,7 @@ class MeterProvider with ChangeNotifier {
     try {
       final dateStr = "${DateTime.now().year}.${DateTime.now().month.toString().padLeft(2, '0')}.${DateTime.now().day.toString().padLeft(2, '0')}";
       await _firestore
-          .collection('dayly_trips')
+          .collection('roadpickups_hires')
           .doc(dateStr)
           .collection(membershipNo)
           .doc(_tripId)

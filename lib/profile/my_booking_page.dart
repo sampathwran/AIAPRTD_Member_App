@@ -7,6 +7,8 @@ import 'tabs/ongoing_tab.dart';
 import 'tabs/completed_tab.dart';
 import 'tabs/cancelled_tab.dart';
 
+import '../providers/theme_provider.dart';
+
 class MyBookingPage extends StatefulWidget {
   final int initialIndex;
   
@@ -64,10 +66,17 @@ class _MyBookingPageState extends State<MyBookingPage> {
   @override
   Widget build(BuildContext context) {
     final memberId = Provider.of<ProfileProvider>(context).memberNo;
+    final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
 
     if (memberId == 'N/A' || memberId.isEmpty) {
-      return const Scaffold(
-        body: Center(child: Text("Please login to view bookings")),
+      return Scaffold(
+        backgroundColor: isDark ? const Color(0xff121212) : const Color(0xFFF8FAFC),
+        body: Center(
+          child: Text(
+            "Please login to view bookings",
+            style: TextStyle(color: isDark ? Colors.white70 : Colors.black87),
+          ),
+        ),
       );
     }
 
@@ -75,21 +84,21 @@ class _MyBookingPageState extends State<MyBookingPage> {
       initialIndex: widget.initialIndex,
       length: 4,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: isDark ? const Color(0xff121212) : const Color(0xFFF8FAFC),
         appBar: AppBar(
           title: const Text("My Bookings", style: TextStyle(fontWeight: FontWeight.w800)),
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black87,
+          backgroundColor: isDark ? const Color(0xff1B2735) : Colors.white,
+          foregroundColor: isDark ? Colors.white : Colors.black87,
           elevation: 0,
           centerTitle: true,
-          bottom: const TabBar(
+          bottom: TabBar(
             isScrollable: true,
             labelColor: Colors.blue,
-            unselectedLabelColor: Colors.grey,
+            unselectedLabelColor: isDark ? Colors.grey.shade400 : Colors.grey,
             indicatorColor: Colors.blue,
             indicatorWeight: 3,
-            labelStyle: TextStyle(fontWeight: FontWeight.bold),
-            tabs: [
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+            tabs: const [
               Tab(text: "Upcoming"),
               Tab(text: "Ongoing"),
               Tab(text: "Completed"),

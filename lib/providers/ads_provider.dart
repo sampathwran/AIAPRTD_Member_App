@@ -16,19 +16,18 @@ class AdsProvider with ChangeNotifier {
 
   // Fetch Categories Stream
   Stream<QuerySnapshot> getCategoriesStream() {
-    return FirebaseFirestore.instance.collection('marketplace_categories').orderBy('name').snapshots();
+    return FirebaseFirestore.instance.collection('marketplace_categories').snapshots();
   }
 
   // Fetch Ads Stream
   Stream<QuerySnapshot> getAdsStream(String? category) {
     Query query = FirebaseFirestore.instance.collection('marketplace_ads')
-        .where('status', isEqualTo: 'approved')
-        .orderBy('createdAt', descending: true);
-        
+        .where('status', isEqualTo: 'approved');
+
     if (category != null) {
       query = query.where('category', isEqualTo: category);
     }
-    return query.limit(20).snapshots();
+    return query.snapshots();
   }
 
   // Get Location
@@ -43,7 +42,7 @@ class AdsProvider with ChangeNotifier {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) throw 'Location permissions are denied';
       }
-      
+
       if (permission == LocationPermission.deniedForever) {
         throw 'Location permissions are permanently denied.';
       }
@@ -51,7 +50,7 @@ class AdsProvider with ChangeNotifier {
       Position position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(accuracy: LocationAccuracy.high)
       );
-      
+
       // Temporary fix to avoid geocoding package errors
       String address = "Lat: ${position.latitude.toStringAsFixed(3)}, Lng: ${position.longitude.toStringAsFixed(3)}";
 
@@ -138,5 +137,79 @@ class AdsProvider with ChangeNotifier {
     } finally {
       _setLoading(false);
     }
+  }
+
+  // Get My Ads Stream
+  Stream<QuerySnapshot> getMyAdsStream() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return const Stream.empty();
+
+    return FirebaseFirestore.instance
+        .collection('marketplace_ads')
+        .where('ownerId', isEqualTo: user.uid)
+        .snapshots();
+  }
+
+  // Mark Ad As Sold
+  Future<Map<String, dynamic>> markAdAsSold(String adId) async {
+    _setLoading(true);
+    try {
+      await FirebaseFirestore.instance.collection('marketplace_ads').doc(adId).update({
+        'status': 'sold',
+        'soldAt': FieldValue.serverTimestamp(),
+      });
+      return {'success': true};
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Delete Ad
+  Future<Map<String, dynamic>> deleteAd(String adId) async {
+    _setLoading(true);
+    try {
+      await FirebaseFirestore.instance.collection('marketplace_ads').doc(adId).delete();
+      return {'success': true};
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Update Ad Price
+  Future<Map<String, dynamic>> updateAdPrice(String adId, String newPrice) async {
+    _setLoading(true);
+    try {
+      await FirebaseFirestore.instance.collection('marketplace_ads').doc(adId).update({
+        'price': newPrice,
+      });
+      return {'success': true};
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Increment Ad Views
+  Future<void> incrementAdViews(String adId) async {
+    try {
+      await FirebaseFirestore.instance.collection('marketplace_ads').doc(adId).update({
+        'views': FieldValue.increment(1),
+      });
+    } catch (e) {
+      debugPrint("Failed to increment views: $e");
+    }
+  }
+
+  // Get Sponsor Ads Stream
+  Stream<QuerySnapshot> getSponsorAdsStream() {
+    return FirebaseFirestore.instance
+        .collection('marketplace_sponsor_ads')
+        .orderBy('createdAt', descending: true)
+        .snapshots();
   }
 }

@@ -78,6 +78,13 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
           _memberData?['imageUrl']?.toString() ??
           '';
 
+  List<String> get grantedBenefits {
+    if (_memberData?['grantedBenefits'] is List) {
+      return List<String>.from(_memberData!['grantedBenefits']);
+    }
+    return [];
+  }
+
   Future<bool> fetchAndStoreMemberData() async {
     _isLoading = true;
     notifyListeners();
@@ -189,28 +196,41 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _loadPaymentData(
-      String membershipNo,
-      ) async {
+  Future<void> _loadPaymentData(String membershipNo) async {
     try {
-      final DocumentSnapshot<Map<String, dynamic>> paymentDocument =
-      await _firestore
-          .collection('payments')
-          .doc(membershipNo)
-          .get();
+      if (_memberData == null) return;
+      
+      List<dynamic> combinedHistory = [];
 
-      if (!paymentDocument.exists ||
-          paymentDocument.data() == null ||
-          _memberData == null) {
-        return;
+      // 1. Fetch from app_membership_fee
+      final appDoc = await _firestore.collection('app_membership_fee').doc(membershipNo).get();
+      if (appDoc.exists && appDoc.data() != null) {
+        final data = appDoc.data()!;
+        if (data['payment_history'] != null && data['payment_history'] is List) {
+          combinedHistory.addAll(data['payment_history']);
+        }
       }
 
-      final Map<String, dynamic> paymentData = paymentDocument.data()!;
-
-      if (paymentData['payment_history'] != null) {
-        _memberData!['payment_history'] =
-        paymentData['payment_history'];
+      // 2. Fetch from web_sync_membership_fee
+      final webDoc = await _firestore.collection('web_sync_membership_fee').doc(membershipNo).get();
+      if (webDoc.exists && webDoc.data() != null) {
+        final data = webDoc.data()!;
+        if (data['payment_history'] != null && data['payment_history'] is List) {
+          combinedHistory.addAll(data['payment_history']);
+        }
       }
+
+      // 3. Fallback to old payments collection just in case
+      final paymentDoc = await _firestore.collection('payments').doc(membershipNo).get();
+      if (paymentDoc.exists && paymentDoc.data() != null) {
+        final data = paymentDoc.data()!;
+        if (data['payment_history'] != null && data['payment_history'] is List) {
+          combinedHistory.addAll(data['payment_history']);
+        }
+      }
+
+      _memberData!['payment_history'] = combinedHistory;
+      
     } catch (error) {
       debugPrint('Error fetching payment data: $error');
     }
