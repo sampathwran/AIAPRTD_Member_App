@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_windows
+  battery_plus
   cloud_firestore
   file_selector_windows
   firebase_auth
@@ -11,6 +12,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   firebase_storage
   geolocator_windows
   local_auth_windows
+  record_windows
   url_launcher_windows
 )
 

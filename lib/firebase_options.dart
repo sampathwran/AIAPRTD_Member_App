@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, Tar
 
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
-    // 🌐 වෙබ් එකෙන් ඇප් එක රන් වෙද්දී මේ කීස් ටික වැඩ කරනවා
+    // 🌐 These keys work when running the app from web
     if (kIsWeb) {
       return web;
     }
@@ -20,7 +20,7 @@ class DefaultFirebaseOptions {
     }
   }
 
-  // 🌐 WEB CONFIGURATION (උඹ දැන් බ්‍රවුසර් එකෙන් ගත්තු නිවැරදිම ටික 🎯)
+  // 🌐 WEB CONFIGURATION (Correct ones fetched from browser)
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyCDBGrVPwHFh3gNs_AXY7o1lFfsBw_1B00',
     appId: '1:1012060339384:web:2d4cceffb2f8ed8dcac84d',
@@ -31,7 +31,7 @@ class DefaultFirebaseOptions {
     measurementId: 'G-YZ9MZ3LF8R',
   );
 
-  // 🤖 ANDROID CONFIGURATION (අපි කලින් හොයාගත්ත ටික 🎯)
+  // 🤖 ANDROID CONFIGURATION (Previously fetched ones)
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAHlq6b4elQt8tff-dhSSujgl7iaYA9Lsc',
     appId: '1:1012060339384:android:a21989d5cce6398ecac84d',

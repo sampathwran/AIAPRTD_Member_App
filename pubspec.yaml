@@ -35,6 +35,12 @@ dependencies:
   shared_preferences: ^2.5.5
   flutter_local_notifications: ^22.0.1
   video_player: ^2.11.1
+  google_fonts: ^8.1.0
+  battery_plus: ^7.1.0
+  record: ^7.1.1
+  image: ^4.9.1
+  mailer: ^7.1.0
+
 
 
 
