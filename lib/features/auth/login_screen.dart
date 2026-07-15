@@ -3,11 +3,12 @@
 // ==========================================
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 
 import 'package:aiaprtd_member/core/providers/profile_provider.dart';
+import 'package:aiaprtd_member/core/providers/auth_provider.dart';
 import 'package:aiaprtd_member/features/auth/register_screen.dart';
 import 'package:aiaprtd_member/features/auth/forgot_password_screen.dart';
 import 'package:aiaprtd_member/features/settings/privacy_policy_screen.dart';
@@ -99,9 +100,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (userCredential.user != null) {
         final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
         // Fetch data into Provider
         bool dataLoaded = await profileProvider.fetchAndStoreMemberData();
+
+        // Update persistent device token
+        String deviceId = await authProvider.getPersistentDeviceId();
+        await authProvider.updateDeviceToken(
+          collectionSource: profileProvider.collectionSource,
+          documentId: profileProvider.documentId,
+          currentDeviceToken: deviceId,
+        );
 
         if (!mounted) return;
 

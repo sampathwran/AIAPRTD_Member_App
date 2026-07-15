@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aiaprtd_member/core/providers/meter_provider.dart';
+import 'package:aiaprtd_member/core/providers/finance_provider.dart';
 import 'package:aiaprtd_member/core/providers/profile_provider.dart';
 import 'package:aiaprtd_member/features/general/widgets/rating_dialog_widget.dart';
 
@@ -146,6 +147,19 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
         await FirebaseFirestore.instance.collection('all_bookings').doc(widget.bookingId!).set(billDetails, SetOptions(merge: true));
       } catch (e) {
         debugPrint("Error saving bill to passenger: $e");
+      }
+
+      // Process Trip Commission (10% Split)
+      try {
+        final financeProv = Provider.of<FinanceProvider>(context, listen: false);
+        await financeProv.processTripCommission(
+          tripId: meter.tripId,
+          totalFare: meter.totalFare,
+          driverId: driverMembershipNo,
+          passengerId: passengerId,
+        );
+      } catch (e) {
+        debugPrint("Error processing finance commission: $e");
       }
 
       // 3. Show Rating Dialog

@@ -159,12 +159,12 @@ class KYCProvider with ChangeNotifier {
         SetOptions(merge: true),
       );
 
-      // Update the app's member document so the UI knows it's pending
+      // Update the app's member document so the UI knows it's AUTO-APPROVED
       batch.set(
         _firestore.collection('member').doc(documentId),
         {
-          'kycApprovalStatus': 'pending',
-          'faceKycStatus': 'pending',
+          'kycApprovalStatus': 'approved',
+          'faceKycStatus': 'approved',
           'updatedAt': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),

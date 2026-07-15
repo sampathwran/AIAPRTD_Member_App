@@ -66,6 +66,9 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   bool get isOnline => _memberData?['isOnline'] == true;
 
+  String get collectionSource =>
+      _memberData?['collectionSource']?.toString() ?? 'member';
+
   String get inactiveReason =>
       _memberData?['inactiveReason']?.toString() ??
       _memberData?['rejectionReason']?.toString() ??
@@ -159,6 +162,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
           );
 
           _memberData!['docId'] = memberDocument.id;
+          _memberData!['collectionSource'] = collectionSource; // 💡 NEW: Expose source collection
 
           // 💡 🎯 FIXED: Use docId if membershipNo field is missing in member collection
           if (_memberData!['membershipNo'] == null || _memberData!['membershipNo'].toString().isEmpty) {
@@ -476,7 +480,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
     _sessionSubscription?.cancel();
 
     _sessionSubscription = _firestore
-        .collection('member')
+        .collection(collectionSource) // 👈 Use the actual collection the document is in!
         .doc(documentId)
         .snapshots()
         .listen(

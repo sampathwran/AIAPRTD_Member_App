@@ -21,6 +21,7 @@ import 'package:aiaprtd_member/core/providers/theme_provider.dart';
 import 'package:aiaprtd_member/core/providers/earnings_provider.dart';
 import 'package:aiaprtd_member/core/providers/settings_provider.dart';
 import 'package:aiaprtd_member/core/providers/sos_provider.dart';
+import 'package:aiaprtd_member/core/providers/finance_provider.dart'; // Added FinanceProvider
 import 'package:aiaprtd_member/core/theme/app_theme.dart';
 
 // ==========================================
@@ -42,6 +43,9 @@ import 'package:aiaprtd_member/core/providers/ads_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Override debugPrint to suppress console output and improve performance
+  debugPrint = (String? message, {int? wrapWidth}) {};
 
   // Firebase initialization
   try {
@@ -70,6 +74,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AdsProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => EarningsProvider()),
+        ChangeNotifierProvider(create: (_) => FinanceProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => SosProvider()),
         ChangeNotifierProvider(create: (_) => CommunityAssistanceProvider()),

@@ -18,11 +18,11 @@ dependencies:
   google_maps_flutter: ^2.17.0
   geolocator: ^14.0.2
   flutter_compass: ^0.8.1
-  firebase_storage: ^13.4.2
+  firebase_storage: ^13.4.5
   intl: ^0.20.3
   cached_network_image: ^3.4.1
   http: ^1.6.0
-  image_picker: ^1.2.2
+  image_picker: ^1.2.3
   camera: ^0.10.6
   google_mlkit_face_detection: ^0.13.2
   dash_bubble: ^2.0.0
@@ -40,6 +40,8 @@ dependencies:
   record: ^7.1.1
   image: ^4.9.1
   mailer: ^7.1.0
+  share_plus: ^13.2.0
+  font_awesome_flutter: ^11.0.0
 
 
 
@@ -73,6 +75,12 @@ flutter:
     - assets/images/6_seater.png
     - assets/images/9_seater.png
     - assets/images/14_seater.png
+    - assets/images/map_budget.png
+    - assets/images/map_mini.png
+    - assets/images/map_sedan.png
+    - assets/images/map_6_seater.png
+    - assets/images/map_9_seater.png
+    - assets/images/map_14_seater.png
 
 
 flutter_launcher_icons:

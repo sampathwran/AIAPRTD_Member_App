@@ -13,6 +13,21 @@ class MainActivity: FlutterFragmentActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        
+        // Security checks channel
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.aiaprtd.security").setMethodCallHandler { call, result ->
+            if (call.method == "isDeveloperModeEnabled") {
+                val devOptions = android.provider.Settings.Global.getInt(
+                    contentResolver,
+                    android.provider.Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0
+                ) != 0
+                result.success(devOptions)
+            } else {
+                result.notImplemented()
+            }
+        }
+
+        // WhatsApp Share channel
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             if (call.method == "sharePdf") {
                 val phone = call.argument<String>("phone")

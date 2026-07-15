@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_compass/flutter_compass.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 // ignore: depend_on_referenced_packages
 import 'package:audioplayers/audioplayers.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +14,7 @@ import 'package:aiaprtd_member/core/providers/community_assistance_provider.dart
 import 'package:aiaprtd_member/features/home/widgets/help_alert_overlay.dart';
 import 'package:aiaprtd_member/features/home/widgets/requester_status_overlay.dart';
 import 'package:aiaprtd_member/core/providers/profile_provider.dart';
+import 'package:aiaprtd_member/core/providers/auth_provider.dart';
 
 import 'package:aiaprtd_member/features/home/home_header.dart';
 import 'package:aiaprtd_member/features/home/home_footer.dart';
@@ -107,10 +108,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
         final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
         await profileProvider.fetchAndStoreMemberData();
         if (!mounted) return;
 
-        String myCurrentPhoneToken = "phone_fcm_token_or_unique_id";
+        String myCurrentPhoneToken = await authProvider.getPersistentDeviceId();
         profileProvider.listenToDeviceSession(context, myCurrentPhoneToken);
         
         Provider.of<CommunityAssistanceProvider>(context, listen: false)

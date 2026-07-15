@@ -87,22 +87,26 @@ class EarningsProvider with ChangeNotifier {
 
   double get todayEarnings {
     DateTime now = DateTime.now();
-    DateTime today = DateTime(now.year, now.month, now.day);
     return allUnfilteredTrips
-        .where((t) => !t.date.isBefore(today))
+        .where((t) => t.date.year == now.year && t.date.month == now.month && t.date.day == now.day)
         .fold(0, (total, trip) => total + trip.fare);
   }
 
   double get thisWeekEarnings {
     DateTime now = DateTime.now();
-    DateTime lastWeek = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 7));
+    // Calculate the start of the current week (Monday)
+    int daysSinceMonday = now.weekday - 1;
+    DateTime thisMonday = DateTime(now.year, now.month, now.day).subtract(Duration(days: daysSinceMonday));
     return allUnfilteredTrips
-        .where((t) => !t.date.isBefore(lastWeek))
+        .where((t) => !t.date.isBefore(thisMonday))
         .fold(0, (total, trip) => total + trip.fare);
   }
 
   double get thisMonthEarnings {
-    return allUnfilteredTrips.fold(0, (total, trip) => total + trip.fare);
+    DateTime now = DateTime.now();
+    return allUnfilteredTrips
+        .where((t) => t.date.year == now.year && t.date.month == now.month)
+        .fold(0, (total, trip) => total + trip.fare);
   }
   // --------------------------
 
@@ -178,9 +182,9 @@ class EarningsProvider with ChangeNotifier {
 
             DateTime tripDate;
             if (data['pickupTime'] != null) {
-              tripDate = DateTime.tryParse(data['pickupTime'].toString()) ?? DateTime.now();
-            } else if (data['timestamp'] != null && data['timestamp'] is Timestamp) {
-              tripDate = (data['timestamp'] as Timestamp).toDate();
+              tripDate = _parseDate(data['pickupTime']);
+            } else if (data['timestamp'] != null) {
+              tripDate = _parseDate(data['timestamp']);
             } else {
               tripDate = DateTime.now();
             }
@@ -242,7 +246,7 @@ class EarningsProvider with ChangeNotifier {
             Map<String, dynamic> data = doc.data();
 
             if (data.containsKey('tripId') && data.containsKey('totalFare')) {
-              DateTime tripDate = data['pickupTime'] != null ? (DateTime.tryParse(data['pickupTime'].toString()) ?? DateTime.now()) : DateTime.now();
+              DateTime tripDate = _parseDate(data['pickupTime'] ?? data['timestamp']);
 
               dailyTrips.add(TripModel(
                 id: data['tripId'] ?? doc.id,
@@ -324,5 +328,20 @@ class EarningsProvider with ChangeNotifier {
       sub.cancel();
     }
     super.dispose();
+  }
+
+  // 💡 NEW HELPER: Properly parse Firestore Timestamps, Strings, and Ints
+  DateTime _parseDate(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    if (value is int) {
+      if (value > 1000000000000) {
+        return DateTime.fromMillisecondsSinceEpoch(value);
+      } else {
+        return DateTime.fromMillisecondsSinceEpoch(value * 1000);
+      }
+    }
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    return DateTime.now();
   }
 }

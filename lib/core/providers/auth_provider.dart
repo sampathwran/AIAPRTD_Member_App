@@ -4,12 +4,28 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 
+import 'dart:math';
+import 'package:shared_preferences/shared_preferences.dart';
+
 class AuthProvider with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   bool _isLocalLoading = false;
   bool get isLocalLoading => _isLocalLoading;
+
+  // ==========================================================
+  // 📱 0. DEVICE ID GENERATION
+  // ==========================================================
+  Future<String> getPersistentDeviceId() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? deviceId = prefs.getString('persistent_device_id');
+    if (deviceId == null) {
+      deviceId = 'device_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000000)}';
+      await prefs.setString('persistent_device_id', deviceId);
+    }
+    return deviceId;
+  }
 
   // ==========================================================
   // 📱 1. OTP REQUEST ENGINE FOR MOBILE NUMBER UPDATE
@@ -107,18 +123,37 @@ class AuthProvider with ChangeNotifier {
 
   // 💡 Method to insert new Device ID/Token into Firestore after successful login
   Future<bool> updateDeviceToken({
+    required String collectionSource,
     required String documentId,
     required String currentDeviceToken,
   }) async {
     try {
       debugPrint("🔄 [AuthProvider] Updating device token for security sync...");
+      
+      final docRef = _firestore.collection(collectionSource).doc(documentId);
+      final docSnapshot = await docRef.get();
+      
+      if (docSnapshot.exists) {
+        final data = docSnapshot.data()!;
+        final previousToken = data['currentDeviceToken']?.toString();
+        
+        Map<String, dynamic> updates = {
+          'currentDeviceToken': currentDeviceToken, // 👈 Insert new phone's ID into Firestore
+        };
+        
+        // If the token is different, it means they logged in from a new device!
+        // We reset face verification so they can't go online until they verify again.
+        if (previousToken != null && previousToken.isNotEmpty && previousToken != currentDeviceToken) {
+           debugPrint("⚠️ [AuthProvider] New device detected! Resetting face verification.");
+           updates['faceKycStatus'] = 'pending';
+           updates['isOnline'] = false; // Force them offline just in case
+        }
 
-      await _firestore.collection('member').doc(documentId).update({
-        'currentDeviceToken': currentDeviceToken, // 👈 Insert new phone's ID into Firestore
-      });
-
-      debugPrint("✅ [AuthProvider] Device token successfully bound to Firestore session.");
-      return true;
+        await docRef.update(updates);
+        debugPrint("✅ [AuthProvider] Device token successfully bound to Firestore session.");
+        return true;
+      }
+      return false;
     } catch (e) {
       debugPrint("❌ [AuthProvider] Device Token Sync Error: $e");
       return false;
