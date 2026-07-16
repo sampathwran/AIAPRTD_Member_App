@@ -210,6 +210,8 @@ class _SavingPageState extends State<SavingPage> {
             final amount = (type == 'app_booking_commission_split' ? data['passengerSavings'] : data['amount'] ?? 0.0).toDouble();
             final date = (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
             
+            final tripId = data['tripId'] as String? ?? 'N/A';
+            final totalFare = (data['totalFare'] ?? 0.0).toDouble();
             final isEarning = type == 'app_booking_commission_split';
 
             return Container(
@@ -240,10 +242,12 @@ class _SavingPageState extends State<SavingPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          isEarning ? "Booking Reward" : (type == 'fee_payment' ? 'Fee Payment' : 'Withdrawal'),
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
-                        ),
+                        Text(isEarning ? "Shared Booking Reward" : "Withdrawal", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        if (isEarning && tripId != 'N/A') ...[
+                          const SizedBox(height: 4),
+                          Text("Trip ID: $tripId", style: const TextStyle(color: Colors.black54, fontSize: 13)),
+                          Text("Total Fare: LKR ${NumberFormat('#,##0.00').format(totalFare)}", style: const TextStyle(color: Colors.black54, fontSize: 13)),
+                        ],
                         const SizedBox(height: 4),
                         Text(DateFormat('MMM dd, yyyy • hh:mm a').format(date), 
                             style: const TextStyle(color: Colors.grey, fontSize: 12)),

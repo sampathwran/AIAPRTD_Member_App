@@ -197,6 +197,8 @@ class _AppUsagePageState extends State<AppUsagePage> {
             final data = doc.data() as Map<String, dynamic>;
             final amount = (data['driverCommission'] ?? 0.0).toDouble();
             final date = (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+            final tripId = data['tripId'] as String? ?? 'N/A';
+            final totalFare = (data['totalFare'] ?? 0.0).toDouble();
 
             return Container(
               margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -223,7 +225,10 @@ class _AppUsagePageState extends State<AppUsagePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text("App Usage Charge", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const Text("Commission Deducted", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const SizedBox(height: 4),
+                        Text("Trip ID: $tripId", style: const TextStyle(color: Colors.black54, fontSize: 13)),
+                        Text("Total Fare: LKR ${NumberFormat('#,##0.00').format(totalFare)}", style: const TextStyle(color: Colors.black54, fontSize: 13)),
                         const SizedBox(height: 4),
                         Text(DateFormat('MMM dd, yyyy • hh:mm a').format(date), 
                             style: const TextStyle(color: Colors.grey, fontSize: 12)),
