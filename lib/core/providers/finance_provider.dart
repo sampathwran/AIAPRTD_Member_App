@@ -72,7 +72,7 @@ class FinanceProvider extends ChangeNotifier {
     required String driverId,
     required String passengerId, // Booking Member
   }) async {
-    if (totalFare <= 0 || driverId.isEmpty || passengerId.isEmpty) return;
+    if (totalFare <= 0 || driverId.isEmpty) return;
 
     try {
       // 1. Fetch latest rates just to be sure
@@ -91,10 +91,12 @@ class FinanceProvider extends ChangeNotifier {
       }, SetOptions(merge: true));
 
       // 3. Update Passenger's Savings Balance
-      DocumentReference passengerRef = _firestore.collection('members').doc(passengerId);
-      batch.set(passengerRef, {
-        'savingsBalance': FieldValue.increment(passengerSavings),
-      }, SetOptions(merge: true));
+      if (passengerId.isNotEmpty) {
+        DocumentReference passengerRef = _firestore.collection('members').doc(passengerId);
+        batch.set(passengerRef, {
+          'savingsBalance': FieldValue.increment(passengerSavings),
+        }, SetOptions(merge: true));
+      }
 
       // 4. Create Transaction Record
       DocumentReference txnRef = _firestore.collection('finance_transactions').doc();
@@ -106,7 +108,7 @@ class FinanceProvider extends ChangeNotifier {
         'totalFare': totalFare,
         'driverCommission': totalDriverCommission,
         'unionUsageCharge': unionUsageCharge,
-        'passengerSavings': passengerSavings,
+        'passengerSavings': passengerId.isNotEmpty ? passengerSavings : 0.0,
         'timestamp': FieldValue.serverTimestamp(),
         'type': 'app_booking_commission_split',
       });
