@@ -115,6 +115,25 @@ class _AppUsagePageState extends State<AppUsagePage> {
               ),
             ],
           ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.percent, color: Colors.white, size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  "Union Commission Rate: ${Provider.of<FinanceProvider>(context, listen: false).driverCommissionRate.toStringAsFixed(0)}%",
+                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
