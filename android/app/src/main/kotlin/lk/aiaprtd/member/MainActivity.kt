@@ -1,4 +1,4 @@
-package com.example.aiaprtd_member
+package lk.aiaprtd.member
 
 import android.content.Intent
 import android.net.Uri
