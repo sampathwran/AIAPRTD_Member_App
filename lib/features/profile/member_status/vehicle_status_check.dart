@@ -4,7 +4,8 @@ const List<String> requiredComplianceDocs = [
   'Revenue License',
   'Insurance Policy',
   'Registration Document',
-  'Driving License',
+  'Driving License (Front)',
+  'Driving License (Back)',
 ];
 
 Map<String, dynamic> checkMemberSystemStatus(Map<String, dynamic>? memberData) {

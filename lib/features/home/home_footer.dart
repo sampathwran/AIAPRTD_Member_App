@@ -14,10 +14,10 @@ import 'package:aiaprtd_member/features/home/road_pickup_button.dart';
 import 'package:aiaprtd_member/features/home/acceptance_widget.dart';
 import 'package:aiaprtd_member/features/home/rating_widget.dart';
 import 'package:aiaprtd_member/features/home/cancellation_widget.dart';
-import 'package:aiaprtd_member/features/profile/status_badge_widget.dart';
-import 'package:aiaprtd_member/features/profile/membership_fee_status_check.dart';
-import 'package:aiaprtd_member/features/profile/personal_kyc_checker.dart';
-import 'package:aiaprtd_member/features/profile/vehicle_status_check.dart';
+import 'package:aiaprtd_member/features/profile/member_status/status_badge_widget.dart';
+import 'package:aiaprtd_member/features/profile/member_status/membership_fee_status_check.dart';
+import 'package:aiaprtd_member/features/profile/member_status/personal_kyc_checker.dart';
+import 'package:aiaprtd_member/features/profile/member_status/vehicle_status_check.dart';
 import 'package:aiaprtd_member/core/providers/vehicle_provider.dart';
 
 class HomeFooter extends StatefulWidget {

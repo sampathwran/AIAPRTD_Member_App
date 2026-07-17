@@ -116,9 +116,13 @@ class VehiclePhotosSection extends StatelessWidget {
               children: [
                 Icon(Icons.camera_enhance_rounded, color: colorScheme.primary, size: 22),
                 const SizedBox(width: 8),
-                Text(
-                  "Vehicle Inspection Photos",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: isDark ? Colors.white : const Color(0xff1B2735)),
+                Expanded(
+                  child: Text(
+                    "Vehicle Inspection Photos",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : const Color(0xff1B2735)),
+                  ),
                 ),
               ],
             ),

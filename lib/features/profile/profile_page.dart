@@ -6,7 +6,7 @@ import 'package:aiaprtd_member/core/providers/profile_provider.dart';
 
 import 'package:aiaprtd_member/features/profile/profile_menu_widget.dart';
 import 'package:aiaprtd_member/features/profile/achievement_badge_widget.dart';
-import 'package:aiaprtd_member/features/profile/status_badge_widget.dart';
+import 'package:aiaprtd_member/features/profile/member_status/status_badge_widget.dart';
 import 'package:aiaprtd_member/features/profile/rank_page.dart';
 import 'package:aiaprtd_member/features/profile/image_upload_page.dart';
 import 'package:aiaprtd_member/features/profile/widgets/rating_widget.dart';

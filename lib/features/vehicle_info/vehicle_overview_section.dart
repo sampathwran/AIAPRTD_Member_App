@@ -71,7 +71,9 @@ class VehicleOverviewSection extends StatelessWidget {
               children: [
                 const Text(
                   "Vehicle Overview",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 20),
 

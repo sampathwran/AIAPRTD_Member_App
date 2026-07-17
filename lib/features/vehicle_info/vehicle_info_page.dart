@@ -160,7 +160,7 @@ class _VehicleInfoPageState extends State<VehicleInfoPage> {
           final bool canEdit = data['canEdit'] ?? false;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
             child: Column(
               children: [
                 VehicleOverviewSection(

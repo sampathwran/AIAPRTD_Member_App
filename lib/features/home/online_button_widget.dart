@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 
 import 'package:aiaprtd_member/core/providers/profile_provider.dart';
 import 'package:aiaprtd_member/core/providers/vehicle_provider.dart';
-import 'package:aiaprtd_member/features/profile/vehicle_status_check.dart';
-import 'package:aiaprtd_member/features/profile/membership_fee_status_check.dart';
+import 'package:aiaprtd_member/features/profile/member_status/vehicle_status_check.dart';
+import 'package:aiaprtd_member/features/profile/member_status/membership_fee_status_check.dart';
 
 class OnlineButtonWidget extends StatelessWidget {
   final bool isSharingLocation;

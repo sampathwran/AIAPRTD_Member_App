@@ -9,6 +9,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 
+import 'package:aiaprtd_member/features/profile/member_status/profile_status_evaluator.dart';
+import 'package:aiaprtd_member/features/profile/member_status/member_status_sync_service.dart';
+
 // 💡 NEW: Added `WidgetsBindingObserver` to check if the App is Minimized
 class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -62,18 +65,25 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool get isLocalLoading => _isLocalLoading;
 
   String get memberStatus =>
-      _memberData?['status']?.toString() ?? 'inactive';
+      _memberData?['profile_status']?.toString() ?? _memberData?['status']?.toString() ?? 'inactive member';
 
   bool get isOnline => _memberData?['isOnline'] == true;
 
   String get collectionSource =>
       _memberData?['collectionSource']?.toString() ?? 'member';
 
-  String get inactiveReason =>
-      _memberData?['inactiveReason']?.toString() ??
-      _memberData?['rejectionReason']?.toString() ??
-      _memberData?['adminMessage']?.toString() ??
-      "Your account is currently inactive. Please contact the Union Administrator for more details.";
+  String get inactiveReason {
+    if (_memberData?['inactive_reasons'] is List) {
+      final reasons = List<String>.from(_memberData!['inactive_reasons']);
+      if (reasons.isNotEmpty) {
+        return reasons.join('\n');
+      }
+    }
+    return _memberData?['inactiveReason']?.toString() ??
+        _memberData?['rejectionReason']?.toString() ??
+        _memberData?['adminMessage']?.toString() ??
+        "Your account is currently inactive. Please contact the Union Administrator for more details.";
+  }
 
   String get memberFullName =>
       _memberData?['fullName']?.toString() ?? 'Member';
@@ -178,6 +188,8 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
             _listenToProfileImageRequest(membershipNo);
           }
 
+          await _evaluateAndSyncProfileStatus();
+
           _isLoading = false;
           notifyListeners();
 
@@ -206,6 +218,58 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       return false;
     }
+  }
+
+  // 💡 NEW: Evaluates current status and syncs to Firebase if changed
+  Future<void> _evaluateAndSyncProfileStatus() async {
+    if (_memberData == null) return;
+    
+    final String currentStatus = _memberData!['profile_status']?.toString() ?? '';
+    final statusResult = calculateMemberStatus(_memberData!);
+    final bool isActive = statusResult['isActive'] == true;
+    final List<String> reasons = List<String>.from(statusResult['reasons'] ?? []);
+    
+    final String newStatus = isActive ? 'active member' : 'inactive member';
+    
+    bool shouldUpdate = false;
+    if (currentStatus != newStatus) {
+      shouldUpdate = true;
+    } else {
+      final currentReasonsList = _memberData!['inactive_reasons'] is List ? List.from(_memberData!['inactive_reasons']) : [];
+      if (currentReasonsList.length != reasons.length) {
+        shouldUpdate = true;
+      } else {
+        for (int i = 0; i < reasons.length; i++) {
+          if (currentReasonsList[i] != reasons[i]) {
+            shouldUpdate = true;
+            break;
+          }
+        }
+      }
+    }
+    
+    if (shouldUpdate) {
+        try {
+          await _firestore.collection(collectionSource).doc(documentId).set({
+            'profile_status': newStatus,
+            'inactive_reasons': reasons,
+          }, SetOptions(merge: true));
+          
+          _memberData!['profile_status'] = newStatus;
+          _memberData!['inactive_reasons'] = reasons;
+          
+          // dY' NEW: Sync to the dedicated 'member_statuses' collection
+          await MemberStatusSyncService.syncStatusToFirestore(_memberData!, memberId: documentId);
+        } catch (e) {
+          debugPrint("Error syncing profile_status: $e");
+        }
+    }
+  }
+
+  // 💡 NEW: Expose method to manually trigger sync after updating profile data
+  Future<void> syncProfileStatus() async {
+    await _evaluateAndSyncProfileStatus();
+    notifyListeners();
   }
 
   Future<void> _loadPaymentData(String membershipNo) async {

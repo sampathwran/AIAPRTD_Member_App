@@ -69,6 +69,7 @@ class VehicleProvider with ChangeNotifier {
           {'status': 'empty', 'reason': '', 'url': ''},
           {'status': 'empty', 'reason': '', 'url': ''},
           {'status': 'empty', 'reason': '', 'url': ''},
+          {'status': 'empty', 'reason': '', 'url': ''},
         ],
         'vehiclePhotos': {},
         'timestamp': FieldValue.serverTimestamp(),
@@ -133,7 +134,7 @@ class VehicleProvider with ChangeNotifier {
       final List<dynamic> documents = List<dynamic>.from(snapshot.data()!['documents'] ?? []);
 
       // 💡 FIXED: Added { } block to the while loop
-      while (documents.length < 4) {
+      while (documents.length < 5) {
         documents.add({'status': 'empty', 'reason': '', 'url': ''});
       }
 

@@ -22,7 +22,8 @@ static const List<String> _documentTitles = [
 'Revenue License',
 'Insurance Policy',
 'Registration Document',
-'Driving License',
+'Driving License (Front)',
+'Driving License (Back)',
 ];
 
 // =========================================================================
@@ -209,29 +210,147 @@ return false;
 // =========================================================================
 @override
 Widget build(BuildContext context) {
-return Card(
-elevation: 3,
-shape: RoundedRectangleBorder(
-borderRadius: BorderRadius.circular(18),
-),
-child: ExpansionTile(
-title: const Text(
-'Compliance Documents',
-style: TextStyle(
-fontWeight: FontWeight.bold,
-),
-),
-children: [
-for (int index = 0; index < _documentTitles.length; index++)
-_buildDocumentTile(
-context,
-_documentTitles[index],
-index,
-),
-const SizedBox(height: 8),
-],
-),
-);
+  bool shouldMerge = false;
+  Map<String, dynamic>? backDoc;
+
+  if (_documents.length >= 5) {
+    final frontDoc = _documents[3];
+    backDoc = _documents[4];
+
+    final frontStatus = frontDoc['status']?.toString().trim().toLowerCase() ?? 'empty';
+    final backStatus = backDoc['status']?.toString().trim().toLowerCase() ?? 'empty';
+
+    final frontExpiry = _getExpiryDate(frontDoc);
+    final backExpiry = _getExpiryDate(backDoc);
+
+    final frontRemaining = _getRemainingDays(frontExpiry);
+    final backRemaining = _getRemainingDays(backExpiry);
+
+    final canUploadFront = _canUpload(title: 'Driving License (Front)', status: frontStatus, remainingDays: frontRemaining);
+    final canUploadBack = _canUpload(title: 'Driving License (Back)', status: backStatus, remainingDays: backRemaining);
+
+    if (frontStatus == 'approved' && backStatus == 'approved' && !canUploadFront && !canUploadBack) {
+      shouldMerge = true;
+    }
+  }
+
+  return Card(
+    elevation: 3,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(18),
+    ),
+    child: ExpansionTile(
+      title: const Text(
+        'Compliance Documents',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+      children: [
+        for (int index = 0; index < 3; index++)
+          if (index < _documentTitles.length)
+            _buildDocumentTile(
+              context,
+              _documentTitles[index],
+              index,
+            ),
+            
+        if (shouldMerge && backDoc != null)
+          _buildMergedDrivingLicenseTile(context, backDoc)
+        else ...[
+          if (_documentTitles.length > 3)
+            _buildDocumentTile(context, _documentTitles[3], 3),
+          if (_documentTitles.length > 4)
+            _buildDocumentTile(context, _documentTitles[4], 4),
+        ],
+        const SizedBox(height: 8),
+      ],
+    ),
+  );
+}
+
+// =========================================================================
+// 📄 MERGED DOCUMENT TILE
+// =========================================================================
+Widget _buildMergedDrivingLicenseTile(BuildContext context, Map<String, dynamic> document) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    final String? expiryDate = _getExpiryDate(document);
+    final int? remainingDays = _getRemainingDays(expiryDate);
+    
+    const Color statusColor = Colors.green;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: 6,
+        vertical: 5,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+        leading: Icon(
+          Icons.badge_rounded,
+          color: statusColor,
+        ),
+        title: const Text(
+          'Driving License',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text(
+              'Status: APPROVED',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: statusColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+            if (expiryDate != null && expiryDate.trim().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _getExpiryText(
+                      expiryDate,
+                      remainingDays,
+                    ),
+                    style: TextStyle(
+                      color: _getExpiryColor(remainingDays, isDark),
+                      fontSize: 12,
+                      fontWeight: remainingDays != null && remainingDays <= 20
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        trailing: Icon(
+          Icons.lock_outline_rounded,
+          color: statusColor,
+        ),
+        onTap: null, // No tap action on merged tile
+      ),
+    );
 }
 
 // =========================================================================
@@ -259,24 +378,28 @@ remainingDays: remainingDays,
 
 final Color statusColor = _statusColor(status);
 
-    return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 5,
-      ),
-      decoration: BoxDecoration(
-        color: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(14),
-      ),
+      return Container(
+        margin: const EdgeInsets.symmetric(
+          horizontal: 6,
+          vertical: 5,
+        ),
+        decoration: BoxDecoration(
+          color: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(14),
+        ),
 child: ListTile(
-leading: Icon(
+  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+  leading: Icon(
 Icons.description,
 color: statusColor,
 ),
 title: Text(
 title,
+maxLines: 1,
+overflow: TextOverflow.ellipsis,
 style: const TextStyle(
 fontWeight: FontWeight.w600,
+fontSize: 14,
 ),
 ),
 subtitle: Column(
@@ -286,6 +409,8 @@ const SizedBox(height: 4),
 
 Text(
 'Status: ${status.toUpperCase()}',
+maxLines: 1,
+overflow: TextOverflow.ellipsis,
 style: TextStyle(
 color: statusColor,
 fontWeight: FontWeight.bold,
@@ -298,6 +423,9 @@ expiryDate != null &&
 expiryDate.trim().isNotEmpty)
 Padding(
 padding: const EdgeInsets.only(top: 4),
+child: FittedBox(
+fit: BoxFit.scaleDown,
+alignment: Alignment.centerLeft,
 child: Text(
 _getExpiryText(
 expiryDate,
@@ -310,6 +438,7 @@ fontWeight:
 remainingDays != null && remainingDays <= 20
 ? FontWeight.bold
     : FontWeight.normal,
+),
 ),
 ),
 ),
