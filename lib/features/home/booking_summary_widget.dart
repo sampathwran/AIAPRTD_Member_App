@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:aiaprtd_member/core/providers/booking_provider.dart';
 import 'package:aiaprtd_member/core/providers/vehicle_provider.dart';
 import 'package:aiaprtd_member/core/providers/profile_provider.dart';
+import 'package:flutter/cupertino.dart';
 
 class BookingSummaryWidget extends StatefulWidget {
   const BookingSummaryWidget({super.key});
@@ -20,32 +21,94 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
   Future<void> _pickDateTime() async {
     DateTime now = DateTime.now();
     DateTime minAllowedTime = now.add(const Duration(minutes: 30));
+    DateTime initialDateTime = _selectedDateTime ?? minAllowedTime;
 
-    DateTime? pickedDate = await showDatePicker(
+    // Ensure initialDateTime is not before minAllowedTime
+    if (initialDateTime.isBefore(minAllowedTime)) {
+      initialDateTime = minAllowedTime;
+    }
+
+    DateTime? tempPickedDate;
+
+    await showModalBottomSheet(
       context: context,
-      initialDate: minAllowedTime,
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 30)),
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext builder) {
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
+        
+        return Container(
+          height: 320,
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E2C) : Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
+          ),
+          child: Column(
+            children: [
+              // Header with Done button
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: theme.dividerColor.withValues(alpha: 0.1),
+                    ),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancel', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                    ),
+                    const Text('Select Time', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedDateTime = tempPickedDate ?? initialDateTime;
+                        });
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Done', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 16)),
+                    ),
+                  ],
+                ),
+              ),
+              // Cupertino Date Picker
+              Expanded(
+                child: CupertinoTheme(
+                  data: CupertinoThemeData(
+                    brightness: isDark ? Brightness.dark : Brightness.light,
+                    textTheme: CupertinoTextThemeData(
+                      dateTimePickerTextStyle: TextStyle(
+                        color: isDark ? Colors.white : Colors.black,
+                        fontSize: 20,
+                      ),
+                    ),
+                  ),
+                  child: CupertinoDatePicker(
+                    mode: CupertinoDatePickerMode.dateAndTime,
+                    initialDateTime: initialDateTime,
+                    minimumDate: now,
+                    maximumDate: now.add(const Duration(days: 30)),
+                    onDateTimeChanged: (DateTime newDateTime) {
+                      tempPickedDate = newDateTime;
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
 
-    if (pickedDate == null) return;
-
-    TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(minAllowedTime),
-    );
-
-    if (pickedTime == null) return;
-
-    DateTime finalDateTime = DateTime(
-      pickedDate.year,
-      pickedDate.month,
-      pickedDate.day,
-      pickedTime.hour,
-      pickedTime.minute,
-    );
-
-    if (finalDateTime.isBefore(minAllowedTime)) {
+    // After bottom sheet closes, check if selected time is valid
+    if (_selectedDateTime != null && _selectedDateTime!.isBefore(minAllowedTime)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -54,12 +117,10 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
           ),
         );
       }
-      return;
+      setState(() {
+        _selectedDateTime = null; // Reset if invalid
+      });
     }
-
-    setState(() {
-      _selectedDateTime = finalDateTime;
-    });
   }
 
   void _showSuccessDialog() {

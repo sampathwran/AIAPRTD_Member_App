@@ -101,7 +101,7 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
             const SizedBox(height: 16),
             const Text("No Live Bookings", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
             const SizedBox(height: 8),
-            const Text("Bookings starting within 30 mins appear here.", style: TextStyle(color: Colors.grey)),
+            const Text("Bookings starting within 1 hour appear here.", style: TextStyle(color: Colors.grey)),
           ],
         ),
       );

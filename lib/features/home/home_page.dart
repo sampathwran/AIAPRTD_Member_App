@@ -6,7 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
-// ignore: depend_on_referenced_packages
+// ignore: depend_on_referenced_packages, spell_check
 import 'package:audioplayers/audioplayers.dart';
 import 'package:provider/provider.dart';
 
@@ -20,6 +20,8 @@ import 'package:aiaprtd_member/features/home/home_header.dart';
 import 'package:aiaprtd_member/features/home/home_footer.dart';
 import 'package:aiaprtd_member/features/home/online_button_widget.dart';
 import 'package:aiaprtd_member/features/home/widgets/meter/mini_meter_widget.dart';
+import 'package:aiaprtd_member/core/providers/meter_provider.dart';
+import 'package:aiaprtd_member/features/home/trip_summary_page.dart';
 
 // Neutral Grey Theme - easy on the eyes
 const String _mapStyle = '''
@@ -84,7 +86,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Position? _currentPosition;
   double _currentHeading = 0.0;
   bool _isLoading = true;
-  bool _isSharingLocation = false;
   bool _isFirstLocationFound = false;
 
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -107,12 +108,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
+        final meterProvider = Provider.of<MeterProvider>(context, listen: false);
+        await meterProvider.loadState();
+        
+        if (!mounted) return;
+        
+        if (meterProvider.isRunning) {
+          Navigator.pushNamed(context, '/road-pickup');
+        } else if (meterProvider.isTripCompleted) {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const TripSummaryPage()));
+        }
+
         final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        
         await profileProvider.fetchAndStoreMemberData();
+        
         if (!mounted) return;
 
         String myCurrentPhoneToken = await authProvider.getPersistentDeviceId();
+        if (!mounted) return;
         profileProvider.listenToDeviceSession(context, myCurrentPhoneToken);
         
         Provider.of<CommunityAssistanceProvider>(context, listen: false)
@@ -191,7 +206,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _syncLocationToFirebase(double lat, double lng, double bearing) {
-    if (!_isSharingLocation) return;
+    if (!mounted) return;
+    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+    if (!profileProvider.isOnline) return;
 
     final now = DateTime.now();
     if (_lastFirebaseUpdateTime == null ||
@@ -199,7 +216,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       _lastFirebaseUpdateTime = now;
 
-      final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
       profileProvider.updateLiveLocation(lat, lng, bearing);
     }
   }
@@ -302,11 +318,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    // Reactively update map style when theme changes
-    if (_mapController != null) {
-      _mapController!.setMapStyle(isDarkMode ? _darkMapStyle : _mapStyle);
-    }
+    final profileProvider = context.watch<ProfileProvider>();
+    final bool isOnline = profileProvider.isOnline;
 
     return Scaffold(
       body: _isLoading
@@ -324,9 +337,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
             onMapCreated: (controller) {
               _mapController = controller;
-              _mapController!.setMapStyle(isDarkMode ? _darkMapStyle : _mapStyle);
               if (_currentPosition != null) _updateCamera();
             },
+            style: isDarkMode ? _darkMapStyle : _mapStyle,
             zoomControlsEnabled: false,
             myLocationEnabled: false,
             myLocationButtonEnabled: false,
@@ -368,13 +381,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             right: 0,
             child: Center(
               child: OnlineButtonWidget(
-                isSharingLocation: _isSharingLocation,
+                isSharingLocation: isOnline,
                 currentHeading: _currentHeading,
                 currentPosition: _currentPosition,
                 playSound: _playSound,
                 footerBadgeKey: _footerBadgeKey,
                 onStatusChanged: (status) {
-                  setState(() => _isSharingLocation = status);
+                  // No-op, managed by profile provider now
                 },
               ),
             ),
@@ -383,10 +396,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           const HelpAlertOverlay(),
           const RequesterStatusOverlay(),
           HomeFooter(
-            isSharingLocation: _isSharingLocation,
+            isSharingLocation: isOnline,
             badgeKey: _footerBadgeKey,
             onToggleLocation: () {
-              setState(() => _isSharingLocation = !_isSharingLocation);
+              // No-op, managed by profile provider now
             },
           ),
         ],

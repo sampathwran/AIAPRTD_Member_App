@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:aiaprtd_member/core/providers/earnings_provider.dart';
 
 class EarningTripTile extends StatelessWidget {
@@ -103,7 +104,7 @@ class EarningTripTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  "${trip.date.year}-${trip.date.month.toString().padLeft(2, '0')}-${trip.date.day.toString().padLeft(2, '0')} • ${trip.date.hour.toString().padLeft(2, '0')}:${trip.date.minute.toString().padLeft(2, '0')}",
+                  DateFormat('MMM dd, yyyy • hh:mm a').format(trip.date),
                   style: TextStyle(fontSize: 12, color: subTextColor),
                 ),
                 const SizedBox(height: 10),

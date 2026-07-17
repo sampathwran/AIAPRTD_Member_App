@@ -181,10 +181,12 @@ class EarningsProvider with ChangeNotifier {
             }
 
             DateTime tripDate;
-            if (data['pickupTime'] != null) {
-              tripDate = _parseDate(data['pickupTime']);
+            if (data['updatedAt'] != null) {
+              tripDate = _parseDate(data['updatedAt']);
             } else if (data['timestamp'] != null) {
               tripDate = _parseDate(data['timestamp']);
+            } else if (data['pickupTime'] != null) {
+              tripDate = _parseDate(data['pickupTime']);
             } else {
               tripDate = DateTime.now();
             }
@@ -246,7 +248,7 @@ class EarningsProvider with ChangeNotifier {
             Map<String, dynamic> data = doc.data();
 
             if (data.containsKey('tripId') && data.containsKey('totalFare')) {
-              DateTime tripDate = _parseDate(data['pickupTime'] ?? data['timestamp']);
+              DateTime tripDate = _parseDate(data['timestamp'] ?? data['startTime'] ?? data['pickupTime']);
 
               dailyTrips.add(TripModel(
                 id: data['tripId'] ?? doc.id,

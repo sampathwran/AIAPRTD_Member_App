@@ -15,13 +15,16 @@ class MeterFareDisplay extends StatelessWidget {
           style: TextStyle(color: Colors.grey, fontSize: 16, letterSpacing: 2),
         ),
         const SizedBox(height: 8),
-        Text(
-          "LKR ${totalFare.toStringAsFixed(2)}",
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 48,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            "LKR ${totalFare.toStringAsFixed(2)}",
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ),
       ],

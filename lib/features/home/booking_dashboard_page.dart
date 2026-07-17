@@ -110,7 +110,7 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
           continue;
         }
 
-        if (diff.inMinutes <= 30) {
+        if (diff.inMinutes <= 60) {
           live.add(doc); 
         } else {
           scheduled.add(doc); 

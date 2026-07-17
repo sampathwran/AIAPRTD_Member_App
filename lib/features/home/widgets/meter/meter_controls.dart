@@ -59,33 +59,6 @@ class MeterControls extends StatelessWidget {
               },
               child: const Text("VIEW SUMMARY", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
             ),
-          ),
-          const SizedBox(height: 16),
-          TextButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  backgroundColor: Colors.grey.shade900,
-                  title: const Text("Reset Meter?", style: TextStyle(color: Colors.white)),
-                  content: const Text("Are you sure you want to reset the meter? All current trip data will be lost.", style: TextStyle(color: Colors.grey)),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text("Cancel", style: TextStyle(color: Colors.blue)),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        meter.resetMeter();
-                      },
-                      child: const Text("Yes, Reset", style: TextStyle(color: Colors.red)),
-                    ),
-                  ],
-                ),
-              );
-            },
-            child: const Text("Reset Meter", style: TextStyle(color: Colors.grey, fontSize: 16)),
           )
         ]
       ],

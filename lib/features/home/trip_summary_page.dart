@@ -148,24 +148,27 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
       } catch (e) {
         debugPrint("Error saving bill to passenger: $e");
       }
+    }
 
-      // Process Trip Commission (10% Split)
-      try {
-        final financeProv = Provider.of<FinanceProvider>(context, listen: false);
-        await financeProv.processTripCommission(
-          tripId: meter.tripId,
-          totalFare: meter.totalFare,
-          driverId: driverMembershipNo,
-          passengerId: passengerId,
-        );
-      } catch (e) {
-        debugPrint("Error processing finance commission: $e");
-      }
+    // Process Trip Commission (10% Split for App Booking, 3% for Road Pickup)
+    try {
+      final financeProv = Provider.of<FinanceProvider>(context, listen: false);
+      await financeProv.processTripCommission(
+        tripId: meter.tripId,
+        totalFare: meter.totalFare,
+        driverId: driverMembershipNo,
+        passengerId: passengerId,
+      );
+    } catch (e) {
+      debugPrint("Error processing finance commission: $e");
+    }
 
-      // 3. Show Rating Dialog
+    if (passengerId.isNotEmpty && widget.bookingId != null) {
+      // Show Rating Dialog for App Bookings
       if (!mounted) return;
       _showRatingDialog(passengerId, meter);
     } else {
+      // For Road Pickups, just reset and close
       meter.resetMeter();
       if (mounted) Navigator.pop(context);
     }
@@ -236,15 +239,28 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        title: const Text("Trip Summary", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-      ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Please collect cash to finish the trip."),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.grey.shade50,
+        appBar: AppBar(
+          title: const Text("Trip Summary", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+          automaticallyImplyLeading: false,
+        ),
       body: Consumer<MeterProvider>(
         builder: (context, meter, child) {
           final profile = Provider.of<ProfileProvider>(context, listen: false);
@@ -381,7 +397,7 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
           );
         },
       ),
-    );
+    ));
   }
 
   Widget _buildInfoRow(IconData icon, String title, String value) {
