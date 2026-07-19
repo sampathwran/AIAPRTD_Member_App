@@ -248,7 +248,19 @@ class _HomeFooterState extends State<HomeFooter> {
                 Divider(indent: 20, endIndent: 20, color: isDarkMode ? Colors.grey[850] : const Color(0xFFF8FAFC)),
                 CreateJobButton(onTap: () => _handleCreateBooking(context)),
                 Divider(indent: 20, endIndent: 20, color: isDarkMode ? Colors.grey[850] : const Color(0xFFF8FAFC)),
-                RoadPickupButton(onTap: () => Navigator.pushNamed(context, '/road-pickup')),
+                RoadPickupButton(onTap: () {
+                  if (!widget.isSharingLocation) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("You must be Online to start a Road Pickup."),
+                        backgroundColor: Colors.red,
+                        duration: Duration(seconds: 3),
+                      ),
+                    );
+                    return;
+                  }
+                  Navigator.pushNamed(context, '/road-pickup');
+                }),
 
                 Consumer<ProfileProvider>(
                   builder: (context, profileProvider, child) {
