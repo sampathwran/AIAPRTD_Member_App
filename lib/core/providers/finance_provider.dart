@@ -59,89 +59,11 @@ class FinanceProvider extends ChangeNotifier {
         _mySavingsBalance = (data['savingsBalance'] ?? 0.0).toDouble();
         _myAppUsageChargeBalance = (data['appUsageChargeBalance'] ?? 0.0).toDouble();
         
-        // Auto-settlement logic (only if amount is reasonably larger than 0.00)
-        // We round down to 2 decimal places to avoid floating point bugs causing 0.01 charges
-        if (_mySavingsBalance >= 0.01 && _myAppUsageChargeBalance >= 0.01) {
-          _autoSettleOutstandingWithSavings(membershipNo, _mySavingsBalance, _myAppUsageChargeBalance);
-        }
-
-        // Refund negative outstanding balances to savings
-        if (_myAppUsageChargeBalance <= -0.01) {
-          _refundNegativeAppUsageToSavings(membershipNo, _myAppUsageChargeBalance);
-        }
-
         notifyListeners();
       }
     }, onError: (e) {
       debugPrint("Error listening to finance balances: $e");
     });
-  }
-
-  Future<void> _autoSettleOutstandingWithSavings(String memberId, double savings, double outstanding) async {
-    try {
-      double rawAmount = savings < outstanding ? savings : outstanding;
-      // Round to 2 decimal places to avoid 0.01 floating point residues
-      double amountToSettle = (rawAmount * 100).floorToDouble() / 100.0;
-      
-      if (amountToSettle <= 0) return;
-      
-      WriteBatch batch = _firestore.batch();
-      DocumentReference memberRef = _firestore.collection('members').doc(memberId);
-      
-      batch.set(memberRef, {
-        'savingsBalance': FieldValue.increment(-amountToSettle),
-        'appUsageChargeBalance': FieldValue.increment(-amountToSettle),
-      }, SetOptions(merge: true));
-
-      // Create transaction record for settlement
-      DocumentReference txnRef = _firestore.collection('finance_transactions').doc();
-      batch.set(txnRef, {
-        'transactionId': txnRef.id,
-        'passengerId': memberId, // For savings history
-        'driverId': memberId, // For app usage history
-        'amount': amountToSettle,
-        'type': 'auto_settlement',
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-
-      await batch.commit();
-      debugPrint("Auto-settled LKR $amountToSettle outstanding with savings.");
-    } catch (e) {
-      debugPrint("Error auto-settling outstanding: $e");
-    }
-  }
-
-  Future<void> _refundNegativeAppUsageToSavings(String memberId, double negativeOutstanding) async {
-    try {
-      double rawAmount = -negativeOutstanding; // Convert negative to positive
-      double amountToRefund = (rawAmount * 100).floorToDouble() / 100.0;
-      
-      if (amountToRefund <= 0) return;
-      
-      WriteBatch batch = _firestore.batch();
-      DocumentReference memberRef = _firestore.collection('members').doc(memberId);
-      
-      batch.set(memberRef, {
-        'appUsageChargeBalance': FieldValue.increment(amountToRefund), // brings it back to 0
-        'savingsBalance': FieldValue.increment(amountToRefund), // returns it to savings
-      }, SetOptions(merge: true));
-
-      // Create transaction record for refund
-      DocumentReference txnRef = _firestore.collection('finance_transactions').doc();
-      batch.set(txnRef, {
-        'transactionId': txnRef.id,
-        'passengerId': memberId, // For savings history
-        'driverId': memberId, // For app usage history
-        'amount': amountToRefund,
-        'type': 'auto_settlement_refund',
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-
-      await batch.commit();
-      debugPrint("Refunded LKR $amountToRefund negative outstanding to savings.");
-    } catch (e) {
-      debugPrint("Error refunding negative outstanding: $e");
-    }
   }
 
   /// Process the commission split at the end of an App Booking
@@ -167,38 +89,74 @@ class FinanceProvider extends ChangeNotifier {
           ? totalFare * (_driverCommissionRate / 100) 
           : unionUsageCharge;
 
-      WriteBatch batch = _firestore.batch();
+      await _firestore.runTransaction((transaction) async {
+        DocumentReference driverRef = _firestore.collection('members').doc(driverId);
+        DocumentSnapshot driverDoc = await transaction.get(driverRef);
+        
+        if (!driverDoc.exists) return;
+        
+        final driverData = driverDoc.data() as Map<String, dynamic>;
+        double currentSavings = (driverData['savingsBalance'] ?? 0.0).toDouble();
+        double currentAppUsage = (driverData['appUsageChargeBalance'] ?? 0.0).toDouble();
+        
+        // Calculate new app usage after this trip
+        double newAppUsage = currentAppUsage + totalDriverCommission;
+        double amountToSettle = 0.0;
+        
+        // Auto-settlement logic
+        if (currentSavings >= 0.01 && newAppUsage >= 0.01) {
+          double rawAmount = currentSavings < newAppUsage ? currentSavings : newAppUsage;
+          amountToSettle = (rawAmount * 100).floorToDouble() / 100.0;
+        }
 
-      // 2. Update Driver's App Usage Charge Balance (They OWE this money to union)
-      DocumentReference driverRef = _firestore.collection('members').doc(driverId);
-      batch.set(driverRef, {
-        'appUsageChargeBalance': FieldValue.increment(totalDriverCommission),
-      }, SetOptions(merge: true));
+        // Apply settlement if any
+        if (amountToSettle > 0) {
+          transaction.set(driverRef, {
+            'appUsageChargeBalance': FieldValue.increment(totalDriverCommission - amountToSettle),
+            'savingsBalance': FieldValue.increment(-amountToSettle),
+          }, SetOptions(merge: true));
+          
+          // Create auto-settlement transaction log
+          DocumentReference settleTxnRef = _firestore.collection('finance_transactions').doc();
+          transaction.set(settleTxnRef, {
+            'transactionId': settleTxnRef.id,
+            'passengerId': driverId,
+            'driverId': driverId,
+            'amount': amountToSettle,
+            'type': 'auto_settlement',
+            'timestamp': FieldValue.serverTimestamp(),
+          });
+        } else {
+          // No settlement, just add to usage charge
+          transaction.set(driverRef, {
+            'appUsageChargeBalance': FieldValue.increment(totalDriverCommission),
+          }, SetOptions(merge: true));
+        }
 
-      // 3. Update Passenger's Savings Balance
-      if (isAppBooking) {
-        DocumentReference passengerRef = _firestore.collection('members').doc(passengerId);
-        batch.set(passengerRef, {
-          'savingsBalance': FieldValue.increment(passengerSavings),
-        }, SetOptions(merge: true));
-      }
+        // 3. Update Passenger's Savings Balance
+        if (isAppBooking) {
+          DocumentReference passengerRef = _firestore.collection('members').doc(passengerId);
+          transaction.set(passengerRef, {
+            'savingsBalance': FieldValue.increment(passengerSavings),
+          }, SetOptions(merge: true));
+        }
 
-      // 4. Create Transaction Record
-      DocumentReference txnRef = _firestore.collection('finance_transactions').doc();
-      batch.set(txnRef, {
-        'transactionId': txnRef.id,
-        'tripId': tripId,
-        'driverId': driverId,
-        'passengerId': passengerId,
-        'totalFare': totalFare,
-        'driverCommission': totalDriverCommission,
-        'unionUsageCharge': unionUsageCharge,
-        'passengerSavings': isAppBooking ? passengerSavings : 0.0,
-        'timestamp': FieldValue.serverTimestamp(),
-        'type': isAppBooking ? 'app_booking_commission_split' : 'road_pickup_commission',
+        // 4. Create Trip Transaction Record
+        DocumentReference txnRef = _firestore.collection('finance_transactions').doc();
+        transaction.set(txnRef, {
+          'transactionId': txnRef.id,
+          'tripId': tripId,
+          'driverId': driverId,
+          'passengerId': passengerId,
+          'totalFare': totalFare,
+          'driverCommission': totalDriverCommission,
+          'unionUsageCharge': unionUsageCharge,
+          'passengerSavings': isAppBooking ? passengerSavings : 0.0,
+          'timestamp': FieldValue.serverTimestamp(),
+          'type': isAppBooking ? 'app_booking_commission_split' : 'road_pickup_commission',
+        });
       });
 
-      await batch.commit();
       debugPrint("Trip Commission processed successfully for $tripId");
     } catch (e) {
       debugPrint("Error processing trip commission: $e");
