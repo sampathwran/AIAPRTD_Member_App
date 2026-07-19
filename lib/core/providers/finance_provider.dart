@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 
 class FinanceProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -117,7 +118,15 @@ class FinanceProvider extends ChangeNotifier {
           }, SetOptions(merge: true));
           
           // Create auto-settlement transaction log
-          DocumentReference settleTxnRef = _firestore.collection('finance_transactions').doc();
+          String dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+          DocumentReference settleTxnRef = _firestore
+              .collection('finance_transactions')
+              .doc(driverId)
+              .collection('history')
+              .doc(dateStr)
+              .collection('transactions')
+              .doc();
+              
           transaction.set(settleTxnRef, {
             'transactionId': settleTxnRef.id,
             'passengerId': driverId,
@@ -142,7 +151,15 @@ class FinanceProvider extends ChangeNotifier {
         }
 
         // 4. Create Trip Transaction Record
-        DocumentReference txnRef = _firestore.collection('finance_transactions').doc();
+        String dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+        DocumentReference txnRef = _firestore
+            .collection('finance_transactions')
+            .doc(driverId)
+            .collection('history')
+            .doc(dateStr)
+            .collection('transactions')
+            .doc();
+            
         transaction.set(txnRef, {
           'transactionId': txnRef.id,
           'tripId': tripId,

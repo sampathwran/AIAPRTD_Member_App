@@ -13,7 +13,7 @@ class SavingHistoryList extends StatelessWidget {
     
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('finance_transactions')
+          .collectionGroup('transactions')
           .where('passengerId', isEqualTo: profile.memberNo)
           .orderBy('timestamp', descending: true)
           .limit(30)

@@ -13,7 +13,7 @@ class TransactionHistoryList extends StatelessWidget {
     
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('finance_transactions')
+          .collectionGroup('transactions')
           .where('driverId', isEqualTo: profile.memberNo)
           .where('type', whereIn: ['app_booking_commission_split', 'road_pickup_commission', 'auto_settlement', 'auto_settlement_refund'])
           .orderBy('timestamp', descending: true)
