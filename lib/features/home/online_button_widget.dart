@@ -112,12 +112,26 @@ class OnlineButtonWidget extends StatelessWidget {
               } catch (e) {
                 debugPrint("   -> Sound play error: $e");
               }
-              // Added SnackBar here for better visibility
-              scaffoldMessenger.showSnackBar(
-                SnackBar(
-                  content: Text(status['reason']?.toString() ?? "System verification failed!"),
-                  behavior: SnackBarBehavior.floating,
-                  backgroundColor: Colors.redAccent,
+              
+              // 💡 Show Alert Dialog instead of SnackBar for better visibility
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  title: const Row(
+                    children: [
+                      Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
+                      SizedBox(width: 8),
+                      Text("Action Required", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  content: Text("You cannot go online.\n\n${status['reason']?.toString() ?? 'System verification failed!'}"),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context), 
+                      child: const Text("OK", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ],
                 ),
               );
               return;

@@ -29,8 +29,10 @@ class PersonalKYCChecker {
     final String faceStatus =
         memberData['faceKycStatus']?.toString().toLowerCase() ?? 'none';
 
+    // We no longer accept mainStatus == 'active' here because WP API sends it by default!
+    // Must rely specifically on kycApprovalStatus for Admin approval.
     final bool isAdminApproved =
-        kycApproval == 'approved' || mainStatus == 'active' || mainStatus == 'active member';
+        kycApproval == 'approved';
 
     // Face verification doesn't need admin approval.
     // App/backend approval based on profile image match is enough.

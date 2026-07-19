@@ -209,6 +209,20 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
           'activatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
 
+        // Create member collection from source document
+        if (_sourceCollection != null && _targetUid != null) {
+            var webSyncDoc = await FirebaseFirestore.instance.collection(_sourceCollection!).doc(_targetUid).get();
+            if (webSyncDoc.exists) {
+                var data = webSyncDoc.data()!;
+                data['auth_uid'] = user.uid;
+                data['isProfileComplete'] = true;
+                data['activatedAt'] = FieldValue.serverTimestamp();
+                data['status'] = 'inactive member';
+                data['profile_status'] = 'inactive member';
+                await FirebaseFirestore.instance.collection('member').doc(_targetUid).set(data);
+            }
+        }
+
         // Try writing to member as well IF it exists (merge will only add to it, but wait, merge will create it if it doesn't exist!)
         // So let's NOT write to member collection. 
         // Just writing to web_sync_member is fine. ProfileProvider will find them by email.

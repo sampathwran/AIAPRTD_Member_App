@@ -31,9 +31,8 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
   _sessionSubscription;
 
-  // 💡 NEW: Subscription for Rating Sync
-  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
-  _ratingSyncSubscription;
+  // 💡 NEW: Subscriptions for Rating Sync across multiple collections
+  List<StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>> _ratingSyncSubscriptions = [];
 
   // 💡 NEW: Start App Lifecycle Observer in Constructor
   ProfileProvider() {
@@ -186,6 +185,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
             await _loadPaymentData(membershipNo);
             await _loadVehicleCategory(membershipNo);
             _listenToProfileImageRequest(membershipNo);
+            _listenToRatingSync(membershipNo);
           }
 
           await _evaluateAndSyncProfileStatus();
@@ -252,10 +252,12 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
         try {
           await _firestore.collection(collectionSource).doc(documentId).set({
             'profile_status': newStatus,
+            'status': newStatus, // 💡 Override WordPress API 'active' status
             'inactive_reasons': reasons,
           }, SetOptions(merge: true));
           
           _memberData!['profile_status'] = newStatus;
+          _memberData!['status'] = newStatus;
           _memberData!['inactive_reasons'] = reasons;
           
           // dY' NEW: Sync to the dedicated 'member_statuses' collection
@@ -364,7 +366,64 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
     );
   }
 
+  void _listenToRatingSync(String membershipNo) {
+    for (var sub in _ratingSyncSubscriptions) {
+      sub.cancel();
+    }
+    _ratingSyncSubscriptions.clear();
 
+    final List<String> collections = ['members', 'member', 'web_sync_member'];
+
+    for (String col in collections) {
+      final sub = _firestore
+          .collection(col)
+          .doc(membershipNo)
+          .snapshots()
+          .listen(
+        (document) {
+          if (!document.exists || document.data() == null || _memberData == null) {
+            return;
+          }
+
+          final Map<String, dynamic> data = document.data()!;
+          bool shouldUpdate = false;
+
+          int currentCount = (_memberData!['ratingCount'] ?? 0) is int
+              ? (_memberData!['ratingCount'] ?? 0) as int
+              : int.tryParse(_memberData!['ratingCount'].toString()) ?? 0;
+
+          int incomingCount = (data['ratingCount'] ?? 0) is int
+              ? (data['ratingCount'] ?? 0) as int
+              : int.tryParse(data['ratingCount'].toString()) ?? 0;
+
+          // Only accept the new rating if it has more rating counts
+          // Or if our current rating is missing but incoming has it
+          if (incomingCount > currentCount || (currentCount == 0 && data.containsKey('rating'))) {
+            if (data.containsKey('rating') && _memberData!['rating'] != data['rating']) {
+              _memberData!['rating'] = data['rating'];
+              shouldUpdate = true;
+            }
+            if (data.containsKey('ratingSum') && _memberData!['ratingSum'] != data['ratingSum']) {
+              _memberData!['ratingSum'] = data['ratingSum'];
+              shouldUpdate = true;
+            }
+            if (data.containsKey('ratingCount') && _memberData!['ratingCount'] != data['ratingCount']) {
+              _memberData!['ratingCount'] = data['ratingCount'];
+              shouldUpdate = true;
+            }
+          }
+
+          if (shouldUpdate) {
+            notifyListeners();
+          }
+        },
+        onError: (error) {
+          debugPrint('Rating sync listener error on $col: $error');
+        },
+      );
+      _ratingSyncSubscriptions.add(sub);
+    }
+  }
 
   // 💡 🎯 UPDATED: Added Timeout and Error Handling
   Future<bool> toggleDriverStatus(
@@ -704,8 +763,10 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
     await _sessionSubscription?.cancel();
     _sessionSubscription = null;
 
-    await _ratingSyncSubscription?.cancel();
-    _ratingSyncSubscription = null;
+    for (var sub in _ratingSyncSubscriptions) {
+      await sub.cancel();
+    }
+    _ratingSyncSubscriptions.clear();
   }
 
   @override

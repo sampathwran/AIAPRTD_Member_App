@@ -211,11 +211,8 @@ class _StatusBadgeWidgetState extends State<StatusBadgeWidget>
 
         final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
 
-        if (!isActive && profileProvider.isOnline) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-             profileProvider.toggleDriverStatus(false);
-          });
-        }
+        // Removed automatic toggleDriverStatus(false) here per user request.
+        // The member must manually go offline.
 
         if (!widget.isProfileView) {
           if (isActive || !_showErrorBlock) {

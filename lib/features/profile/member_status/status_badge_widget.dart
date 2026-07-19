@@ -117,24 +117,30 @@ class _StatusBadgeWidgetState extends State<StatusBadgeWidget> with SingleTicker
               stream: FirebaseFirestore.instance.collection('member_inactive_reasons').doc(membershipNo).snapshots(),
               builder: (context, snapshot) {
 
-                // Firebase Status එක අනුව වැඩේ තීරණය කරමු
+                // 💡 1. Check member document profile_status and inactive_reasons directly!
+                final bool isLocalInactive = activeData['profile_status']?.toString().toLowerCase() == 'inactive member' || 
+                                             activeData['status']?.toString().toLowerCase() == 'inactive member';
+                
+                final List<dynamic> localReasons = activeData['inactive_reasons'] is List ? List.from(activeData['inactive_reasons']) : [];
+                String localReasonStr = localReasons.isNotEmpty ? localReasons.first.toString() : 'Account Inactive';
+
+                // 💡 2. Also check member_inactive_reasons collection as fallback
                 final bool isFirebaseInactive = snapshot.hasData &&
                     snapshot.data!.exists &&
                     snapshot.data!['status'] == 'INACTIVE';
 
                 final List<dynamic> issues = (snapshot.data?.data()?['issues'] as List<dynamic>?) ?? [];
-                final String reason = issues.isNotEmpty ? issues.first['reason'].toString() : 'Account Inactive';
+                final String firebaseReason = issues.isNotEmpty ? issues.first['reason'].toString() : 'Account Inactive';
 
-                // Status එක අනුව Driver Online/Offline ටොගල් කිරීම
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (!mounted) return;
-                  final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
-                  if (isFirebaseInactive && profileProvider.isOnline) {
-                    profileProvider.toggleDriverStatus(false);
-                  }
-                });
+                final bool isInactive = isLocalInactive || isFirebaseInactive;
+                
+                // Prioritize local reason if it exists since ProfileProvider calculates it comprehensively
+                final String reason = (isLocalInactive && localReasons.isNotEmpty) ? localReasonStr : firebaseReason;
 
-                if (!widget.isProfileView && !isFirebaseInactive) return const SizedBox.shrink();
+                // Removed automatic toggleDriverStatus(false) per user request.
+                // Drivers must manually go offline.
+
+                if (!widget.isProfileView && !isInactive) return const SizedBox.shrink();
 
                 return FadeTransition(
                   opacity: widget.isProfileView ? const AlwaysStoppedAnimation<double>(1) : _opacityAnimation,
@@ -143,8 +149,8 @@ class _StatusBadgeWidgetState extends State<StatusBadgeWidget> with SingleTicker
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (!isFirebaseInactive) _buildActiveBadge(),
-                        if (isFirebaseInactive) ...[
+                        if (!isInactive) _buildActiveBadge(),
+                        if (isInactive) ...[
                           _buildInactiveBadge(),
                           const SizedBox(height: 8),
                           _buildReasonBox(reason),

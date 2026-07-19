@@ -43,6 +43,8 @@ class MeterProvider with ChangeNotifier {
   DateTime? _startTime;
   DateTime? _endTime;
   
+  DateTime _lastTimerTick = DateTime.now();
+  
   // Getters
   bool get isRunning => _isRunning;
   bool get isWaiting => _isWaiting;
@@ -173,12 +175,19 @@ class MeterProvider with ChangeNotifier {
       _handlePositionUpdate(position);
     });
 
+    _lastTimerTick = DateTime.now();
     _waitingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_isRunning && _isWaiting && !_isWaitingPaused) {
-        _waitingTimeSeconds++;
-        _calculateFare();
-        _saveState();
-        notifyListeners();
+      DateTime now = DateTime.now();
+      int elapsedSecs = now.difference(_lastTimerTick).inSeconds;
+      
+      if (elapsedSecs > 0) {
+        if (_isRunning && _isWaiting && !_isWaitingPaused) {
+          _waitingTimeSeconds += elapsedSecs;
+          _calculateFare();
+          if (_waitingTimeSeconds % 5 == 0) _saveState(); // Save every 5 seconds to reduce load
+          notifyListeners();
+        }
+        _lastTimerTick = now;
       }
     });
   }
@@ -291,12 +300,19 @@ class MeterProvider with ChangeNotifier {
       _handlePositionUpdate(position);
     });
 
+    _lastTimerTick = DateTime.now();
     _waitingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_isRunning && _isWaiting && !_isWaitingPaused) {
-        _waitingTimeSeconds++;
-        _calculateFare();
-        if (_waitingTimeSeconds % 5 == 0) _saveState(); // Save every 5 seconds to reduce load
-        notifyListeners();
+      DateTime now = DateTime.now();
+      int elapsedSecs = now.difference(_lastTimerTick).inSeconds;
+      
+      if (elapsedSecs > 0) {
+        if (_isRunning && _isWaiting && !_isWaitingPaused) {
+          _waitingTimeSeconds += elapsedSecs;
+          _calculateFare();
+          if (_waitingTimeSeconds % 5 == 0) _saveState(); // Save every 5 seconds to reduce load
+          notifyListeners();
+        }
+        _lastTimerTick = now;
       }
     });
   }

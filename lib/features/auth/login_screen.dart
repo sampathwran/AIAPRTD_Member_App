@@ -53,35 +53,36 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      String targetEmail = input;
-
-      // If Membership No is entered instead of an email
-      if (!input.contains('@')) {
-        // 1. Try checking the member collection first
-        var querySnapshot = await FirebaseFirestore.instance
+      // 1. STRICT CHECK: Must exist in `member` collection!
+      String targetEmail = '';
+      String inputDocId = '';
+      
+      var memberSnapshot = await FirebaseFirestore.instance
+          .collection('member')
+          .where('user_email', isEqualTo: input)
+          .limit(1)
+          .get();
+          
+      if (memberSnapshot.docs.isEmpty) {
+        memberSnapshot = await FirebaseFirestore.instance
             .collection('member')
             .where('membershipNo', isEqualTo: input)
             .limit(1)
             .get();
+      }
 
-        if (querySnapshot.docs.isNotEmpty) {
-          targetEmail = querySnapshot.docs.first.data()['user_email'] ?? '';
-        } else {
-          // 2. Not found in member, try checking web_sync_member
-          var webSyncSnapshot = await FirebaseFirestore.instance
-              .collection('web_sync_member')
-              .where('membershipNo', isEqualTo: input)
-              .limit(1)
-              .get();
-
-          if (webSyncSnapshot.docs.isNotEmpty) {
-            targetEmail = webSyncSnapshot.docs.first.data()['user_email'] ?? '';
-          } else {
-            _showSnackBar("No member found with this Membership Number.");
-            setState(() => _isLoading = false);
-            return;
-          }
+      if (memberSnapshot.docs.isNotEmpty) {
+        targetEmail = memberSnapshot.docs.first.data()['user_email'] ?? '';
+        inputDocId = memberSnapshot.docs.first.id;
+      } else {
+        // Not in member collection!
+        // STRICT RULE: MUST GO TO FIRST TIME LOGIN
+        _showSnackBar("Please activate your account via First Time Login.");
+        if (mounted) {
+           Navigator.of(context).push(MaterialPageRoute(builder: (context) => const FirstTimeLoginScreen()));
         }
+        setState(() => _isLoading = false);
+        return;
       }
 
       if (targetEmail.isEmpty) {
@@ -91,10 +92,23 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       // Firebase Login
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: targetEmail,
-        password: password,
-      );
+      UserCredential userCredential;
+      try {
+        userCredential = await _auth.signInWithEmailAndPassword(
+          email: targetEmail,
+          password: password,
+        );
+      } on FirebaseAuthException catch (e) {
+        String errorMsg = "Login Failed. Please try again.";
+        if (e.code == 'user-not-found' || e.code == 'invalid-credential' || e.code == 'wrong-password') {
+          errorMsg = "Invalid Login credentials. Please check your Email/ID and Password.";
+        } else if (e.code == 'too-many-requests') {
+          errorMsg = "Too many attempts. Account temporarily locked.";
+        }
+        _showSnackBar("$errorMsg (${e.code})");
+        setState(() => _isLoading = false);
+        return;
+      }
 
       if (!mounted) return;
 
