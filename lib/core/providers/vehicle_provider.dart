@@ -110,12 +110,22 @@ class VehicleProvider with ChangeNotifier {
       final TaskSnapshot uploadSnapshot = await storageReference.putFile(imageFile);
       final String imageUrl = await uploadSnapshot.ref.getDownloadURL();
 
-      await _firestore.collection('vehicles').doc(membershipNo).update({
+      final WriteBatch batch = _firestore.batch();
+      
+      batch.update(_firestore.collection('vehicles').doc(membershipNo), {
         'vehiclePhotos.$label.url': imageUrl,
         'vehiclePhotos.$label.status': 'pending',
         'vehiclePhotos.$label.reason': '',
         'status': 'pending', // 💡 Send back to Admin request queue
       });
+
+      // Update new Single Source of Truth collection
+      batch.set(_firestore.collection('member_inactive_reasons').doc(membershipNo), {
+        label: 'pending_approval',
+        'status': 'INACTIVE',
+      }, SetOptions(merge: true));
+
+      await batch.commit();
     } catch (error) {
       rethrow;
     }
@@ -141,10 +151,28 @@ class VehicleProvider with ChangeNotifier {
       if (docIndex < 0 || docIndex >= documents.length) throw Exception('Invalid document index');
 
       documents[docIndex] = {'status': 'pending', 'reason': '', 'url': downloadUrl};
-      await reference.update({
+      
+      final WriteBatch batch = _firestore.batch();
+      
+      batch.update(reference, {
         'documents': documents,
         'status': 'pending', // 💡 Send back to Admin request queue
       });
+
+      String fieldName = '';
+      if (docIndex == 0) fieldName = 'revenue_licence';
+      else if (docIndex == 1) fieldName = 'insurance_policy';
+      else if (docIndex == 2) fieldName = 'vehicle_registration_document';
+      else if (docIndex == 3 || docIndex == 4) fieldName = 'driving_licence';
+
+      if (fieldName.isNotEmpty) {
+        batch.set(_firestore.collection('member_inactive_reasons').doc(membershipNo), {
+          fieldName: 'pending_approval',
+          'status': 'INACTIVE',
+        }, SetOptions(merge: true));
+      }
+
+      await batch.commit();
     } catch (error) {
       rethrow;
     }

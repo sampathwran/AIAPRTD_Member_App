@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:aiaprtd_member/core/providers/finance_provider.dart';
+import 'package:aiaprtd_member/core/providers/earnings_provider.dart';
 import 'package:aiaprtd_member/core/providers/profile_provider.dart';
 import 'package:aiaprtd_member/core/providers/payment_provider.dart';
 import 'package:aiaprtd_member/features/finance/widgets/total_saving.dart';
@@ -44,7 +45,11 @@ class _SavingPageState extends State<SavingPage> {
       ),
       body: Consumer<FinanceProvider>(
         builder: (context, financeProv, child) {
-          final balance = financeProv.mySavingsBalance;
+          final earningsProv = Provider.of<EarningsProvider>(context, listen: false);
+          double balance = financeProv.mySavingsBalance;
+          if (earningsProv.hasFetched && earningsProv.totalTrips == 0) {
+            balance = 0.0;
+          }
           
           return Column(
             children: [

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:pdf/pdf.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aiaprtd_member/core/providers/meter_provider.dart';
 import 'package:aiaprtd_member/core/providers/finance_provider.dart';
@@ -41,7 +42,15 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
         mapSnapshot = await _mapController!.takeSnapshot();
       }
 
-      // 2. Generate PDF
+      // 2. Load Assets and Info
+      final ByteData imageByteData = await rootBundle.load('assets/images/logo.png');
+      final Uint8List logoBytes = imageByteData.buffer.asUint8List();
+      final pw.MemoryImage logoImage = pw.MemoryImage(logoBytes);
+      
+      final profile = Provider.of<ProfileProvider>(context, listen: false);
+      final memberNo = profile.memberData?['membershipNo'] ?? 'Unknown';
+
+      // 3. Generate PDF
       final pdf = pw.Document();
       
       final startDateStr = meter.startTime != null ? DateFormat('yyyy-MM-dd').format(meter.startTime!) : 'Unknown';
@@ -50,54 +59,122 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
 
       pdf.addPage(
         pw.Page(
+          margin: const pw.EdgeInsets.all(32),
           build: (pw.Context context) {
-            return pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
+            return pw.Stack(
+              alignment: pw.Alignment.center,
               children: [
-                pw.Center(child: pw.Text("TAXI RECEIPT", style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold))),
-                pw.SizedBox(height: 20),
-                pw.Text("Trip ID: ${meter.tripId}", style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-                pw.Text("Date: $startDateStr", style: const pw.TextStyle(fontSize: 14)),
-                pw.SizedBox(height: 10),
-                pw.Divider(),
-                pw.SizedBox(height: 10),
-                pw.Text("Start Time: $startTimeStr", style: const pw.TextStyle(fontSize: 14)),
-                pw.Text("End Time: $endTimeStr", style: const pw.TextStyle(fontSize: 14)),
-                pw.SizedBox(height: 10),
-                pw.Text("From: ${meter.startAddress}", style: const pw.TextStyle(fontSize: 14)),
-                pw.Text("To: ${meter.endAddress}", style: const pw.TextStyle(fontSize: 14)),
-                pw.SizedBox(height: 10),
-                pw.Divider(),
-                pw.SizedBox(height: 10),
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Text("Distance:", style: const pw.TextStyle(fontSize: 14)),
-                    pw.Text("${meter.totalDistanceKm.toStringAsFixed(2)} km", style: const pw.TextStyle(fontSize: 14)),
-                  ]
-                ),
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Text("Wait Time:", style: const pw.TextStyle(fontSize: 14)),
-                    pw.Text("${(meter.waitingTimeSeconds / 60).floor()}m ${(meter.waitingTimeSeconds % 60)}s", style: const pw.TextStyle(fontSize: 14)),
-                  ]
-                ),
-                pw.SizedBox(height: 10),
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Text("TOTAL FARE:", style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-                    pw.Text("LKR ${meter.totalFare.toStringAsFixed(2)}", style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-                  ]
-                ),
-                pw.SizedBox(height: 20),
-                if (mapSnapshot != null)
-                  pw.Expanded(
-                    child: pw.Center(
-                      child: pw.Image(pw.MemoryImage(mapSnapshot)),
+                // Watermark Tiled
+                pw.Opacity(
+                  opacity: 0.06,
+                  child: pw.Transform.rotateBox(
+                    angle: 0.6,
+                    child: pw.Column(
+                      mainAxisAlignment: pw.MainAxisAlignment.center,
+                      children: List.generate(7, (index) => 
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.symmetric(vertical: 40),
+                          child: pw.Row(
+                            mainAxisAlignment: pw.MainAxisAlignment.center,
+                            children: [
+                              pw.Text("AIAPRTD", style: pw.TextStyle(fontSize: 50, fontWeight: pw.FontWeight.bold, color: PdfColors.grey)),
+                              pw.SizedBox(width: 60),
+                              pw.Text("AIAPRTD", style: pw.TextStyle(fontSize: 50, fontWeight: pw.FontWeight.bold, color: PdfColors.grey)),
+                              pw.SizedBox(width: 60),
+                              pw.Text("AIAPRTD", style: pw.TextStyle(fontSize: 50, fontWeight: pw.FontWeight.bold, color: PdfColors.grey)),
+                            ]
+                          )
+                        )
+                      ),
                     ),
                   ),
+                ),
+                
+                // Content
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    pw.Center(
+                      child: pw.Column(
+                        children: [
+                          pw.Image(logoImage, height: 60),
+                          pw.SizedBox(height: 10),
+                          pw.Text("AIAPRTD TAXI RECEIPT", style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold, color: PdfColors.indigo900)),
+                          pw.SizedBox(height: 5),
+                          pw.Text("Email: info@aiaprtd.lk | Contact: 0705001002 / 0775018681", style: const pw.TextStyle(fontSize: 10)),
+                          pw.Text("Address: Head Office, Colombo, Sri Lanka | Reg No: Pending", style: const pw.TextStyle(fontSize: 10)),
+                        ]
+                      ),
+                    ),
+                    pw.SizedBox(height: 20),
+                    
+                    // Trip Details
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text("Trip ID: ${meter.tripId}", style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                        pw.Text("Driver ID: $memberNo", style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                      ]
+                    ),
+                    pw.Text("Date: $startDateStr", style: const pw.TextStyle(fontSize: 12)),
+                    pw.SizedBox(height: 10),
+                    pw.Divider(color: PdfColors.grey400),
+                    pw.SizedBox(height: 10),
+                    
+                    // Times and Locations
+                    pw.Text("Start Time: $startTimeStr", style: const pw.TextStyle(fontSize: 12)),
+                    pw.Text("End Time: $endTimeStr", style: const pw.TextStyle(fontSize: 12)),
+                    pw.SizedBox(height: 10),
+                    pw.Text("From: ${meter.startAddress}", style: const pw.TextStyle(fontSize: 12)),
+                    pw.Text("To: ${meter.endAddress}", style: const pw.TextStyle(fontSize: 12)),
+                    pw.SizedBox(height: 10),
+                    pw.Divider(color: PdfColors.grey400),
+                    pw.SizedBox(height: 10),
+                    
+                    // Fare Breakdown
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text("Distance:", style: const pw.TextStyle(fontSize: 12)),
+                        pw.Text("${meter.totalDistanceKm.toStringAsFixed(2)} km", style: const pw.TextStyle(fontSize: 12)),
+                      ]
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text("Wait Time:", style: const pw.TextStyle(fontSize: 12)),
+                        pw.Text("${(meter.waitingTimeSeconds / 60).floor()}m ${(meter.waitingTimeSeconds % 60)}s", style: const pw.TextStyle(fontSize: 12)),
+                      ]
+                    ),
+                    pw.SizedBox(height: 10),
+                    pw.Container(
+                      padding: const pw.EdgeInsets.all(8),
+                      color: PdfColors.grey200,
+                      child: pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text("TOTAL FARE:", style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+                          pw.Text("LKR ${meter.totalFare.toStringAsFixed(2)}", style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900)),
+                        ]
+                      )
+                    ),
+                    pw.SizedBox(height: 20),
+                    
+                    // Map Snapshot
+                    if (mapSnapshot != null)
+                      pw.Expanded(
+                        child: pw.Center(
+                          child: pw.ClipRRect(
+                            horizontalRadius: 10,
+                            verticalRadius: 10,
+                            child: pw.Image(pw.MemoryImage(mapSnapshot)),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ],
             );
           },
@@ -143,7 +220,19 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
       };
       
       try {
-        await FirebaseFirestore.instance.collection('members').doc(passengerId).collection('my_bookings').doc(widget.bookingId!).set(billDetails, SetOptions(merge: true));
+        DocumentReference? passRef;
+        final passQ = await FirebaseFirestore.instance.collection('member').where('membershipNo', isEqualTo: passengerId).limit(1).get();
+        if (passQ.docs.isNotEmpty) {
+          passRef = passQ.docs.first.reference;
+        } else {
+          final webQ = await FirebaseFirestore.instance.collection('web_sync_member').where('membershipNo', isEqualTo: passengerId).limit(1).get();
+          if (webQ.docs.isNotEmpty) passRef = webQ.docs.first.reference;
+        }
+        if (passRef != null) {
+          await passRef.collection('my_bookings').doc(widget.bookingId!).set(billDetails, SetOptions(merge: true));
+        } else {
+          await FirebaseFirestore.instance.collection('member').doc(passengerId).collection('my_bookings').doc(widget.bookingId!).set(billDetails, SetOptions(merge: true));
+        }
         await FirebaseFirestore.instance.collection('all_bookings').doc(widget.bookingId!).set(billDetails, SetOptions(merge: true));
       } catch (e) {
         debugPrint("Error saving bill to passenger: $e");
@@ -196,17 +285,32 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
                   }, SetOptions(merge: true));
                   
                   if (passengerId.isNotEmpty) {
-                    await FirebaseFirestore.instance.collection('members').doc(passengerId).collection('my_bookings').doc(widget.bookingId!).set({
-                      'passengerRating': rating,
-                      'passengerRatingReasons': selectedChips,
-                      'passengerRatingCustomReason': customReason,
-                    }, SetOptions(merge: true));
+                    DocumentReference? passRef;
+                    final passQ = await FirebaseFirestore.instance.collection('member').where('membershipNo', isEqualTo: passengerId).limit(1).get();
+                    if (passQ.docs.isNotEmpty) passRef = passQ.docs.first.reference;
+                    else {
+                      final webQ = await FirebaseFirestore.instance.collection('web_sync_member').where('membershipNo', isEqualTo: passengerId).limit(1).get();
+                      if (webQ.docs.isNotEmpty) passRef = webQ.docs.first.reference;
+                    }
+                    if (passRef != null) {
+                      await passRef.collection('my_bookings').doc(widget.bookingId!).set({
+                        'passengerRating': rating,
+                        'passengerRatingReasons': selectedChips,
+                        'passengerRatingCustomReason': customReason,
+                      }, SetOptions(merge: true));
+                    } else {
+                      await FirebaseFirestore.instance.collection('member').doc(passengerId).collection('my_bookings').doc(widget.bookingId!).set({
+                        'passengerRating': rating,
+                        'passengerRatingReasons': selectedChips,
+                        'passengerRatingCustomReason': customReason,
+                      }, SetOptions(merge: true));
+                    }
                     
-                    final memberRef = FirebaseFirestore.instance.collection('members').doc(passengerId);
+                    final memberRef = passRef ?? FirebaseFirestore.instance.collection('member').doc(passengerId);
                     await FirebaseFirestore.instance.runTransaction((transaction) async {
                       final snapshot = await transaction.get(memberRef);
                       if (snapshot.exists) {
-                        final data = snapshot.data()!;
+                        final data = snapshot.data() as Map<String, dynamic>;
                         double currentSum = (data['ratingSum'] ?? 0.0).toDouble();
                         int currentCount = (data['ratingCount'] ?? 0).toInt();
                         

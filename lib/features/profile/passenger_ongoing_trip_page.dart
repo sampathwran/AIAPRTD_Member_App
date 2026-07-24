@@ -50,24 +50,24 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
   }
 
   Future<void> _loadCarIcon(String category) async {
-    String assetPath = 'assets/images/mini.png'; // default fallback
+    String assetPath = 'assets/images/map_mini.png'; // default fallback
 
     if (category.contains('budget')) {
-      assetPath = 'assets/images/budget.png';
+      assetPath = 'assets/images/map_budget.png';
     } else if (category.contains('sedan')) {
-      assetPath = 'assets/images/sedan.png';
+      assetPath = 'assets/images/map_sedan.png';
     } else if (category.contains('6 seater') || category.contains('6_seater')) {
-      assetPath = 'assets/images/6_seater.png';
+      assetPath = 'assets/images/map_6_seater.png';
     } else if (category.contains('9 seater') || category.contains('9_seater')) {
-      assetPath = 'assets/images/9_seater.png';
+      assetPath = 'assets/images/map_9_seater.png';
     } else if (category.contains('14 seater') || category.contains('14_seater')) {
-      assetPath = 'assets/images/14_seater.png';
+      assetPath = 'assets/images/map_14_seater.png';
     } else if (category.contains('mini')) {
-      assetPath = 'assets/images/mini.png';
+      assetPath = 'assets/images/map_mini.png';
     }
 
     try {
-      final Uint8List markerIcon = await getBytesFromAsset(assetPath, 120); // Enlarged car icon
+      final Uint8List markerIcon = await getBytesFromAsset(assetPath, 80); // Reduced car icon size
       _carIcon = BitmapDescriptor.bytes(markerIcon);
     } catch (e) {
       try {

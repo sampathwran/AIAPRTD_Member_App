@@ -512,6 +512,7 @@ class BookingProvider extends ChangeNotifier {
     required Map<String, dynamic> selectedVehicle,
     required double estimateFare,
     required String paymentMethod,
+    String? note,
   }) async {
     String tripId = await _generateTripId();
 
@@ -522,6 +523,7 @@ class BookingProvider extends ChangeNotifier {
       'memberName': memberName,
       'status': 'Pending',
       'tripType': 'Scheduled Booking',
+      'note': note,
       'pickupTime': pickupTime.toIso8601String(),
       'pickupLocation': {
         'address': pickupController.text,

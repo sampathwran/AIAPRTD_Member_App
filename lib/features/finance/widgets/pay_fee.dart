@@ -38,7 +38,7 @@ Future<void> handlePayMembershipFee(BuildContext context, double balance) async 
       final memNo = profile.memberNo;
       
       // 1. Deduct from savings
-      batch.set(FirebaseFirestore.instance.collection('members').doc(memNo), {
+      batch.set(FirebaseFirestore.instance.collection('member').doc(memNo), {
         'savingsBalance': FieldValue.increment(-monthlyFee)
       }, SetOptions(merge: true));
 
@@ -57,11 +57,19 @@ Future<void> handlePayMembershipFee(BuildContext context, double balance) async 
         }])
       }, SetOptions(merge: true));
 
-      // 3. Add transaction record
-      final txnRef = FirebaseFirestore.instance.collection('finance_transactions').doc();
+      // 3. Add transaction record (Nested under finance_transactions so it appears in collectionGroup)
+      final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final txnRef = FirebaseFirestore.instance
+          .collection('finance_transactions')
+          .doc(memNo)
+          .collection('history')
+          .doc(dateStr)
+          .collection('transactions')
+          .doc();
+          
       batch.set(txnRef, {
         'transactionId': txnRef.id,
-        'passengerId': memNo,
+        'passengerId': memNo, // This makes it show up in the SavingHistoryList
         'amount': monthlyFee,
         'type': 'fee_payment',
         'timestamp': FieldValue.serverTimestamp(),

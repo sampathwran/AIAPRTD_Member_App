@@ -1,5 +1,7 @@
 // ignore_for_file: spell_check_on_languages
 
+import 'package:flutter/material.dart';
+
 /// 💰 Checks a driver's 'payment_history' array,
 /// Logic engine to verify if the membership fee for the current month is paid before the 5th.
 Map<String, dynamic> checkMembershipFeeStatus(Map<String, dynamic>? data) {
@@ -40,11 +42,15 @@ Map<String, dynamic> checkMembershipFeeStatus(Map<String, dynamic>? data) {
   // 5. Search through the array to check if the membership fee for the current month is paid
   bool hasPaidForCurrentMonth = false;
 
+  debugPrint('🔍 [MembershipFeeCheck] Checking for month: $currentMonthName, year: $currentYearStr');
+  debugPrint('🔍 [MembershipFeeCheck] Total payments in history: ${paymentHistory.length}');
+
   for (var payment in paymentHistory) {
     if (payment is Map) {
       final String pStatus = (payment['status'] ?? '').toString().trim().toLowerCase();
-      // Only consider approved or completed payments (skip pending/rejected)
+      
       if (pStatus == 'pending' || pStatus == 'rejected') {
+        debugPrint('🔍 [MembershipFeeCheck] Skipping payment due to status: $pStatus');
         continue;
       }
 
@@ -55,7 +61,6 @@ Map<String, dynamic> checkMembershipFeeStatus(Map<String, dynamic>? data) {
         String mStr = (payment['month'] ?? '').toString().trim().toLowerCase();
         monthsToCheck = [mStr];
 
-        // If the month is stored as a number (e.g. "7" or "07")
         if (int.tryParse(mStr) != null) {
           int mInt = int.parse(mStr);
           if (mInt >= 1 && mInt <= 12) {
@@ -67,31 +72,32 @@ Map<String, dynamic> checkMembershipFeeStatus(Map<String, dynamic>? data) {
       final String pYear = (payment['year'] ?? '').toString().trim();
       final String pReason = (payment['reason'] ?? payment['type'] ?? '').toString().trim().toLowerCase();
 
-      bool isMembershipPayment = pReason.isEmpty ||
+      bool isMembershipPayment = (pReason.isEmpty ||
           pReason.contains('membership') ||
-          pReason.contains('fee') ||
-          pReason.contains('monthly');
+          pReason.contains('monthly') ||
+          (pReason.contains('fee') && !pReason.contains('registration')));
+
+      debugPrint('🔍 [MembershipFeeCheck] Found payment: Month=$monthsToCheck, Year=$pYear, Reason=$pReason, isMembership=$isMembershipPayment');
 
       if (monthsToCheck.contains(currentMonthName.toLowerCase()) &&
           (pYear == currentYearStr || pYear.isEmpty) &&
           isMembershipPayment) {
         hasPaidForCurrentMonth = true;
-        break; // Stop the loop since a valid payment is found
+        debugPrint('✅ [MembershipFeeCheck] Valid payment found for current month!');
+        break; 
       }
     }
   }
 
-  // ==========================================================
-  // ⚠️ Block if the day is >= 5 AND no payment is made for current month
-  // ==========================================================
   if (currentDay >= 5 && !hasPaidForCurrentMonth) {
+    debugPrint('❌ [MembershipFeeCheck] No valid payment found. Day is $currentDay (>=5). Blocking.');
     return {
       'isFeePaidValid': false,
       'reason': 'Pending Membership Fee 💰',
     };
   }
 
-  // 🟢 If within the grace period (1st-4th) OR paid successfully
+  debugPrint('✅ [MembershipFeeCheck] Fee is valid or within grace period.');
   return {
     'isFeePaidValid': true,
     'reason': '',

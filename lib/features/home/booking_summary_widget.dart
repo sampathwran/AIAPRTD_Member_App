@@ -14,9 +14,10 @@ class BookingSummaryWidget extends StatefulWidget {
 }
 
 class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
-  String _selectedPaymentMethod = "Cash";
+  String _selectedPaymentMethod = "Pay by passenger";
   DateTime? _selectedDateTime;
   bool _isBooking = false;
+  String? _bookingNote;
 
   Future<void> _pickDateTime() async {
     DateTime now = DateTime.now();
@@ -154,6 +155,78 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
     );
   }
 
+  void _showPaymentMethodSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("Select Payment Method", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.person, color: Colors.blue),
+                title: const Text("Pay by passenger"),
+                trailing: _selectedPaymentMethod == "Pay by passenger" ? const Icon(Icons.check, color: Colors.blue) : null,
+                onTap: () {
+                  setState(() => _selectedPaymentMethod = "Pay by passenger");
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.group, color: Colors.blue),
+                title: const Text("Pay by member"),
+                trailing: _selectedPaymentMethod == "Pay by member" ? const Icon(Icons.check, color: Colors.blue) : null,
+                onTap: () {
+                  setState(() => _selectedPaymentMethod = "Pay by member");
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      }
+    );
+  }
+
+  void _showAddNoteDialog() {
+    TextEditingController _noteController = TextEditingController(text: _bookingNote);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Add Note"),
+          content: TextField(
+            controller: _noteController,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              hintText: "Type note here...",
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() => _bookingNote = _noteController.text.trim());
+                Navigator.pop(context);
+              },
+              child: const Text("Save"),
+            ),
+          ],
+        );
+      }
+    );
+  }
+
   Future<void> _processBooking() async {
     if (_selectedDateTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -199,6 +272,7 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
         selectedVehicle: selectedVehicle,
         estimateFare: estimateFare,
         paymentMethod: _selectedPaymentMethod,
+        note: _bookingNote,
       );
 
       if (mounted) {
@@ -289,20 +363,23 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
                 Expanded(
                   flex: 2,
                   child: InkWell(
-                    onTap: () { /* Change payment */ },
+                    onTap: _showPaymentMethodSheet,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                           decoration: BoxDecoration(color: Colors.green.shade600, borderRadius: BorderRadius.circular(4)),
-                          child: const Text("CASH", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 1)),
+                          child: Text(
+                            _selectedPaymentMethod == "Pay by passenger" ? "PASSENGER" : "MEMBER", 
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 1)
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text("Pay with Cash", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                            Text(_selectedPaymentMethod, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                             Text("Default", style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
                           ],
                         ),
@@ -315,13 +392,24 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
                 Expanded(
                   flex: 2,
                   child: InkWell(
-                    onTap: () {},
+                    onTap: _showAddNoteDialog,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.edit_outlined, color: isDark ? Colors.grey.shade300 : Colors.grey.shade800, size: 20),
+                        Icon(
+                          _bookingNote != null && _bookingNote!.isNotEmpty ? Icons.notes : Icons.edit_outlined, 
+                          color: isDark ? Colors.grey.shade300 : Colors.grey.shade800, 
+                          size: 20
+                        ),
                         const SizedBox(width: 4),
-                        Text("Add note", style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? Colors.grey.shade300 : Colors.grey.shade800)),
+                        Flexible(
+                          child: Text(
+                            _bookingNote != null && _bookingNote!.isNotEmpty ? _bookingNote! : "Add note", 
+                            style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? Colors.grey.shade300 : Colors.grey.shade800),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ],
                     ),
                   ),

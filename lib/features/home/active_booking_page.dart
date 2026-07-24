@@ -50,6 +50,7 @@ class _ActiveBookingPageState extends State<ActiveBookingPage> {
   bool _isSheetExpanded = true;
   bool _passengerCancelledAlertShown = false;
   late Future<DocumentSnapshot> _passengerFuture;
+  DateTime _lastFirestoreUpdate = DateTime.now().subtract(const Duration(seconds: 10)); // Throttling tracker
 
   @override
   void initState() {
@@ -147,7 +148,7 @@ class _ActiveBookingPageState extends State<ActiveBookingPage> {
     _positionStream = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 10, // Update every 10 meters
+        distanceFilter: 5, // 5 meters is a good balance
       ),
     ).listen((Position position) {
       if (!mounted) return;
@@ -157,12 +158,16 @@ class _ActiveBookingPageState extends State<ActiveBookingPage> {
       _recenterMap();
 
       if (_tripState != 'completed' && _tripState != 'cancelled') {
-        // Broadcast location to Firebase so passenger can see
-        FirebaseFirestore.instance.collection('all_bookings').doc(widget.bookingId).set({
-          'driverLat': position.latitude,
-          'driverLng': position.longitude,
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        // Broadcast location to Firebase (Throttled to max 1 update every 3 seconds to prevent DB lag on highways)
+        if (DateTime.now().difference(_lastFirestoreUpdate).inSeconds >= 3) {
+          _lastFirestoreUpdate = DateTime.now();
+          FirebaseFirestore.instance.collection('all_bookings').doc(widget.bookingId).set({
+            'driverLat': position.latitude,
+            'driverLng': position.longitude,
+            'driverHeading': position.heading, // Update heading for car rotation
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
         
         // Geofencing Logic
         if (_pickupLatLng != null && _tripState == 'accepted') {

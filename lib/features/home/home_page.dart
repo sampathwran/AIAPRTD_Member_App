@@ -147,8 +147,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _playSound(String assetPath) async {
     try {
       await _audioPlayer.play(AssetSource(assetPath));
-    } catch (e) {
-      debugPrint("Sound play error: $e");
+    } catch (_) {
+      try {
+        // Fallback for some Audioplayers versions where 'assets/' prefix is needed
+        await _audioPlayer.play(AssetSource('assets/$assetPath'));
+      } catch (e) {
+        debugPrint("Sound play error: $e");
+      }
     }
   }
 

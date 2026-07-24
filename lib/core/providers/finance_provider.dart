@@ -54,7 +54,7 @@ class FinanceProvider extends ChangeNotifier {
     if (membershipNo.isEmpty) return;
     
     // Listen to member's document for balances
-    _firestore.collection('members').doc(membershipNo).snapshots().listen((doc) {
+    _firestore.collection('member').doc(membershipNo).snapshots().listen((doc) {
       if (doc.exists) {
         final data = doc.data()!;
         _mySavingsBalance = (data['savingsBalance'] ?? 0.0).toDouble();
@@ -65,6 +65,18 @@ class FinanceProvider extends ChangeNotifier {
     }, onError: (e) {
       debugPrint("Error listening to finance balances: $e");
     });
+  }
+
+  Future<DocumentReference?> _getMemberRef(String membershipNo) async {
+    final memberQuery = await _firestore.collection('member').where('membershipNo', isEqualTo: membershipNo).limit(1).get();
+    if (memberQuery.docs.isNotEmpty) {
+      return memberQuery.docs.first.reference;
+    }
+    final webSyncQuery = await _firestore.collection('web_sync_member').where('membershipNo', isEqualTo: membershipNo).limit(1).get();
+    if (webSyncQuery.docs.isNotEmpty) {
+      return webSyncQuery.docs.first.reference;
+    }
+    return null;
   }
 
   /// Process the commission split at the end of an App Booking
@@ -90,13 +102,18 @@ class FinanceProvider extends ChangeNotifier {
           ? totalFare * (_driverCommissionRate / 100) 
           : unionUsageCharge;
 
+      final DocumentReference? driverRef = await _getMemberRef(driverId);
+      final DocumentReference? passengerRef = isAppBooking ? await _getMemberRef(passengerId) : null;
+
+      if (driverRef == null) {
+        debugPrint("❌ Driver reference not found for usage charge update.");
+        return;
+      }
+
       await _firestore.runTransaction((transaction) async {
-        DocumentReference driverRef = _firestore.collection('members').doc(driverId);
         DocumentSnapshot driverDoc = await transaction.get(driverRef);
         
-        if (!driverDoc.exists) return;
-        
-        final driverData = driverDoc.data() as Map<String, dynamic>;
+        final driverData = driverDoc.exists ? driverDoc.data() as Map<String, dynamic> : <String, dynamic>{};
         double currentSavings = (driverData['savingsBalance'] ?? 0.0).toDouble();
         double currentAppUsage = (driverData['appUsageChargeBalance'] ?? 0.0).toDouble();
         
@@ -143,8 +160,7 @@ class FinanceProvider extends ChangeNotifier {
         }
 
         // 3. Update Passenger's Savings Balance
-        if (isAppBooking) {
-          DocumentReference passengerRef = _firestore.collection('members').doc(passengerId);
+        if (isAppBooking && passengerRef != null) {
           transaction.set(passengerRef, {
             'savingsBalance': FieldValue.increment(passengerSavings),
           }, SetOptions(merge: true));

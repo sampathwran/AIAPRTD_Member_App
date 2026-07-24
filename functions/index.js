@@ -134,7 +134,7 @@ exports.onFinanceTxDeleted = onDocumentDeleted('finance_transactions/{transactio
 
             // Revert App Usage Charge for Driver
             if (driverId && driverCommission > 0) {
-                const driverRef = db.collection('members').doc(driverId);
+                const driverRef = db.collection('member').doc(driverId);
                 batch.update(driverRef, {
                     'appUsageChargeBalance': FieldValue.increment(-driverCommission)
                 });
@@ -143,7 +143,7 @@ exports.onFinanceTxDeleted = onDocumentDeleted('finance_transactions/{transactio
 
             // Revert Savings for Passenger (only in App Booking)
             if (passengerId && passengerSavings > 0 && type === 'app_booking_commission_split') {
-                const passengerRef = db.collection('members').doc(passengerId);
+                const passengerRef = db.collection('member').doc(passengerId);
                 batch.update(passengerRef, {
                     'savingsBalance': FieldValue.increment(-passengerSavings)
                 });
@@ -155,7 +155,7 @@ exports.onFinanceTxDeleted = onDocumentDeleted('finance_transactions/{transactio
             
             // Revert the auto-settlement by adding the amount back to BOTH balances
             if (memberId && amount > 0) {
-                const memberRef = db.collection('members').doc(memberId);
+                const memberRef = db.collection('member').doc(memberId);
                 batch.update(memberRef, {
                     'appUsageChargeBalance': FieldValue.increment(amount),
                     'savingsBalance': FieldValue.increment(amount)
@@ -185,11 +185,11 @@ exports.onRoadPickupHireDeleted = onDocumentDeleted('roadpickups_hires/{date}/{m
 async function deleteAssociatedFinanceTransactions(tripId) {
     if (!tripId) return;
     try {
-        console.log(`🔍 Searching for finance_transactions with tripId: ${tripId}`);
-        const snapshot = await db.collection('finance_transactions').where('tripId', '==', tripId).get();
+        console.log(`🔍 Searching for transactions with tripId: ${tripId}`);
+        const snapshot = await db.collectionGroup('transactions').where('tripId', '==', tripId).get();
         
         if (snapshot.empty) {
-            console.log(`ℹ️ No finance_transactions found for tripId: ${tripId}`);
+            console.log(`ℹ️ No transactions found for tripId: ${tripId}`);
             return;
         }
 

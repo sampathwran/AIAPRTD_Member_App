@@ -41,9 +41,11 @@ Future<void> handleWithdraw(BuildContext context, double balance) async {
   if (confirm == true) {
     try {
       final memNo = profile.memberNo;
+      final batch = FirebaseFirestore.instance.batch();
+
+      // 1. Create Withdrawal Request
       final reqRef = FirebaseFirestore.instance.collection('withdrawal_requests').doc();
-      
-      await reqRef.set({
+      batch.set(reqRef, {
         'requestId': reqRef.id,
         'memberId': memNo,
         'amount': balance,
@@ -51,6 +53,31 @@ Future<void> handleWithdraw(BuildContext context, double balance) async {
         'timestamp': FieldValue.serverTimestamp(),
         'bankDetails': payment.bankData,
       });
+
+      // 2. Deduct from member's savingsBalance immediately
+      batch.set(FirebaseFirestore.instance.collection('member').doc(memNo), {
+        'savingsBalance': FieldValue.increment(-balance)
+      }, SetOptions(merge: true));
+
+      // 3. Add transaction record
+      final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final txnRef = FirebaseFirestore.instance
+          .collection('finance_transactions')
+          .doc(memNo)
+          .collection('history')
+          .doc(dateStr)
+          .collection('transactions')
+          .doc();
+
+      batch.set(txnRef, {
+        'transactionId': txnRef.id,
+        'passengerId': memNo, // To show in SavingHistoryList
+        'amount': balance,
+        'type': 'withdrawal_request',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      await batch.commit();
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Withdrawal request sent to Admin.')));

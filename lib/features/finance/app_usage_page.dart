@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:aiaprtd_member/core/providers/finance_provider.dart';
+import 'package:aiaprtd_member/core/providers/earnings_provider.dart';
 import 'package:aiaprtd_member/core/providers/profile_provider.dart';
 import 'package:aiaprtd_member/core/theme/app_theme.dart';
 import 'package:aiaprtd_member/features/finance/widgets/outstanding_balance.dart';
@@ -40,7 +41,11 @@ class _AppUsagePageState extends State<AppUsagePage> {
       ),
       body: Consumer<FinanceProvider>(
         builder: (context, financeProv, child) {
-          final balance = financeProv.myAppUsageChargeBalance;
+          final earningsProv = Provider.of<EarningsProvider>(context, listen: false);
+          double balance = financeProv.myAppUsageChargeBalance;
+          if (earningsProv.hasFetched && earningsProv.totalTrips == 0) {
+            balance = 0.0;
+          }
           
           return Column(
             children: [

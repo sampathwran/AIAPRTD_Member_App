@@ -2,9 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:aiaprtd_member/core/providers/vehicle_provider.dart';
 import 'package:aiaprtd_member/core/providers/profile_provider.dart';
 import 'package:aiaprtd_member/core/providers/payment_provider.dart';
+import 'package:aiaprtd_member/core/providers/vehicle_provider.dart';
 import 'member_status_tracker.dart';
 
 class StatusBadgeWidget extends StatefulWidget {
@@ -24,13 +24,13 @@ class StatusBadgeWidget extends StatefulWidget {
 class _StatusBadgeWidgetState extends State<StatusBadgeWidget> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _opacityAnimation;
-  String _lastSyncedDataString = '';
+  String _lastDataHash = '';
 
   @override
   void initState() {
     super.initState();
     _setupAnimations();
-    _fetchVehicleDataInitial();
+    _fetchPaymentDataInitial();
   }
 
   void _setupAnimations() {
@@ -41,14 +41,12 @@ class _StatusBadgeWidgetState extends State<StatusBadgeWidget> with SingleTicker
     _opacityAnimation = Tween<double>(begin: 1.0, end: 0.4).animate(_animationController);
   }
 
-  void _fetchVehicleDataInitial() {
+  void _fetchPaymentDataInitial() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final String? membershipNo = widget.memberData['membershipNo']?.toString();
       if (membershipNo != null && membershipNo.trim().isNotEmpty) {
-        Provider.of<VehicleProvider>(context, listen: false).fetchVehicleData(membershipNo);
-        // We do not need to fetch paymentData explicitly here if it's already fetched
-        // but let's safely fetch it if needed.
         Provider.of<PaymentProvider>(context, listen: false).streamPaymentData(membershipNo).listen((_) {});
+        Provider.of<VehicleProvider>(context, listen: false).fetchVehicleData(membershipNo);
       }
     });
   }
@@ -59,86 +57,91 @@ class _StatusBadgeWidgetState extends State<StatusBadgeWidget> with SingleTicker
     super.dispose();
   }
 
-  Map<String, dynamic> _mergeMemberData(Map<String, dynamic>? vehicleData, Map<String, dynamic>? feeData) {
-    final Map<String, dynamic> activeData = Map<String, dynamic>.from(widget.memberData);
-    if (vehicleData != null) {
-      final safeVehicleData = Map<String, dynamic>.from(vehicleData);
-      safeVehicleData.remove('payment_history');
-      safeVehicleData.remove('pending_payments');
-      safeVehicleData.remove('status');
-      safeVehicleData.remove('profile_status');
-      activeData.addAll(safeVehicleData);
+  String? _getFirstPendingReason(Map<String, dynamic> data) {
+    if (data['admin_block_permanently'] == true) return 'Account Permanently Blocked by Admin';
+    if (data['admin_block_temporarily'] == true) return 'Account Temporarily Blocked by Admin';
+    if (data['membership_fee'] != 'approved') return 'Pending Membership Fee 💰';
+
+    final Map<String, String> requiredDocs = {
+      'profile_image': 'Profile Image',
+      'id_card_image': 'National Identity Card (NIC)',
+      'face_verification': 'Face Verification',
+      'kyc_details': 'Personal KYC Details',
+      'revenue_licence': 'Revenue License',
+      'insurance_policy': 'Insurance Policy',
+      'vehicle_registration_document': 'Registration Document',
+      'driving_licence': 'Driving License',
+      'vehicle_image_front': 'Vehicle Front Image',
+      'vehicle_image_back': 'Vehicle Back Image',
+      'vehicle_image_right_side': 'Vehicle Right Side Image',
+      'vehicle_image_left_side': 'Vehicle Left Side Image',
+      'vehicle_image_interior': 'Vehicle Interior Image',
+    };
+
+    for (var entry in requiredDocs.entries) {
+      if (data[entry.key] == 'missing' || data[entry.key] == 'rejected' || data[entry.key] == null) {
+         return 'Pending ${entry.value}';
+      }
     }
-    if (feeData != null) activeData.addAll(feeData);
-    return activeData;
+
+    for (var entry in requiredDocs.entries) {
+      if (data[entry.key] != 'approved') {
+         return 'Pending Admin Approval for ${entry.value}';
+      }
+    }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     final String membershipNo = widget.memberData['membershipNo']?.toString() ?? '';
+    if (membershipNo.isEmpty) return const SizedBox.shrink();
 
-    return Consumer2<VehicleProvider, PaymentProvider>(
-      builder: (context, vehicleProvider, paymentProvider, child) {
-        
-        return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-          stream: FirebaseFirestore.instance.collection('app_membership_fee').doc(membershipNo).snapshots(),
-          builder: (context, appFeeSnapshot) {
+    return Consumer2<PaymentProvider, VehicleProvider>(
+      builder: (context, paymentProvider, vehicleProvider, child) {
 
-            // 💡 MERGE ALL DATA
-            final Map<String, dynamic> activeData = _mergeMemberData(vehicleProvider.vehicleData, paymentProvider.paymentData);
+            // Sync Fee & Vehicle Logic
+            final Map<String, dynamic> evaluationData = Map<String, dynamic>.from(widget.memberData);
             
-            // 🔥 Inject real-time payment history from app_membership_fee
-            if (appFeeSnapshot.hasData && appFeeSnapshot.data!.exists) {
-              final appFeeData = appFeeSnapshot.data!.data()!;
-              List<dynamic> combinedHistory = List.from(activeData['payment_history'] ?? []);
-              if (appFeeData['payment_history'] is List) {
-                combinedHistory.addAll(appFeeData['payment_history']);
-              }
-              activeData['payment_history'] = combinedHistory;
+            if (paymentProvider.paymentData != null) {
+              final Map<String, dynamic> pData = Map<String, dynamic>.from(paymentProvider.paymentData!);
+              // ⚠️ Do not overwrite the merged 'payment_history' from ProfileProvider (which includes app_membership_fee)
+              // with the older 'payment_history' from the payments collection.
+              pData.remove('payment_history'); 
+              evaluationData.addAll(pData);
+            }
+            if (vehicleProvider.vehicleData != null) {
+              evaluationData.addAll(vehicleProvider.vehicleData!);
             }
 
-            final String currentDataString = activeData.toString();
-
-            if (membershipNo.isNotEmpty && vehicleProvider.vehicleData != null) {
-              if (currentDataString != _lastSyncedDataString) {
-                _lastSyncedDataString = currentDataString;
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) {
-                    MemberStatusTracker.syncStatusIssuesToFirebase(
-                      membershipNo: membershipNo,
-                      activeData: activeData,
-                    );
-                  }
-                });
-              }
+            // Create a hash of fields that determine status to know when to sync
+            final String currentDataHash = '${evaluationData['payment_history']}_${evaluationData['documents']}_${evaluationData['vehiclePhotos']}_${evaluationData['kycApprovalStatus']}_${evaluationData['faceKycStatus']}_${evaluationData['profileImageUrl']}_${evaluationData['adminBlockStatus']}';
+            
+            if (currentDataHash != _lastDataHash) {
+              _lastDataHash = currentDataHash;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  MemberStatusTracker.syncStatusIssuesToFirebase(
+                    membershipNo: membershipNo,
+                    activeData: evaluationData,
+                  );
+                }
+              });
             }
 
             return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
               stream: FirebaseFirestore.instance.collection('member_inactive_reasons').doc(membershipNo).snapshots(),
               builder: (context, snapshot) {
-
-                // 💡 1. Check member document profile_status and inactive_reasons directly!
-                final bool isLocalInactive = activeData['profile_status']?.toString().toLowerCase() == 'inactive member' || 
-                                             activeData['status']?.toString().toLowerCase() == 'inactive member';
+                if (!snapshot.hasData) return const SizedBox.shrink();
                 
-                final List<dynamic> localReasons = activeData['inactive_reasons'] is List ? List.from(activeData['inactive_reasons']) : [];
-                String localReasonStr = localReasons.isNotEmpty ? localReasons.first.toString() : 'Account Inactive';
+                if (!snapshot.data!.exists) {
+                  return const SizedBox.shrink();
+                }
 
-                // 💡 2. Also check member_inactive_reasons collection as fallback
-                final bool isFirebaseInactive = snapshot.hasData &&
-                    snapshot.data!.exists &&
-                    snapshot.data!['status'] == 'INACTIVE';
-
-                final List<dynamic> issues = (snapshot.data?.data()?['issues'] as List<dynamic>?) ?? [];
-                final String firebaseReason = issues.isNotEmpty ? issues.first['reason'].toString() : 'Account Inactive';
-
-                final bool isInactive = isLocalInactive || isFirebaseInactive;
-                
-                // Prioritize local reason if it exists since ProfileProvider calculates it comprehensively
-                final String reason = (isLocalInactive && localReasons.isNotEmpty) ? localReasonStr : firebaseReason;
-
-                // Removed automatic toggleDriverStatus(false) per user request.
-                // Drivers must manually go offline.
+                final data = snapshot.data!.data()!;
+                final String? pendingReason = _getFirstPendingReason(data);
+                final bool isInactive = pendingReason != null;
+                final String reason = pendingReason ?? 'Active';
 
                 if (!widget.isProfileView && !isInactive) return const SizedBox.shrink();
 
@@ -161,8 +164,6 @@ class _StatusBadgeWidgetState extends State<StatusBadgeWidget> with SingleTicker
                 );
               },
             );
-          }
-        );
       },
     );
   }
@@ -200,4 +201,4 @@ class _StatusBadgeWidgetState extends State<StatusBadgeWidget> with SingleTicker
       ])),
     ]),
   );
-}
+}

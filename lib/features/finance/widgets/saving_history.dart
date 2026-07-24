@@ -53,13 +53,15 @@ class SavingHistoryList extends StatelessWidget {
             final totalFare = (data['totalFare'] ?? 0.0).toDouble();
             final isEarning = type == 'app_booking_commission_split';
             
-            String title = "Withdrawal";
+            String title = "Unknown Transaction";
             if (type == 'app_booking_commission_split') {
               title = "Shared Booking Reward";
             } else if (type == 'auto_settlement') {
               title = "Auto-Settled App Charge";
             } else if (type == 'fee_payment') {
               title = "Membership Fee Payment";
+            } else if (type == 'withdrawal_request') {
+              title = "Withdrawal Request";
             }
 
             return Container(

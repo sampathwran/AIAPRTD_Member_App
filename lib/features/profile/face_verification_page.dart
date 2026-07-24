@@ -159,179 +159,192 @@ class _FaceVerificationPageState extends State<FaceVerificationPage> with Single
     return Scaffold(
       backgroundColor: const Color(0xFF020611), // Dark blue/black (Hacker look)
       body: SafeArea(
-        child: Column(
-          children: [
-            // ==========================================
-            // 🛡️ HEADER / LIVE BADGE
-            // ==========================================
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
                     children: [
-                      Text("AI SECURITY", style: TextStyle(color: Colors.cyanAccent, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
-                      Text("BIOMETRIC SCAN", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.redAccent.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.redAccent),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle)),
-                        const SizedBox(width: 6),
-                        const Text("LIVE", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // ==========================================
-            // 📷 AI SCANNER CAMERA VIEW
-            // ==========================================
-            Expanded(
-              child: Center(
-                child: _isCameraInitialized && _cameraController != null
-                    ? Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Camera Circle
-                    Container(
-                      width: 300,
-                      height: 300,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            color: _isScanning ? Colors.greenAccent : Colors.cyanAccent,
-                            width: 4
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                              color: (_isScanning ? Colors.greenAccent : Colors.cyanAccent).withValues(alpha: 0.3),
-                              blurRadius: 30,
-                              spreadRadius: 10
-                          )
-                        ],
-                      ),
-                      child: ClipOval(
-                        child: AspectRatio(
-                          aspectRatio: 1,
-                          child: CameraPreview(_cameraController!),
-                        ),
-                      ),
-                    ),
-
-                    // Laser scanner line (Visible only during scan)
-                    if (_isScanning)
-                      AnimatedBuilder(
-                        animation: _scannerController,
-                        builder: (context, child) {
-                          return Positioned(
-                            top: 300 * _scannerController.value,
-                            child: Container(
-                              width: 300,
-                              height: 4,
+                      // ==========================================
+                      // 🛡️ HEADER / LIVE BADGE
+                      // ==========================================
+                      Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("AI SECURITY", style: TextStyle(color: Colors.cyanAccent, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                                Text("BIOMETRIC SCAN", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.greenAccent,
-                                boxShadow: [
-                                  BoxShadow(color: Colors.greenAccent.withValues(alpha: 0.8), blurRadius: 15, spreadRadius: 5)
+                                color: Colors.redAccent.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.redAccent),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle)),
+                                  const SizedBox(width: 6),
+                                  const Text("LIVE", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, letterSpacing: 1)),
                                 ],
                               ),
                             ),
-                          );
-                        },
+                          ],
+                        ),
                       ),
 
-                    // 🎯 Target Brackets
-                    if (!_isScanning)
-                      const Icon(Icons.crop_free, size: 100, color: Colors.white54),
-                  ],
-                )
-                    : const CircularProgressIndicator(color: Colors.cyanAccent),
-              ),
-            ),
+                      const SizedBox(height: 20),
 
-            const SizedBox(height: 30),
+                      // ==========================================
+                      // 📷 AI SCANNER CAMERA VIEW
+                      // ==========================================
+                      Expanded(
+                        child: Center(
+                          child: _isCameraInitialized && _cameraController != null
+                              ? Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Camera Circle
+                              Container(
+                                width: 280,
+                                height: 280,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                      color: _isScanning ? Colors.greenAccent : Colors.cyanAccent,
+                                      width: 4
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                        color: (_isScanning ? Colors.greenAccent : Colors.cyanAccent).withValues(alpha: 0.3),
+                                        blurRadius: 30,
+                                        spreadRadius: 10
+                                    )
+                                  ],
+                                ),
+                                child: ClipOval(
+                                  child: AspectRatio(
+                                    aspectRatio: 1,
+                                    child: CameraPreview(_cameraController!),
+                                  ),
+                                ),
+                              ),
 
-            // ==========================================
-            // 💻 AI TERMINAL BOX
-            // ==========================================
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.all(16),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.3)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.memory, color: _isScanning ? Colors.greenAccent : Colors.cyanAccent, size: 18),
-                      const SizedBox(width: 8),
-                      Text(
-                        _aiLogs[_logIndex],
-                        style: TextStyle(
-                          color: _isScanning ? Colors.greenAccent : Colors.cyanAccent,
-                          fontFamily: 'Courier', // Hacker Terminal font
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
+                              // Laser scanner line (Visible only during scan)
+                              if (_isScanning)
+                                AnimatedBuilder(
+                                  animation: _scannerController,
+                                  builder: (context, child) {
+                                    return Positioned(
+                                      top: 280 * _scannerController.value,
+                                      child: Container(
+                                        width: 280,
+                                        height: 4,
+                                        decoration: BoxDecoration(
+                                          color: Colors.greenAccent,
+                                          boxShadow: [
+                                            BoxShadow(color: Colors.greenAccent.withValues(alpha: 0.8), blurRadius: 15, spreadRadius: 5)
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+
+                              // 🎯 Target Brackets
+                              if (!_isScanning)
+                                const Icon(Icons.crop_free, size: 100, color: Colors.white54),
+                            ],
+                          )
+                              : const CircularProgressIndicator(color: Colors.cyanAccent),
+                        ),
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      // ==========================================
+                      // 💻 AI TERMINAL BOX
+                      // ==========================================
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 20),
+                        padding: const EdgeInsets.all(16),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.3)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.memory, color: _isScanning ? Colors.greenAccent : Colors.cyanAccent, size: 18),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _aiLogs[_logIndex],
+                                    style: TextStyle(
+                                      color: _isScanning ? Colors.greenAccent : Colors.cyanAccent,
+                                      fontFamily: 'Courier', // Hacker Terminal font
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            LinearProgressIndicator(
+                              value: _logIndex / (_aiLogs.length - 1),
+                              backgroundColor: Colors.white12,
+                              color: Colors.greenAccent,
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // ==========================================
+                      // 🟢 SCAN BUTTON
+                      // ==========================================
+                      Padding(
+                        padding: const EdgeInsets.only(left: 20, right: 20, bottom: 30),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton.icon(
+                            onPressed: _isScanning || _isSubmitting ? null : _startAIScan,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.cyan.shade800,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            icon: _isSubmitting
+                                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                : const Icon(Icons.face),
+                            label: Text(
+                              _isScanning || _isSubmitting ? "PROCESSING BIOMETRICS..." : "INITIALIZE SCAN",
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1),
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  LinearProgressIndicator(
-                    value: _logIndex / (_aiLogs.length - 1),
-                    backgroundColor: Colors.white12,
-                    color: Colors.greenAccent,
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // ==========================================
-            // 🟢 SCAN BUTTON
-            // ==========================================
-            Padding(
-              padding: const EdgeInsets.only(left: 20, right: 20, bottom: 30),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton.icon(
-                  onPressed: _isScanning || _isSubmitting ? null : _startAIScan,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.cyan.shade800,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  icon: _isSubmitting
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Icon(Icons.face),
-                  label: Text(
-                    _isScanning || _isSubmitting ? "PROCESSING BIOMETRICS..." : "INITIALIZE SCAN",
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1),
-                  ),
                 ),
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

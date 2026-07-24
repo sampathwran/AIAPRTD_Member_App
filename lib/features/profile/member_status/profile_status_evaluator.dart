@@ -8,7 +8,7 @@ Map<String, dynamic> calculateMemberStatus(Map<String, dynamic> activeData) {
   List<String> reasons = [];
   bool isActive = true;
 
-  print("🟢 [STATUS EVALUATOR] Calculating Member Status...");
+  // Status evaluation (print removed to reduce log noise)
 
   // 1. Membership Fee Check (අනිවාර්යයෙන්ම මුලින්ම චෙක් වෙන්න ඕනේ)
   final Map<String, dynamic> feeCheck = checkMembershipFeeStatus(activeData);

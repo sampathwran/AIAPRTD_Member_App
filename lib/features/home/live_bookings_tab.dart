@@ -394,7 +394,12 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
                     Expanded(
                       child: Row(
                         children: [
-                          Icon(paymentMethod.toLowerCase() == 'card' ? Icons.credit_card : Icons.money, color: Colors.grey.shade600, size: 16),
+                          Icon(
+                            paymentMethod.toLowerCase().contains('passenger') ? Icons.person :
+                            paymentMethod.toLowerCase().contains('member') ? Icons.group :
+                            paymentMethod.toLowerCase() == 'card' ? Icons.credit_card : Icons.money, 
+                            color: Colors.grey.shade600, size: 16
+                          ),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
@@ -403,6 +408,45 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          if (data['note'] != null && data['note'].toString().isNotEmpty) ...[
+                            const SizedBox(width: 12),
+                            InkWell(
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Row(
+                                      children: [
+                                        Icon(Icons.notes, color: Colors.blue),
+                                        SizedBox(width: 8),
+                                        Text("Booking Note"),
+                                      ]
+                                    ),
+                                    content: Text(data['note']),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Close"))
+                                    ]
+                                  )
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: Colors.blue.shade200)
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.menu_book, color: Colors.blue, size: 14),
+                                    SizedBox(width: 4),
+                                    Text("Note", style: TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.bold)),
+                                  ]
+                                )
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),

@@ -91,12 +91,20 @@ class KYCProvider with ChangeNotifier {
       final DocumentReference memberRef =
       _firestore.collection('member').doc(documentId);
 
-      // 💡 NEW FIX: Used Set instead of Update.
-      // So no error will occur even if the Document didn't exist before.
       batch.set(memberRef, {
         'kycApprovalStatus': 'pending',
         'faceKycStatus': 'pending',
         'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // Update new Single Source of Truth collection
+      final DocumentReference statusRef = 
+          _firestore.collection('member_inactive_reasons').doc(membershipNo);
+      
+      batch.set(statusRef, {
+        'id_card_image': 'pending_approval',
+        'kyc_details': 'pending_approval',
+        'status': 'INACTIVE',
       }, SetOptions(merge: true));
 
       await batch.commit();
@@ -170,6 +178,15 @@ class KYCProvider with ChangeNotifier {
         SetOptions(merge: true),
       );
 
+      // Update new Single Source of Truth collection
+      final DocumentReference statusRef = 
+          _firestore.collection('member_inactive_reasons').doc(membershipNo);
+      
+      batch.set(statusRef, {
+        'face_verification': 'pending_approval',
+        'status': 'INACTIVE',
+      }, SetOptions(merge: true));
+
       await batch.commit();
 
       _isLocalLoading = false;
@@ -200,22 +217,34 @@ class KYCProvider with ChangeNotifier {
       final String path = 'profile_requests/$memNo.jpg';
       final String imageUrl = await _uploadToFirebaseStorage(imageFile, path);
 
-      // ✅ IMPORTANT FIX:
-      // Removed SetOptions(merge: true).
-      // Otherwise the old approved/rejected status would merge
-      // and it might cause an auto approve issue.
-      await _firestore.collection('profile_image_requests').doc(memNo).set({
-        'membershipNo': memNo,
-        'newImageUrl': imageUrl,
-        'status': 'pending',
-        'submittedAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        'approvedAt': null,
-        'approvedBy': null,
-        'rejectedAt': null,
-        'rejectedBy': null,
-        'rejectReason': null,
-      });
+      final WriteBatch batch = _firestore.batch();
+
+      batch.set(
+        _firestore.collection('profile_image_requests').doc(memNo),
+        {
+          'membershipNo': memNo,
+          'newImageUrl': imageUrl,
+          'status': 'pending',
+          'submittedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+          'approvedAt': null,
+          'approvedBy': null,
+          'rejectedAt': null,
+          'rejectedBy': null,
+          'rejectReason': null,
+        }
+      );
+
+      // Update new Single Source of Truth collection
+      final DocumentReference statusRef = 
+          _firestore.collection('member_inactive_reasons').doc(memNo);
+      
+      batch.set(statusRef, {
+        'profile_image': 'pending_approval',
+        'status': 'INACTIVE',
+      }, SetOptions(merge: true));
+
+      await batch.commit();
 
       _isLocalLoading = false;
       notifyListeners();
@@ -231,3 +260,4 @@ class KYCProvider with ChangeNotifier {
     }
   }
 }
+

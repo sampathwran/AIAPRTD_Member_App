@@ -10,7 +10,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 
 import 'package:aiaprtd_member/features/profile/member_status/profile_status_evaluator.dart';
-import 'package:aiaprtd_member/features/profile/member_status/member_status_sync_service.dart';
 
 // 💡 NEW: Added `WidgetsBindingObserver` to check if the App is Minimized
 class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
@@ -21,6 +20,8 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
   Map<String, dynamic>? _memberData;
   bool _isLoading = false;
   bool _isLocalLoading = false;
+  bool _isSyncing = false;
+  String _lastSyncHash = '';
 
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
   _memberStreamSubscription;
@@ -166,29 +167,36 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
 
           debugPrint("🟢 ProfileProvider: Successfully found in '$collectionSource' collection!");
 
-          _memberData = Map<String, dynamic>.from(
-            memberDocument.data(),
-          );
+          if (_memberData == null) {
+            _memberData = Map<String, dynamic>.from(memberDocument.data());
+            _memberData!['docId'] = memberDocument.id;
+            _memberData!['collectionSource'] = collectionSource; 
 
-          _memberData!['docId'] = memberDocument.id;
-          _memberData!['collectionSource'] = collectionSource; // 💡 NEW: Expose source collection
+            if (_memberData!['membershipNo'] == null || _memberData!['membershipNo'].toString().isEmpty) {
+              _memberData!['membershipNo'] = memberDocument.id;
+            }
 
-          // 💡 🎯 FIXED: Use docId if membershipNo field is missing in member collection
-          if (_memberData!['membershipNo'] == null || _memberData!['membershipNo'].toString().isEmpty) {
-            _memberData!['membershipNo'] = memberDocument.id;
+            final String membershipNo = _memberData!['membershipNo']?.toString() ?? '';
+
+            if (membershipNo.isNotEmpty) {
+              await _loadPaymentData(membershipNo);
+              await _loadVehicleCategory(membershipNo);
+              _listenToProfileImageRequest(membershipNo);
+              _listenToRatingSync(membershipNo);
+            }
+          } else {
+            // Just update the incoming data without resetting subscriptions
+            final newData = memberDocument.data();
+            newData.forEach((key, value) {
+              // Skip fields we manage locally to avoid overwrite loops
+              if (key != 'payment_history' && key != 'vehicle_category' && key != 'selectedCategory'
+                  && key != 'profile_status' && key != 'inactive_reasons') {
+                _memberData![key] = value;
+              }
+            });
+            // DO NOT call _evaluateAndSyncProfileStatus here!
+            // The member stream fires when WE write to it, causing an infinite loop.
           }
-
-          final String membershipNo =
-              _memberData!['membershipNo']?.toString() ?? '';
-
-          if (membershipNo.isNotEmpty) {
-            await _loadPaymentData(membershipNo);
-            await _loadVehicleCategory(membershipNo);
-            _listenToProfileImageRequest(membershipNo);
-            _listenToRatingSync(membershipNo);
-          }
-
-          await _evaluateAndSyncProfileStatus();
 
           _isLoading = false;
           notifyListeners();
@@ -221,50 +229,48 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   // 💡 NEW: Evaluates current status and syncs to Firebase if changed
+  // 🛡️ GUARDED: Prevents re-entrancy and duplicate writes
   Future<void> _evaluateAndSyncProfileStatus() async {
-    if (_memberData == null) return;
+    if (_memberData == null || _isSyncing) return;
     
-    final String currentStatus = _memberData!['profile_status']?.toString() ?? '';
     final statusResult = calculateMemberStatus(_memberData!);
     final bool isActive = statusResult['isActive'] == true;
     final List<String> reasons = List<String>.from(statusResult['reasons'] ?? []);
-    
     final String newStatus = isActive ? 'active member' : 'inactive member';
     
-    bool shouldUpdate = false;
-    if (currentStatus != newStatus) {
-      shouldUpdate = true;
-    } else {
-      final currentReasonsList = _memberData!['inactive_reasons'] is List ? List.from(_memberData!['inactive_reasons']) : [];
-      if (currentReasonsList.length != reasons.length) {
-        shouldUpdate = true;
-      } else {
-        for (int i = 0; i < reasons.length; i++) {
-          if (currentReasonsList[i] != reasons[i]) {
-            shouldUpdate = true;
-            break;
-          }
-        }
-      }
+    // Build a hash to check if anything actually changed
+    final String syncHash = '$newStatus|${reasons.join(',')}';
+    if (syncHash == _lastSyncHash) {
+      // Nothing changed, skip write entirely
+      return;
+    }
+
+    // Auto offline if they become inactive
+    final isOnline = _memberData!['onlineStatus'] == true || _memberData!['driver_status'] == 'online';
+    if (!isActive && isOnline) {
+      debugPrint('🔴 User became inactive while online! Auto-switching to OFFLINE.');
+      await toggleDriverStatus(false);
     }
     
-    if (shouldUpdate) {
-        try {
-          await _firestore.collection(collectionSource).doc(documentId).set({
-            'profile_status': newStatus,
-            'status': newStatus, // 💡 Override WordPress API 'active' status
-            'inactive_reasons': reasons,
-          }, SetOptions(merge: true));
-          
-          _memberData!['profile_status'] = newStatus;
-          _memberData!['status'] = newStatus;
-          _memberData!['inactive_reasons'] = reasons;
-          
-          // dY' NEW: Sync to the dedicated 'member_statuses' collection
-          await MemberStatusSyncService.syncStatusToFirestore(_memberData!, memberId: documentId);
-        } catch (e) {
-          debugPrint("Error syncing profile_status: $e");
-        }
+    _isSyncing = true;
+    _lastSyncHash = syncHash;
+    
+    try {
+      await _firestore.collection(collectionSource).doc(documentId).set({
+        'profile_status': newStatus,
+        'status': newStatus,
+        'inactive_reasons': reasons,
+      }, SetOptions(merge: true));
+      
+      _memberData!['profile_status'] = newStatus;
+      _memberData!['status'] = newStatus;
+      _memberData!['inactive_reasons'] = reasons;
+      
+      debugPrint('✅ [PROFILE] Status synced: $newStatus, Reasons: $reasons');
+    } catch (e) {
+      debugPrint("Error syncing profile_status: $e");
+    } finally {
+      _isSyncing = false;
     }
   }
 
@@ -274,40 +280,57 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _appFeeSubscription;
+
   Future<void> _loadPaymentData(String membershipNo) async {
     try {
       if (_memberData == null) return;
       
-      List<dynamic> combinedHistory = [];
+      List<dynamic> initialHistory = [];
 
-      // 1. Fetch from app_membership_fee
-      final appDoc = await _firestore.collection('app_membership_fee').doc(membershipNo).get();
-      if (appDoc.exists && appDoc.data() != null) {
+      // The user wants to only rely on app_membership_fee directly.
+      // We will not load from web_sync_membership_fee or payments collections.
+      _memberData!['payment_history'] = initialHistory;
+      
+      // 1. Listen to app_membership_fee
+      _appFeeSubscription?.cancel();
+      _appFeeSubscription = _firestore.collection('app_membership_fee').doc(membershipNo).snapshots().listen((appDoc) async {
+        if (!appDoc.exists || appDoc.data() == null || _memberData == null) {
+          // Even if the document doesn't exist, we must re-evaluate status based on initialHistory
+          if (_memberData != null) {
+            await _evaluateAndSyncProfileStatus();
+            notifyListeners();
+          }
+          return;
+        }
+        
         final data = appDoc.data()!;
-        if (data['payment_history'] != null && data['payment_history'] is List) {
-          combinedHistory.addAll(data['payment_history']);
+        List<dynamic> newHistory = List.from(initialHistory);
+        
+        debugPrint('🔍 [ProfileProvider] Snapshot fired! Data: $data');
+        
+        if (data['payment_history'] != null) {
+          debugPrint('🔍 [ProfileProvider] payment_history type: ${data['payment_history'].runtimeType}');
+          if (data['payment_history'] is List) {
+            newHistory.addAll(data['payment_history']);
+          }
         }
-      }
-
-      // 2. Fetch from web_sync_membership_fee
-      final webDoc = await _firestore.collection('web_sync_membership_fee').doc(membershipNo).get();
-      if (webDoc.exists && webDoc.data() != null) {
-        final data = webDoc.data()!;
-        if (data['payment_history'] != null && data['payment_history'] is List) {
-          combinedHistory.addAll(data['payment_history']);
+        
+        // Also read from pending_payments since Admin panel might update status to 'approved' without moving it
+        if (data['pending_payments'] != null) {
+          debugPrint('🔍 [ProfileProvider] pending_payments type: ${data['pending_payments'].runtimeType}');
+          if (data['pending_payments'] is List) {
+            newHistory.addAll(data['pending_payments']);
+          }
         }
-      }
-
-      // 3. Fallback to old payments collection just in case
-      final paymentDoc = await _firestore.collection('payments').doc(membershipNo).get();
-      if (paymentDoc.exists && paymentDoc.data() != null) {
-        final data = paymentDoc.data()!;
-        if (data['payment_history'] != null && data['payment_history'] is List) {
-          combinedHistory.addAll(data['payment_history']);
-        }
-      }
-
-      _memberData!['payment_history'] = combinedHistory;
+        
+        debugPrint('🔍 [ProfileProvider] newHistory length: ${newHistory.length}');
+        _memberData!['payment_history'] = newHistory;
+        
+        // Re-evaluate profile status when fee updates
+        await _evaluateAndSyncProfileStatus();
+        notifyListeners();
+      });
       
     } catch (error) {
       debugPrint('Error fetching payment data: $error');
@@ -324,6 +347,8 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
       }
 
       final Map<String, dynamic> vehicleData = vehicleDocument.data()!;
+      _memberData!.addAll(vehicleData);
+      // Ensure specific fields are mapped properly just in case
       _memberData!['vehicle_category'] = vehicleData['vehicle_category'] ?? vehicleData['selectedCategory'] ?? '';
       _memberData!['selectedCategory'] = vehicleData['selectedCategory'] ?? vehicleData['vehicle_category'] ?? '';
     } catch (e) {
@@ -716,7 +741,6 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
           id: 101,
           title: 'AIAPRTD Driver Active',
           body: 'You are currently online. Tap to open app.',
-          icon: 'my_bubble_icon', // 👈 Same for Notification icon
         ),
         onTap: () {
           debugPrint('Floating bubble clicked - Opening App...');
@@ -759,6 +783,9 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     await _profileImageRequestSubscription?.cancel();
     _profileImageRequestSubscription = null;
+    
+    await _appFeeSubscription?.cancel();
+    _appFeeSubscription = null;
 
     await _sessionSubscription?.cancel();
     _sessionSubscription = null;

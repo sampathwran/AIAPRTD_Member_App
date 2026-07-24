@@ -83,6 +83,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
               content: "We believe in complete transparency. If you have any questions, concerns, or require assistance regarding this Privacy Policy or your profile data, please do not hesitate to contact the administration team.\n\nEmail: info@aiaprtd.lk\nPhone: 0705001002, 0775018681",
             ),
 
+            const SizedBox(height: 24),
+            _buildSectionCard(
+              context: context,
+              icon: Icons.delete_forever_rounded,
+              title: "5. Account & Data Deletion",
+              content: "If you wish to delete your AIAPRTD Member account and permanently remove your associated personal data, you can request account deletion at any time. To do this, please contact our administration team via email at info@aiaprtd.lk or call us at 0705001002. Upon verification, your account, profile data, and all related records will be permanently deleted from our active systems within 30 days.",
+            ),
+
             const SizedBox(height: 40),
             Center(
               child: Text(
