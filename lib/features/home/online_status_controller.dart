@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aiaprtd_member/core/providers/profile_provider.dart';
 import 'package:aiaprtd_member/core/providers/vehicle_provider.dart';
 import 'package:aiaprtd_member/core/providers/payment_provider.dart';
+import 'package:aiaprtd_member/core/providers/finance_provider.dart';
 import 'package:aiaprtd_member/features/profile/member_status/membership_fee_status_check.dart';
 import 'package:aiaprtd_member/features/profile/member_status/personal_kyc_checker.dart'; 
 import 'package:aiaprtd_member/features/profile/member_status/vehicle_status_check.dart';
@@ -54,6 +55,11 @@ class OnlineStatusController {
     final vehicleCheck = checkMemberSystemStatus(activeData);
     if (vehicleCheck['isActive'] == false) {
       return {'isActive': false, 'reason': vehicleCheck['reason'] ?? 'Vehicle verification pending.'};
+    }
+
+    final financeProvider = Provider.of<FinanceProvider>(context, listen: false);
+    if (financeProvider.myAppUsageChargeBalance > financeProvider.appUsageLimit) {
+      return {'isActive': false, 'reason': 'Outstanding balance limit exceeded. Please settle Union dues.'};
     }
 
     return {'isActive': true, 'reason': 'Active'};

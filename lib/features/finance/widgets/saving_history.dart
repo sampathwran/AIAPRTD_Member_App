@@ -45,12 +45,19 @@ class SavingHistoryList extends StatelessWidget {
             final doc = snapshot.data!.docs[index];
             final data = doc.data() as Map<String, dynamic>;
             
+            double _parseDouble(dynamic val) {
+              if (val == null) return 0.0;
+              if (val is num) return val.toDouble();
+              if (val is String) return double.tryParse(val) ?? 0.0;
+              return 0.0;
+            }
+
             final type = data['type'] as String? ?? 'app_booking_commission_split';
-            final amount = (type == 'app_booking_commission_split' ? data['passengerSavings'] : data['amount'] ?? 0.0).toDouble();
+            final amount = type == 'app_booking_commission_split' ? _parseDouble(data['passengerSavings']) : _parseDouble(data['amount']);
             final date = (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
             
             final tripId = data['tripId'] as String? ?? 'N/A';
-            final totalFare = (data['totalFare'] ?? 0.0).toDouble();
+            final totalFare = _parseDouble(data['totalFare']);
             final isEarning = type == 'app_booking_commission_split';
             
             String title = "Unknown Transaction";

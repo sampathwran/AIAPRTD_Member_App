@@ -1,32 +1,72 @@
-// ignore_for_file: spell_check_on_languages
+import 'dart:convert';
 
-import 'package:flutter/material.dart';
+void main() {
+  final Map<String, dynamic> data = {
+    'payment_history': [
+      {
+        'amount': '500',
+        'approvedAt': '2026-07-20T15:32:26.618',
+        'date': '2026-07-07',
+        'id': '6a4d302c5ac44',
+        'month': 'May',
+        'reason': 'Monthly Membership Fee',
+        'source': 'web',
+        'status': 'approved',
+        'type': 'Bank Transfer'
+      },
+      {
+        'amount': '500',
+        'approvedAt': '2026-07-27T23:07:00.225',
+        'date': '2026-07-27',
+        'id': '6a678b8985bb4',
+        'month': 'August',
+        'reason': 'Monthly Membership Fee',
+        'source': 'web',
+        'status': 'approved',
+        'type': 'Free Membership Fee',
+        'year': '2026'
+      },
+      {
+        'amount': '500',
+        'approvedAt': '2026-07-27T23:09:22.057',
+        'date': '2026-07-27',
+        'id': '6a678b8985baa',
+        'month': 'July',
+        'reason': 'Monthly Membership Fee',
+        'source': 'web',
+        'status': 'approved',
+        'type': 'Free Membership Fee',
+        'year': '2026'
+      },
+      {
+        'amount': '500',
+        'approvedAt': '2026-07-27T23:12:17.083',
+        'date': '2026-07-27',
+        'id': '6a67983f114d8',
+        'month': 'June',
+        'reason': 'Monthly Membership Fee',
+        'source': 'web',
+        'status': 'approved',
+        'type': 'Free Membership Fee',
+        'year': '2026'
+      }
+    ]
+  };
 
-/// 💰 Checks a driver's 'payment_history' array,
-/// Logic engine to verify if the membership fee for the current month is paid before the 5th.
-Map<String, dynamic> checkMembershipFeeStatus(Map<String, dynamic>? data) {
-  // 1. Safety check: If data is null or empty, return inactive safely.
-  if (data == null || data.isEmpty) {
-    return {
-      'isFeePaidValid': false,
-      'reason': 'Membership fee verification required.',
-    };
-  }
+  final result = checkMembershipFeeStatus(data);
+  print(jsonEncode(result));
+}
 
-  // 2. Get the current date and time from the system
-  final DateTime now = DateTime.now();
+Map<String, dynamic> checkMembershipFeeStatus(Map<String, dynamic> data) {
+  final DateTime now = DateTime.now(); // 2026-07-27
   final int currentDay = now.day;
-
   final List<String> monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
   ];
   final String currentMonthName = monthNames[now.month - 1];
   final String currentYearStr = now.year.toString();
   
-  // Calculate target month for fee validation
-  // If today is < 5th, we check if the PREVIOUS month was paid (Grace Period).
-  // If today is >= 5th, we check if the CURRENT month is paid.
   String targetMonthName = currentMonthName;
   String targetYearStr = currentYearStr;
   
@@ -46,7 +86,7 @@ Map<String, dynamic> checkMembershipFeeStatus(Map<String, dynamic>? data) {
   if (paymentHistory.isEmpty) {
     return {
       'isFeePaidValid': false,
-      'reason': 'Membership Fee Not Paid 💰',
+      'reason': 'Membership Fee Not Paid',
     };
   }
 
@@ -102,11 +142,10 @@ Map<String, dynamic> checkMembershipFeeStatus(Map<String, dynamic>? data) {
   if (!hasPaidForTargetMonth) {
     return {
       'isFeePaidValid': false,
-      'reason': 'Pending Membership Fee 💰',
+      'reason': 'Pending Membership Fee',
     };
   }
-
-  debugPrint('✅ [MembershipFeeCheck] Fee is valid or within grace period.');
+  
   return {
     'isFeePaidValid': true,
     'reason': '',

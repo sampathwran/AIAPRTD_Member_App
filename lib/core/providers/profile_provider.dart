@@ -351,6 +351,10 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
       // Ensure specific fields are mapped properly just in case
       _memberData!['vehicle_category'] = vehicleData['vehicle_category'] ?? vehicleData['selectedCategory'] ?? '';
       _memberData!['selectedCategory'] = vehicleData['selectedCategory'] ?? vehicleData['vehicle_category'] ?? '';
+      
+      // Re-evaluate profile status when vehicle data is loaded
+      await _evaluateAndSyncProfileStatus();
+      notifyListeners();
     } catch (e) {
       debugPrint("Error loading vehicle category: $e");
     }

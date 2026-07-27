@@ -47,7 +47,7 @@ class TransactionHistoryList extends StatelessWidget {
             final data = doc.data() as Map<String, dynamic>;
             
             final type = data['type'] as String? ?? '';
-            final amount = type == 'auto_settlement' ? (data['amount'] ?? 0.0).toDouble() : (data['driverCommission'] ?? 0.0).toDouble();
+            final amount = type == 'auto_settlement' ? (data['amount'] ?? 0.0).toDouble() : (data['unionUsageCharge'] ?? 0.0).toDouble();
             final date = (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
             final tripId = data['tripId'] as String? ?? 'N/A';
             final totalFare = (data['totalFare'] ?? 0.0).toDouble();

@@ -376,12 +376,20 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(_selectedPaymentMethod, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                            Text("Default", style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
-                          ],
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                _selectedPaymentMethod, 
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                              Text("Default", style: TextStyle(color: Colors.grey.shade600, fontSize: 10)),
+                            ],
+                          ),
                         ),
                       ],
                     ),

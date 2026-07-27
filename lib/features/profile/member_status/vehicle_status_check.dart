@@ -20,7 +20,8 @@ Map<String, dynamic> checkMemberSystemStatus(Map<String, dynamic>? memberData) {
       memberData['documents'] ?? 
       memberData['complianceDocuments'] ?? 
       memberData['vehicle_documents'] ?? 
-      memberData['vehicleDocuments'];
+      memberData['vehicleDocuments'] ??
+      (memberData['currentVehicle'] is Map ? memberData['currentVehicle']['documents'] : null);
 
   if (rawDocuments is List) {
     for (int i = 0; i < requiredComplianceDocs.length; i++) {

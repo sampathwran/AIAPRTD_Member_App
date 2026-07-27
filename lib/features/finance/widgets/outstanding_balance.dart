@@ -5,8 +5,9 @@ import 'package:aiaprtd_member/features/finance/widgets/commission_rates.dart';
 
 class OutstandingBalanceCard extends StatelessWidget {
   final double balance;
+  final double limit;
 
-  const OutstandingBalanceCard({super.key, required this.balance});
+  const OutstandingBalanceCard({super.key, required this.balance, required this.limit});
 
   @override
   Widget build(BuildContext context) {
@@ -80,8 +81,52 @@ class OutstandingBalanceCard extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 20),
+          _buildProgressBar(),
         ],
       ),
+    );
+  }
+
+  Widget _buildProgressBar() {
+    final double percentage = limit > 0 ? (balance / limit).clamp(0.0, 1.0) : 0.0;
+    
+    Color progressColor = Colors.greenAccent;
+    if (percentage > 0.8) {
+      progressColor = Colors.redAccent;
+    } else if (percentage > 0.5) {
+      progressColor = Colors.orangeAccent;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text("Credit Limit", style: TextStyle(color: Colors.white70, fontSize: 12)),
+            Text("LKR ${NumberFormat('#,##0').format(limit)}", style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: LinearProgressIndicator(
+            value: percentage,
+            backgroundColor: Colors.white.withValues(alpha: 0.2),
+            valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+            minHeight: 8,
+          ),
+        ),
+        if (percentage >= 1.0)
+          const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: Text(
+              "⚠️ Limit exceeded. Please settle dues.",
+              style: TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+          ),
+      ],
     );
   }
 }

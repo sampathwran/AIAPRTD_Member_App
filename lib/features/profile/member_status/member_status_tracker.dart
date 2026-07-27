@@ -20,7 +20,7 @@ class MemberStatusTracker {
       
       // Helpers
       String getDocStatus(String systemName) {
-        final dynamic rawDocs = activeData['documents'] ?? activeData['complianceDocuments'];
+        final dynamic rawDocs = activeData['documents'] ?? activeData['complianceDocuments'] ?? (activeData['currentVehicle'] is Map ? activeData['currentVehicle']['documents'] : null);
         String status = 'missing';
         if (rawDocs is List) {
           final List<String> requiredDocs = ['Revenue License', 'Insurance Policy', 'Registration Document', 'Driving License (Front)', 'Driving License (Back)'];
@@ -39,7 +39,7 @@ class MemberStatusTracker {
       }
 
       String getVehicleImgStatus(String systemName) {
-        final dynamic rawDocs = activeData['vehiclePhotos'] ?? activeData['documents']; 
+        final dynamic rawDocs = activeData['vehiclePhotos'] ?? activeData['documents'] ?? (activeData['currentVehicle'] is Map ? activeData['currentVehicle']['vehiclePhotos'] : null); 
         String status = 'missing';
         if (rawDocs is Map) {
           final doc = rawDocs[systemName];
@@ -75,21 +75,51 @@ class MemberStatusTracker {
       final Map<String, dynamic> feeCheck = checkMembershipFeeStatus(activeData);
       String feeStatus = (feeCheck['isFeePaidValid'] == true) ? 'approved' : 'pending_approval';
 
+      final docRev = getDocStatus('Revenue License');
+      final docIns = getDocStatus('Insurance Policy');
+      final docReg = getDocStatus('Registration Document');
+      final docDrv = getDocStatus('Driving License (Front)');
+      final imgFront = getVehicleImgStatus('Front');
+      final imgBack = getVehicleImgStatus('Back');
+      final imgRight = getVehicleImgStatus('Right Side');
+      final imgLeft = getVehicleImgStatus('Left Side');
+      final imgInt = getVehicleImgStatus('Interior');
+
+      bool isAllApproved = 
+          profileImageStatus == 'approved' &&
+          kycStatus == 'approved' &&
+          nicStatus == 'approved' &&
+          faceStatus == 'approved' &&
+          docRev == 'approved' &&
+          docIns == 'approved' &&
+          docReg == 'approved' &&
+          docDrv == 'approved' &&
+          imgFront == 'approved' &&
+          imgBack == 'approved' &&
+          imgRight == 'approved' &&
+          imgLeft == 'approved' &&
+          imgInt == 'approved' &&
+          feeStatus == 'approved' &&
+          !adminBlockTemp &&
+          !adminBlockPerm;
+
+      String overallStatus = isAllApproved ? 'ACTIVE' : 'INACTIVE';
+
       // Update Firebase Single Source of Truth
       await docRef.set({
         'profile_image': profileImageStatus,
         'kyc_details': kycStatus,
         'id_card_image': nicStatus,
         'face_verification': faceStatus,
-        'revenue_licence': getDocStatus('Revenue License'),
-        'insurance_policy': getDocStatus('Insurance Policy'),
-        'vehicle_registration_document': getDocStatus('Registration Document'),
-        'driving_licence': getDocStatus('Driving License (Front)'),
-        'vehicle_image_front': getVehicleImgStatus('Front'),
-        'vehicle_image_back': getVehicleImgStatus('Back'),
-        'vehicle_image_right_side': getVehicleImgStatus('Right Side'),
-        'vehicle_image_left_side': getVehicleImgStatus('Left Side'),
-        'vehicle_image_interior': getVehicleImgStatus('Interior'),
+        'revenue_licence': docRev,
+        'insurance_policy': docIns,
+        'vehicle_registration_document': docReg,
+        'driving_licence': docDrv,
+        'vehicle_image_front': imgFront,
+        'vehicle_image_back': imgBack,
+        'vehicle_image_right_side': imgRight,
+        'vehicle_image_left_side': imgLeft,
+        'vehicle_image_interior': imgInt,
         
         // Remove old incorrect keys that might have been added directly by vehicle_provider
         'Front': FieldValue.delete(),
@@ -103,6 +133,7 @@ class MemberStatusTracker {
         'admin_block_permanently': adminBlockPerm,
         'membershipNo': membershipNo,
         'uid': currentUid,
+        'status': overallStatus,
         'last_updated': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
