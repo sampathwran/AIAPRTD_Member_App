@@ -38,12 +38,8 @@ class ParkingProvider extends ChangeNotifier {
       }).toList();
       notifyListeners();
     } catch (e) {
-      // 
-        data['id'] = doc.id;
-        return data;
-      }).toList();
-      notifyListeners();
-    });
+      print('Error fetching geofences: $e');
+    }
   }
 
   // 3. Process Location Updates (Called from HomePage)
