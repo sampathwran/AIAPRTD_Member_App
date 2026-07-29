@@ -34,25 +34,25 @@ const List<NetworkProvider> networkProviders = [
   NetworkProvider(
     id: 'dialog',
     name: 'Dialog',
-    logoUrl: 'assets/images/dialog_logo.jpg',
+    logoUrl: 'assets/images/dialog_logo.png',
     colorHex: 'ED1C24',
   ),
   NetworkProvider(
     id: 'mobitel',
     name: 'Mobitel',
-    logoUrl: 'assets/images/mobitel_logo.jpg',
+    logoUrl: 'assets/images/mobitel_logo.png',
     colorHex: '00A650',
   ),
   NetworkProvider(
     id: 'airtel',
     name: 'Airtel',
-    logoUrl: 'assets/images/airtel_logo.jpg',
+    logoUrl: 'assets/images/airtel_logo.png',
     colorHex: 'FF0000',
   ),
   NetworkProvider(
     id: 'hutch',
     name: 'Hutch',
-    logoUrl: 'assets/images/hutch_logo.jpg',
+    logoUrl: 'assets/images/hutch_logo.png',
     colorHex: 'F7941D',
   ),
 ];
