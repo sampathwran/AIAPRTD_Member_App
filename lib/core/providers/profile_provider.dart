@@ -47,7 +47,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
   // ==========================================================
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    final bool isOnline = _memberData?['isOnline'] == true;
+    final bool isOnline = _memberData?['onlineStatus'] == 'online';
 
     if (isOnline) {
       if (state == AppLifecycleState.paused) {
@@ -66,10 +66,10 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool get isLoading => _isLoading;
   bool get isLocalLoading => _isLocalLoading;
 
+  bool get isOnline => _memberData?['onlineStatus'] == 'online';
+
   String get memberStatus =>
       _memberData?['profile_status']?.toString() ?? _memberData?['status']?.toString() ?? 'inactive member';
-
-  bool get isOnline => _memberData?['isOnline'] == true;
 
   String get collectionSource =>
       _memberData?['collectionSource']?.toString() ?? 'member';

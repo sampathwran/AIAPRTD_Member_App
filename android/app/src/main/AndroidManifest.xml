@@ -48,6 +48,11 @@
                 android:value="Floating bubble overlay for driver active status" />
         </service>
 
+        <!-- Override flutter_background_service for Android 14+ -->
+        <service
+            android:name="id.flutter.flutter_background_service.BackgroundService"
+            android:foregroundServiceType="location" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
