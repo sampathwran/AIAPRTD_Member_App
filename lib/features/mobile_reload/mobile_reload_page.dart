@@ -68,29 +68,12 @@ class _MobileReloadPageState extends State<MobileReloadPage>
       return;
     }
 
-    // Success - Add to history and reset form
-    setState(() {
-      _reloadHistory.insert(0, {
-        'id': 'TRX${math.Random().nextInt(900000) + 100000}',
-        'provider': _selectedProvider,
-        'phone': _phoneController.text,
-        'amount': amount,
-        'package': _selectedPackage,
-        'date': DateTime.now(),
-        'status': 'Pending', // Pending admin approval
-      });
-
-      _selectedProvider = null;
-      _phoneController.clear();
-      _amountController.clear();
-      _selectedPackage = null;
-      _tabController.animateTo(1); // Go to history tab
-    });
-
+    // Coming soon message
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Reload request submitted successfully!'),
-        backgroundColor: Colors.green,
+        content: Text('Mobile Reload feature is coming soon!'),
+        backgroundColor: Colors.orange,
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
