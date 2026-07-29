@@ -21,7 +21,8 @@ class _AdsPageState extends State<AdsPage> {
   String _searchQuery = "";
   String _locationQuery = "";
   double _minPrice = 0;
-  double _maxPrice = 10000000;
+  double _maxPrice = 1000000000; // 1 Billion Max
+
 
   String? _selectedCategory;
   String? _selectedSubCategory;
@@ -134,8 +135,8 @@ class _AdsPageState extends State<AdsPage> {
                 RangeSlider(
                   values: RangeValues(tempMin, tempMax),
                   min: 0,
-                  max: 10000000,
-                  divisions: 100,
+                  max: 1000000000,
+                  divisions: 1000,
                   activeColor: Colors.purpleAccent,
                   labels: RangeLabels(
                       tempMin.toInt().toString(), tempMax.toInt().toString()),
