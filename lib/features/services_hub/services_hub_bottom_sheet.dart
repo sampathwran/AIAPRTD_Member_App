@@ -69,6 +69,25 @@ class ServicesHubBottomSheet extends StatelessWidget {
         'color': Colors.teal,
         'onTap': () => _showComingSoon(context, 'Finance & Loans', Colors.teal),
       },
+      {
+        'icon': Icons.storefront_rounded,
+        'label': 'Welfare Shops',
+        'color': Colors.brown,
+        'onTap': () => _showComingSoon(context, 'Welfare Shops', Colors.brown),
+      },
+      {
+        'icon': Icons.local_car_wash_rounded,
+        'label': 'Service Stations',
+        'color': Colors.indigo,
+        'onTap': () =>
+            _showComingSoon(context, 'Service Stations', Colors.indigo),
+      },
+      {
+        'icon': Icons.settings_suggest_rounded,
+        'label': 'Vehicle Parts',
+        'color': Colors.cyan,
+        'onTap': () => _showComingSoon(context, 'Vehicle Parts', Colors.cyan),
+      },
     ];
 
     return Container(
@@ -76,7 +95,7 @@ class ServicesHubBottomSheet extends StatelessWidget {
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: const EdgeInsets.only(top: 12, left: 24, right: 24, bottom: 32),
+      padding: const EdgeInsets.only(top: 12, left: 24, right: 24, bottom: 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -89,7 +108,7 @@ class ServicesHubBottomSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16), // Reduced from 24
           const Text(
             'Driver Services Hub',
             style: TextStyle(
@@ -97,7 +116,7 @@ class ServicesHubBottomSheet extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4), // Reduced from 8
           Text(
             'Access all your essential tools in one place',
             style: TextStyle(
@@ -105,7 +124,7 @@ class ServicesHubBottomSheet extends StatelessWidget {
               fontSize: 14,
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 20), // Reduced from 32
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
