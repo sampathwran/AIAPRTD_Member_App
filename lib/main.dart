@@ -63,7 +63,11 @@ void main() async {
   await NotificationService().init();
 
   // Initialize Background Location Service
-  await initializeBackgroundService();
+  try {
+    await initializeBackgroundService();
+  } catch (e) {
+    debugPrint("Background service init error: $e");
+  }
 
   runApp(
     MultiProvider(
