@@ -232,13 +232,23 @@ class _FlightTrackingPageState extends State<FlightTrackingPage>
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: Colors.grey.withValues(alpha: 0.1),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.flight,
-                          size: 20, color: Colors.blue),
+                      width: 40,
+                      height: 40,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: Image.network(
+                          'https://images.kiwi.com/airlines/64/${flight.airlineIata}.png',
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.flight,
+                                  size: 24, color: Colors.blue),
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Column(

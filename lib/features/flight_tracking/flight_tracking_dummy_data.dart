@@ -1,6 +1,7 @@
 class FlightData {
   final String flightNumber;
   final String airline;
+  final String airlineIata; // e.g. UL, EK
   final String origin;
   final String destination;
   final String scheduledTime;
@@ -11,6 +12,7 @@ class FlightData {
   FlightData({
     required this.flightNumber,
     required this.airline,
+    required this.airlineIata,
     required this.origin,
     required this.destination,
     required this.scheduledTime,
@@ -26,6 +28,7 @@ final List<FlightData> dummyFlights = [
   FlightData(
     flightNumber: 'UL 504',
     airline: 'SriLankan Airlines',
+    airlineIata: 'UL',
     origin: 'London (LHR)',
     destination: 'Colombo (CMB)',
     scheduledTime: '12:45 PM',
@@ -36,6 +39,7 @@ final List<FlightData> dummyFlights = [
   FlightData(
     flightNumber: 'EK 654',
     airline: 'Emirates',
+    airlineIata: 'EK',
     origin: 'Dubai (DXB)',
     destination: 'Colombo (CMB)',
     scheduledTime: '02:15 PM',
@@ -46,6 +50,7 @@ final List<FlightData> dummyFlights = [
   FlightData(
     flightNumber: 'QR 668',
     airline: 'Qatar Airways',
+    airlineIata: 'QR',
     origin: 'Doha (DOH)',
     destination: 'Colombo (CMB)',
     scheduledTime: '03:30 PM',
@@ -56,6 +61,7 @@ final List<FlightData> dummyFlights = [
   FlightData(
     flightNumber: 'FZ 547',
     airline: 'flydubai',
+    airlineIata: 'FZ',
     origin: 'Dubai (DXB)',
     destination: 'Colombo (CMB)',
     scheduledTime: '05:00 PM',
@@ -68,6 +74,7 @@ final List<FlightData> dummyFlights = [
   FlightData(
     flightNumber: 'UL 115',
     airline: 'SriLankan Airlines',
+    airlineIata: 'UL',
     origin: 'Colombo (CMB)',
     destination: 'Male (MLE)',
     scheduledTime: '01:30 PM',
@@ -78,6 +85,7 @@ final List<FlightData> dummyFlights = [
   FlightData(
     flightNumber: 'EK 655',
     airline: 'Emirates',
+    airlineIata: 'EK',
     origin: 'Colombo (CMB)',
     destination: 'Dubai (DXB)',
     scheduledTime: '03:15 PM',
@@ -88,6 +96,7 @@ final List<FlightData> dummyFlights = [
   FlightData(
     flightNumber: 'SQ 469',
     airline: 'Singapore Airlines',
+    airlineIata: 'SQ',
     origin: 'Colombo (CMB)',
     destination: 'Singapore (SIN)',
     scheduledTime: '04:45 PM',
