@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:aiaprtd_member/features/marketplace/ads_page.dart';
 import 'package:aiaprtd_member/features/flight_tracking/flight_tracking_page.dart';
+import 'package:aiaprtd_member/features/mobile_reload/mobile_reload_page.dart';
 
 class ServicesHubBottomSheet extends StatelessWidget {
   const ServicesHubBottomSheet({super.key});
@@ -25,7 +26,13 @@ class ServicesHubBottomSheet extends StatelessWidget {
         'icon': Icons.phone_android_rounded,
         'label': 'Mobile Reload',
         'color': Colors.blue,
-        'onTap': () => _showComingSoon(context, 'Mobile Reload', Colors.blue),
+        'onTap': () {
+          Navigator.pop(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MobileReloadPage()),
+          );
+        },
       },
       {
         'icon': Icons.shopping_cart_rounded,
