@@ -104,7 +104,8 @@ class OutstandingBalanceCard extends StatelessWidget {
   }
 
   Widget _buildProgressBar() {
-    final double percentage = limit > 0 ? (balance / limit).clamp(0.0, 1.0) : 0.0;
+    final double effectiveBalance = (balance - pendingAmount).clamp(0.0, double.infinity);
+    final double percentage = limit > 0 ? (effectiveBalance / limit).clamp(0.0, 1.0) : 0.0;
     
     Color progressColor = Colors.greenAccent;
     if (percentage > 0.8) {
