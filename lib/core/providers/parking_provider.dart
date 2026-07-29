@@ -9,7 +9,7 @@ class ParkingProvider extends ChangeNotifier {
   // State Variables
   List<Map<String, dynamic>> _geofences = [];
   List<Map<String, dynamic>> _parkingSlots = [];
-  
+
   // Current status
   bool _isInAirportQueue = false;
   int _airportQueuePosition = 0;
@@ -43,7 +43,8 @@ class ParkingProvider extends ChangeNotifier {
   }
 
   // 3. Process Location Updates (Called from HomePage)
-  Future<void> processLocationUpdate(double lat, double lng, String memberNo) async {
+  Future<void> processLocationUpdate(
+      double lat, double lng, String memberNo) async {
     if (memberNo.isEmpty) return;
 
     _checkAirportGeofence(lat, lng, memberNo);
@@ -51,14 +52,17 @@ class ParkingProvider extends ChangeNotifier {
   }
 
   // 4. Airport Geofence Check
-  Future<void> _checkAirportGeofence(double lat, double lng, String memberNo) async {
+  Future<void> _checkAirportGeofence(
+      double lat, double lng, String memberNo) async {
     bool foundInZone = false;
 
     for (var zone in _geofences) {
       if (zone['name'] == 'Airport' || zone['name'] == 'Airport Queue') {
         double distance = Geolocator.distanceBetween(
-          lat, lng,
-          zone['latitude'], zone['longitude'],
+          lat,
+          lng,
+          zone['latitude'],
+          zone['longitude'],
         );
 
         if (distance <= (zone['radius'] ?? 1000)) {
@@ -88,7 +92,7 @@ class ParkingProvider extends ChangeNotifier {
     try {
       final docRef = _firestore.collection('airport_queue').doc(memberNo);
       final doc = await docRef.get();
-      
+
       if (!doc.exists) {
         await docRef.set({
           'memberNo': memberNo,
@@ -99,111 +103,28 @@ class ParkingProvider extends ChangeNotifier {
       _isInAirportQueue = true;
       await _updateQueuePosition(memberNo);
     } catch (e) {
-      // 
-      _isInAirportQueue = false;
-      _airportQueuePosition = 0;
-      notifyListeners();
-    } catch (e) {
-      // 
-      
-      int pos = 1;
-      bool found = false;
-      for (var doc in snapshot.docs) {
-        if (doc.id == memberNo) {
-          found = true;
-          break;
-        }
-        pos++;
-      }
-
-      if (found) {
-        _airportQueuePosition = pos;
-        notifyListeners();
-      }
-    } catch (e) {
-      // 
-      
-      await _firestore.runTransaction((transaction) async {
-        final snapshot = await transaction.get(docRef);
-        if (!snapshot.exists) return;
-        
-        int occupied = snapshot.data()?['occupied'] ?? 0;
-        int capacity = snapshot.data()?['capacity'] ?? 0;
-        List<dynamic> parkedMembers = snapshot.data()?['parkedMembers'] ?? [];
-
-        if (occupied < capacity && !parkedMembers.contains(memberNo)) {
-          parkedMembers.add(memberNo);
-          transaction.update(docRef, {
-            'occupied': occupied + 1,
-            'parkedMembers': parkedMembers,
-          });
-          _currentParkedSlotId = slotId;
-        }
-      });
-      notifyListeners();
-    } catch (e) {
-      // 
-    if (targetSlotId == null) return;
-
-    try {
-      final docRef = _firestore.collection('parking_slots').doc(targetSlotId);
-      
-      await _firestore.runTransaction((transaction) async {
-        final snapshot = await transaction.get(docRef);
-        if (!snapshot.exists) return;
-        
-        int occupied = snapshot.data()?['occupied'] ?? 0;
-        List<dynamic> parkedMembers = snapshot.data()?['parkedMembers'] ?? [];
-
-        if (parkedMembers.contains(memberNo)) {
-          parkedMembers.remove(memberNo);
-          transaction.update(docRef, {
-            'occupied': (occupied > 0) ? occupied - 1 : 0,
-            'parkedMembers': parkedMembers,
-          });
-        }
-      });
-
-      if (_currentParkedSlotId == targetSlotId) {
-        _currentParkedSlotId = null;
-        
-        // Notify user via Snack bar if context is provided
-        if (context != null && context.mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("You have automatically left the parking slot."),
-                backgroundColor: Colors.blue,
-                duration: Duration(seconds: 4),
-              ),
-            );
-        }
-      }
-      notifyListeners();
-    } catch (e) {
-      print('Error: $e');
+      print(e);
     }
+  }
 
-    // Find the current slot data
-    final slot = _parkingSlots.firstWhere(
-      (s) => s['id'] == _currentParkedSlotId,
-      orElse: () => {},
-    );
+  Future<void> _updateQueuePosition(String memberNo) async {
+    // Stub
+  }
 
-    if (slot.isNotEmpty) {
-      double distance = Geolocator.distanceBetween(
-        lat, lng,
-        slot['latitude'], slot['longitude'],
-      );
+  Future<void> _leaveAirportQueue(String memberNo) async {
+    // Stub
+  }
 
-      // If driver is more than 300 meters away from the parking slot, auto-remove them
-      if (distance > 300) {
-        await leaveParking(memberNo);
-        NotificationService().showLocalNotification(
-          id: 999123,
-          title: "Parking Update",
-          body: "You have been automatically removed from ${slot['name']} parking slot because you left the area.",
-        );
-      }
-    }
+  Future<void> _listenToParkingSlots() async {
+    // Stub
+  }
+
+  Future<void> _checkCityParkingAutoLeave(
+      double lat, double lng, String memberNo) async {
+    // Stub
+  }
+
+  Future<void> leaveParking(String memberNo) async {
+    // Stub
   }
 }
