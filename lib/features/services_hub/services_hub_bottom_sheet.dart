@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:aiaprtd_member/features/marketplace/ads_page.dart';
 
 class ServicesHubBottomSheet extends StatelessWidget {
   const ServicesHubBottomSheet({super.key});
@@ -23,31 +24,43 @@ class ServicesHubBottomSheet extends StatelessWidget {
         'icon': Icons.phone_android_rounded,
         'label': 'Mobile Reload',
         'color': Colors.blue,
+        'onTap': () => _showComingSoon(context, 'Mobile Reload', Colors.blue),
       },
       {
         'icon': Icons.shopping_cart_rounded,
         'label': 'Marketplace',
         'color': Colors.orange,
+        'onTap': () {
+          Navigator.pop(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AdsPage()),
+          );
+        },
       },
       {
         'icon': Icons.directions_car_rounded,
         'label': 'Fleet Tracking',
         'color': Colors.green,
+        'onTap': () => _showComingSoon(context, 'Fleet Tracking', Colors.green),
       },
       {
         'icon': Icons.receipt_long_rounded,
         'label': 'Pay Fines',
         'color': Colors.red,
+        'onTap': () => _showComingSoon(context, 'Pay Fines', Colors.red),
       },
       {
         'icon': Icons.local_parking_rounded,
         'label': 'Parking',
         'color': Colors.purple,
+        'onTap': () => _showComingSoon(context, 'Parking', Colors.purple),
       },
       {
         'icon': Icons.account_balance_wallet_rounded,
         'label': 'Finance & Loans',
         'color': Colors.teal,
+        'onTap': () => _showComingSoon(context, 'Finance & Loans', Colors.teal),
       },
     ];
 
@@ -102,27 +115,27 @@ class ServicesHubBottomSheet extends StatelessWidget {
                 icon: service['icon'] as IconData,
                 label: service['label'] as String,
                 color: service['color'] as Color,
-                onTap: () {
-                  Navigator.pop(context); // Close bottom sheet
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        "${service['label']} - Coming Soon! 🚀",
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      backgroundColor: service['color'] as Color,
-                    ),
-                  );
-                },
+                onTap: service['onTap'] as VoidCallback,
               );
             },
           ),
           const SizedBox(height: 16), // safe area buffer
         ],
+      ),
+    );
+  }
+
+  void _showComingSoon(BuildContext context, String label, Color color) {
+    Navigator.pop(context); // Close bottom sheet
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          "$label - Coming Soon! 🚀",
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: color,
       ),
     );
   }

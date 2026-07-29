@@ -17,7 +17,6 @@ import 'package:aiaprtd_member/features/profile/my_booking_page.dart';
 import 'package:aiaprtd_member/features/general/member_benefits_page.dart';
 import 'package:aiaprtd_member/features/general/support_tickets_page.dart';
 import 'package:aiaprtd_member/features/general/votes_page.dart';
-import 'package:aiaprtd_member/features/marketplace/ads_page.dart';
 import 'package:aiaprtd_member/features/general/notification_page.dart';
 import 'package:aiaprtd_member/features/settings/dark_mode_page.dart';
 import 'package:aiaprtd_member/features/settings/app_volume_page.dart';
@@ -55,7 +54,6 @@ class ProfileMenuWidget extends StatelessWidget {
             _buildTile(context, Icons.star_outline, "Member Benefits", () => _nav(context, const MemberBenefitsPage())),
             _buildTile(context, Icons.support_agent, "Support Tickets", () => _nav(context, const SupportTicketsPage())),
             _buildTile(context, Icons.how_to_vote, "Votes", () => _nav(context, const VotesPage())),
-            _buildTile(context, Icons.ads_click, "Ads", () => _nav(context, const AdsPage())),
             _buildTile(context, Icons.notifications_none, "Notification", () => _nav(context, const NotificationPage())),
           ]),
           _buildSettingsSection(context),
