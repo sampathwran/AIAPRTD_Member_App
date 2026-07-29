@@ -239,7 +239,7 @@ class _MobileReloadPageState extends State<MobileReloadPage>
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(height: 12),
           SizedBox(
-            height: 100,
+            height: 130,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: networkProviders.length,
@@ -257,7 +257,7 @@ class _MobileReloadPageState extends State<MobileReloadPage>
                     });
                   },
                   child: Container(
-                    width: 90,
+                    width: 110,
                     margin: const EdgeInsets.only(right: 12),
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
@@ -277,9 +277,9 @@ class _MobileReloadPageState extends State<MobileReloadPage>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
-                          width: 48,
-                          height: 48,
-                          padding: const EdgeInsets.all(4),
+                          width: 72,
+                          height: 72,
+                          padding: const EdgeInsets.all(2),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
@@ -299,7 +299,7 @@ class _MobileReloadPageState extends State<MobileReloadPage>
                         Text(
                           provider.name,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 14,
                             fontWeight: isSelected
                                 ? FontWeight.bold
                                 : FontWeight.normal,
@@ -530,8 +530,8 @@ class _MobileReloadPageState extends State<MobileReloadPage>
                     Row(
                       children: [
                         Container(
-                          width: 32,
-                          height: 32,
+                          width: 44,
+                          height: 44,
                           padding: const EdgeInsets.all(2),
                           decoration: BoxDecoration(
                             color: Colors.white,
