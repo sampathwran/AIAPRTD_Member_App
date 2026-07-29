@@ -59,6 +59,7 @@ flutter:
 
   # 📌 ඇසෙට්ස් (Logo & Sound) ලියාපදිංචි කරපු කොටස
   assets:
+    - assets/images/
     - assets/images/logo.png
     - assets/sounds/intro.mp3
     - assets/sounds/go_sound.mp3
