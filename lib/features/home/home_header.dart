@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:aiaprtd_member/features/profile/profile_image_widget.dart';
-import 'package:aiaprtd_member/features/parking/parking_icon_widget.dart';
+import 'package:aiaprtd_member/features/services_hub/services_hub_bottom_sheet.dart';
 import 'package:aiaprtd_member/features/income/daily_income_widget.dart';
 import 'package:aiaprtd_member/core/providers/theme_provider.dart';
 
@@ -21,11 +21,14 @@ class _HomeHeaderState extends State<HomeHeader> {
   @override
   Widget build(BuildContext context) {
     final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
-    
+
     // Premium Colors: Sleek, slightly dark/glassy blue-grey in dark mode, light greyish-blue in light mode
     final bgColor = isDark ? const Color(0xff1B2735) : const Color(0xFFF0F3F8);
-    final shadowColor = isDark ? Colors.black.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.08);
-    final borderColor = isDark ? Colors.white12 : Colors.blueGrey.withValues(alpha: 0.1);
+    final shadowColor = isDark
+        ? Colors.black.withValues(alpha: 0.3)
+        : Colors.black.withValues(alpha: 0.08);
+    final borderColor =
+        isDark ? Colors.white12 : Colors.blueGrey.withValues(alpha: 0.1);
 
     return Container(
       margin: const EdgeInsets.only(top: 10),
@@ -66,7 +69,8 @@ class _HomeHeaderState extends State<HomeHeader> {
           Expanded(
             child: Container(
               height: 54,
-              padding: const EdgeInsets.only(left: 6, right: 6), // Padding adjusted for easier swiping
+              padding: const EdgeInsets.only(
+                  left: 6, right: 6), // Padding adjusted for easier swiping
               decoration: BoxDecoration(
                 color: bgColor,
                 border: Border.all(color: borderColor),
@@ -87,15 +91,22 @@ class _HomeHeaderState extends State<HomeHeader> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.5),
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.white.withValues(alpha: 0.5),
                       shape: BoxShape.circle,
-                      border: Border.all(color: isDark ? Colors.white12 : Colors.white),
+                      border: Border.all(
+                          color: isDark ? Colors.white12 : Colors.white),
                     ),
                     child: IconButton(
                       padding: EdgeInsets.zero,
                       icon: Icon(
-                        _isIncomeVisible ? Icons.visibility_rounded : Icons.visibility_off_rounded,
-                        color: isDark ? Colors.grey.shade400 : Colors.blueGrey.shade600,
+                        _isIncomeVisible
+                            ? Icons.visibility_rounded
+                            : Icons.visibility_off_rounded,
+                        color: isDark
+                            ? Colors.grey.shade400
+                            : Colors.blueGrey.shade600,
                         size: 20,
                       ),
                       onPressed: () {
@@ -116,8 +127,11 @@ class _HomeHeaderState extends State<HomeHeader> {
                               style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w900,
-                                  color: isDark ? const Color(0xFF34D399) : const Color(0xFF10B981) // Beautiful green color
-                              ),
+                                  color: isDark
+                                      ? const Color(0xFF34D399)
+                                      : const Color(
+                                          0xFF10B981) // Beautiful green color
+                                  ),
                             ),
                           ),
                   ),
@@ -128,7 +142,7 @@ class _HomeHeaderState extends State<HomeHeader> {
           const SizedBox(width: 12),
 
           // ==========================================================
-          // 🅿️ 3. PARKING SECTION (Premium Glossy Button)
+          // 🚀 NEW: SERVICES HUB SECTION (Super App Menu)
           // ==========================================================
           Container(
             width: 54,
@@ -139,23 +153,30 @@ class _HomeHeaderState extends State<HomeHeader> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: isDark ? Colors.blue.withValues(alpha: 0.3) : Colors.blue.withValues(alpha: 0.15), 
+                  color: isDark
+                      ? Colors.blue.withValues(alpha: 0.3)
+                      : Colors.blue.withValues(alpha: 0.15),
                   blurRadius: 12,
                   offset: const Offset(0, 5),
                 ),
               ],
             ),
             child: Center(
-              child: ParkingIconWidget(
-                onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text(
-                        "Parking Feature Coming Soon! 🅿️",
-                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)
-                    ),
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    backgroundColor: const Color(0xFF3B82F6), // Styled SnackBar
+              child: GestureDetector(
+                onTap: () => ServicesHubBottomSheet.show(context),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.grid_view_rounded,
+                    size: 26,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ),
