@@ -559,6 +559,10 @@ class BookingProvider extends ChangeNotifier {
       'paymentStatus': 'Pending',
       'createdAt': FieldValue.serverTimestamp(),
       'timestamp': FieldValue.serverTimestamp(),
+      'acceptedAt': null,
+      'arrivedAt': null,
+      'tripStartedAt': null,
+      'tripCompletedAt': null,
     };
 
     try {
