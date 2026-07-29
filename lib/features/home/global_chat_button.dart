@@ -34,15 +34,20 @@ class _GlobalChatButtonState extends State<GlobalChatButton> {
           )
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const SizedBox.shrink();
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+          return const SizedBox.shrink();
 
         // Find active trips
         var activeDocs = snapshot.data!.docs.where((doc) {
           var data = doc.data() as Map<String, dynamic>;
           String status = data['status']?.toString().toLowerCase() ?? '';
           String tripState = data['tripState']?.toString().toLowerCase() ?? '';
-          
-          if (status == 'ongoing' || status == 'accepted' || tripState == 'accepted' || tripState == 'arrived' || tripState == 'started') {
+
+          if (status == 'ongoing' ||
+              status == 'accepted' ||
+              tripState == 'accepted' ||
+              tripState == 'arrived' ||
+              tripState == 'started') {
             return true;
           }
           return false;
@@ -50,7 +55,7 @@ class _GlobalChatButtonState extends State<GlobalChatButton> {
 
         // IF THERE ARE NO ACTIVE TRIPS, DO NOT SHOW THE CHAT BUBBLE AT ALL
         if (activeDocs.isEmpty) return const SizedBox.shrink();
-        
+
         return Positioned(
           left: _x,
           top: _y,
@@ -62,9 +67,8 @@ class _GlobalChatButtonState extends State<GlobalChatButton> {
               });
             },
             onTap: () {
-              import_main.navigatorKey.currentState?.push(
-                MaterialPageRoute(builder: (context) => const ChatListPage())
-              );
+              import_main.navigatorKey.currentState?.push(MaterialPageRoute(
+                  builder: (context) => const ChatListPage()));
             },
             child: Stack(
               clipBehavior: Clip.none,
@@ -76,7 +80,10 @@ class _GlobalChatButtonState extends State<GlobalChatButton> {
                     color: Colors.blue.shade600,
                     shape: BoxShape.circle,
                     boxShadow: const [
-                      BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4))
+                      BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 10,
+                          offset: Offset(0, 4))
                     ],
                   ),
                   child: const Center(

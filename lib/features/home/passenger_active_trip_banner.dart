@@ -9,7 +9,8 @@ class PassengerActiveTripBanner extends StatefulWidget {
   const PassengerActiveTripBanner({super.key});
 
   @override
-  State<PassengerActiveTripBanner> createState() => _PassengerActiveTripBannerState();
+  State<PassengerActiveTripBanner> createState() =>
+      _PassengerActiveTripBannerState();
 }
 
 class _PassengerActiveTripBannerState extends State<PassengerActiveTripBanner> {
@@ -29,16 +30,21 @@ class _PassengerActiveTripBannerState extends State<PassengerActiveTripBanner> {
           .where('memberId', isEqualTo: memberId)
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const SizedBox.shrink();
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+          return const SizedBox.shrink();
 
         // Find the active trip
         var activeDocs = snapshot.data!.docs.where((doc) {
           var data = doc.data() as Map<String, dynamic>;
           String status = data['status']?.toString().toLowerCase() ?? '';
           String tripState = data['tripState']?.toString().toLowerCase() ?? '';
-          
+
           // Only show for actively ongoing/accepted trips
-          if (status == 'ongoing' || status == 'accepted' || tripState == 'accepted' || tripState == 'arrived' || tripState == 'started') {
+          if (status == 'ongoing' ||
+              status == 'accepted' ||
+              tripState == 'accepted' ||
+              tripState == 'arrived' ||
+              tripState == 'started') {
             return true;
           }
           return false;
@@ -48,7 +54,7 @@ class _PassengerActiveTripBannerState extends State<PassengerActiveTripBanner> {
 
         var activeBooking = activeDocs.first;
         String bookingId = activeBooking.id;
-        
+
         return StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('chats')
@@ -60,13 +66,14 @@ class _PassengerActiveTripBannerState extends State<PassengerActiveTripBanner> {
           builder: (context, chatSnapshot) {
             bool hasUnread = false;
             String latestMessage = "";
-            
+
             if (chatSnapshot.hasData && chatSnapshot.data!.docs.isNotEmpty) {
-               var d = chatSnapshot.data!.docs.first.data() as Map<String, dynamic>;
-               if (d['senderId'] != memberId && (d['isRead'] == false)) {
-                 hasUnread = true;
-                 latestMessage = d['text'] ?? "New Message";
-               }
+              var d =
+                  chatSnapshot.data!.docs.first.data() as Map<String, dynamic>;
+              if (d['senderId'] != memberId && (d['isRead'] == false)) {
+                hasUnread = true;
+                latestMessage = d['text'] ?? "New Message";
+              }
             }
 
             return Positioned(
@@ -82,13 +89,21 @@ class _PassengerActiveTripBannerState extends State<PassengerActiveTripBanner> {
                 onTap: () {
                   // Click anywhere on the bubble to go to the Chat
                   if (hasUnread) {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => ChatPage(
-                      tripId: bookingId,
-                      otherUserName: "Driver", // We can fetch driver name later if needed
-                      otherUserId: "Driver ID",
-                    )));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => ChatPage(
+                                  tripId: bookingId,
+                                  otherUserName:
+                                      "Driver", // We can fetch driver name later if needed
+                                  otherUserId: "Driver ID",
+                                )));
                   } else {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const MyBookingPage(initialIndex: 1)));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                const MyBookingPage(initialIndex: 1)));
                   }
                 },
                 child: Column(
@@ -99,7 +114,8 @@ class _PassengerActiveTripBannerState extends State<PassengerActiveTripBanner> {
                       // Speech Bubble showing the message
                       Container(
                         margin: const EdgeInsets.only(bottom: 8, left: 10),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
                         constraints: const BoxConstraints(maxWidth: 220),
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -110,7 +126,10 @@ class _PassengerActiveTripBannerState extends State<PassengerActiveTripBanner> {
                             bottomLeft: Radius.circular(4),
                           ),
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 10, offset: const Offset(0, 5))
+                            BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.15),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5))
                           ],
                           border: Border.all(color: Colors.blue.shade100),
                         ),
@@ -119,12 +138,16 @@ class _PassengerActiveTripBannerState extends State<PassengerActiveTripBanner> {
                           children: [
                             Text(
                               "Driver says:",
-                              style: TextStyle(color: Colors.blue.shade700, fontSize: 10, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  color: Colors.blue.shade700,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               latestMessage,
-                              style: const TextStyle(color: Colors.black87, fontSize: 13),
+                              style: const TextStyle(
+                                  color: Colors.black87, fontSize: 13),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -136,10 +159,15 @@ class _PassengerActiveTripBannerState extends State<PassengerActiveTripBanner> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: hasUnread ? Colors.red.shade500 : Colors.blue.shade600,
+                        color: hasUnread
+                            ? Colors.red.shade500
+                            : Colors.blue.shade600,
                         shape: BoxShape.circle,
                         boxShadow: const [
-                          BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4))
+                          BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 10,
+                              offset: Offset(0, 4))
                         ],
                       ),
                       child: Stack(
@@ -160,7 +188,8 @@ class _PassengerActiveTripBannerState extends State<PassengerActiveTripBanner> {
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.red.shade500, width: 2),
+                                  border: Border.all(
+                                      color: Colors.red.shade500, width: 2),
                                 ),
                               ),
                             ),

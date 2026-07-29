@@ -37,13 +37,16 @@ class BookingFormWidget extends StatelessWidget {
             height: 50,
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade100,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: Row(
               children: [
-                _buildTab(context, provider, 'One way', Icons.arrow_right_alt_rounded),
+                _buildTab(context, provider, 'One way',
+                    Icons.arrow_right_alt_rounded),
                 _buildTab(context, provider, 'Round', Icons.sync_alt_rounded),
-                _buildTab(context, provider, 'Package', Icons.inventory_2_outlined),
+                _buildTab(
+                    context, provider, 'Package', Icons.inventory_2_outlined),
               ],
             ),
           ),
@@ -59,7 +62,7 @@ class BookingFormWidget extends StatelessWidget {
               ),
             ),
           ),
-          
+
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             child: SizedBox(
@@ -67,15 +70,20 @@ class BookingFormWidget extends StatelessWidget {
               height: 50,
               child: ElevatedButton(
                 onPressed: () {
-                  if (provider.currentPickupLatLng != null && provider.dropLatLngs.isNotEmpty && provider.dropLatLngs[0] != null) {
+                  if (provider.currentPickupLatLng != null &&
+                      provider.dropLatLngs.isNotEmpty &&
+                      provider.dropLatLngs[0] != null) {
                     provider.calculateRoute();
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const RoutePreviewPage()),
+                      MaterialPageRoute(
+                          builder: (context) => const RoutePreviewPage()),
                     );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Please fill all required locations (Pickup and at least one Drop).")),
+                      const SnackBar(
+                          content: Text(
+                              "Please fill all required locations (Pickup and at least one Drop).")),
                     );
                   }
                 },
@@ -87,7 +95,10 @@ class BookingFormWidget extends StatelessWidget {
                 ),
                 child: const Text(
                   "Continue",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
                 ),
               ),
             ),
@@ -112,19 +123,23 @@ class BookingFormWidget extends StatelessWidget {
   }
 
   // Custom Tab Builder
-  Widget _buildTab(BuildContext context, BookingProvider provider, String title, IconData icon) {
+  Widget _buildTab(BuildContext context, BookingProvider provider, String title,
+      IconData icon) {
     bool isActive = provider.tripType == title;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Expanded(
       child: GestureDetector(
         onTap: () => provider.setTripType(title),
         child: Container(
           decoration: BoxDecoration(
             color: isActive ? theme.cardTheme.color : Colors.transparent,
-            borderRadius: isActive ? const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)) : null,
+            borderRadius: isActive
+                ? const BorderRadius.only(
+                    topLeft: Radius.circular(24), topRight: Radius.circular(24))
+                : null,
           ),
           child: Center(
             child: Row(
@@ -132,14 +147,20 @@ class BookingFormWidget extends StatelessWidget {
               children: [
                 Icon(
                   isActive ? Icons.check_circle : Icons.circle_outlined,
-                  color: isActive ? colorScheme.primary : (isDark ? Colors.grey.shade500 : Colors.grey.shade400),
+                  color: isActive
+                      ? colorScheme.primary
+                      : (isDark ? Colors.grey.shade500 : Colors.grey.shade400),
                   size: 16,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   title,
                   style: TextStyle(
-                    color: isActive ? (isDark ? Colors.white : Colors.black) : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+                    color: isActive
+                        ? (isDark ? Colors.white : Colors.black)
+                        : (isDark
+                            ? Colors.grey.shade400
+                            : Colors.grey.shade600),
                     fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                     fontSize: 13,
                   ),

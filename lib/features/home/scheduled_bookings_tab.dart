@@ -12,7 +12,8 @@ class ScheduledBookingsTab extends StatefulWidget {
   final List<QueryDocumentSnapshot> bookings;
   final Position? currentPosition;
 
-  const ScheduledBookingsTab({super.key, required this.bookings, this.currentPosition});
+  const ScheduledBookingsTab(
+      {super.key, required this.bookings, this.currentPosition});
 
   @override
   State<ScheduledBookingsTab> createState() => _ScheduledBookingsTabState();
@@ -39,7 +40,8 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
       _displayBookings[doc.id] = doc.data() as Map<String, dynamic>;
     }
     final newIds = newBookings.map((e) => e.id).toSet();
-    _displayBookings.removeWhere((id, data) => !newIds.contains(id) && !_removingIds.contains(id));
+    _displayBookings.removeWhere(
+        (id, data) => !newIds.contains(id) && !_removingIds.contains(id));
   }
 
   void _handleIncomingBookings(List<QueryDocumentSnapshot> newBookings) {
@@ -60,15 +62,20 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
 
   Future<void> _checkWhyRemoved(String docId) async {
     try {
-      final doc = await FirebaseFirestore.instance.collection('all_bookings').doc(docId).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('all_bookings')
+          .doc(docId)
+          .get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         final status = data['status']?.toString().toLowerCase();
-        
-        if (status == 'accepted' || status == 'arrived' || status == 'started') {
+
+        if (status == 'accepted' ||
+            status == 'arrived' ||
+            status == 'started') {
           if (mounted) {
             setState(() {
-              _displayBookings[docId] = data; 
+              _displayBookings[docId] = data;
             });
           }
           await Future.delayed(const Duration(milliseconds: 1500));
@@ -99,9 +106,14 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
           children: [
             Icon(Icons.calendar_month, size: 60, color: Colors.blue.shade100),
             const SizedBox(height: 16),
-            const Text("No Scheduled Bookings", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+            const Text("No Scheduled Bookings",
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87)),
             const SizedBox(height: 8),
-            const Text("No upcoming bookings found in this radius.", style: TextStyle(color: Colors.grey)),
+            const Text("No upcoming bookings found in this radius.",
+                style: TextStyle(color: Colors.grey)),
           ],
         ),
       );
@@ -116,12 +128,14 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
       DateTime? timeA;
       if (dataA['pickupTime'] != null) {
         timeA = DateTime.tryParse(dataA['pickupTime'].toString());
-      } else if (dataA['startTime'] != null && dataA['startTime'] is Timestamp) timeA = (dataA['startTime'] as Timestamp).toDate();
+      } else if (dataA['startTime'] != null && dataA['startTime'] is Timestamp)
+        timeA = (dataA['startTime'] as Timestamp).toDate();
 
       DateTime? timeB;
       if (dataB['pickupTime'] != null) {
         timeB = DateTime.tryParse(dataB['pickupTime'].toString());
-      } else if (dataB['startTime'] != null && dataB['startTime'] is Timestamp) timeB = (dataB['startTime'] as Timestamp).toDate();
+      } else if (dataB['startTime'] != null && dataB['startTime'] is Timestamp)
+        timeB = (dataB['startTime'] as Timestamp).toDate();
 
       if (timeA == null && timeB == null) return 0;
       if (timeA == null) return 1; // Put nulls at the end
@@ -142,34 +156,47 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
     );
   }
 
-  Widget _buildScheduledCard(BuildContext context, Map<String, dynamic> data, String docId) {
-    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+  Widget _buildScheduledCard(
+      BuildContext context, Map<String, dynamic> data, String docId) {
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
     final String myMembershipNo = profileProvider.memberNo;
     final String myName = profileProvider.memberFullName;
-    final String myPhone = profileProvider.memberData?['mobile']?.toString() ?? '';
-    final String myVehicle = profileProvider.memberData?['vehicle_category']?.toString() ?? '';
+    final String myPhone =
+        profileProvider.memberData?['mobile']?.toString() ?? '';
+    final String myVehicle =
+        profileProvider.memberData?['vehicle_category']?.toString() ?? '';
     final String myImage = profileProvider.profileImageUrl;
-    
+
     final systemStatus = OnlineStatusController.checkSystemActive(context);
     final bool isActive = systemStatus['isActive'] == true;
-    final String inactiveReason = systemStatus['reason'] ?? profileProvider.inactiveReason;
-    
+    final String inactiveReason =
+        systemStatus['reason'] ?? profileProvider.inactiveReason;
+
     final bool isOnline = profileProvider.isOnline;
 
-    String pickup = data['startAddress'] ?? (data['pickupLocation'] != null ? data['pickupLocation']['address'] : null) ?? 'Unknown Pickup';
-    String drop = data['endAddress'] ?? (data['dropLocation'] != null ? data['dropLocation']['address'] : null) ?? 'Unknown Drop';
+    String pickup = data['startAddress'] ??
+        (data['pickupLocation'] != null
+            ? data['pickupLocation']['address']
+            : null) ??
+        'Unknown Pickup';
+    String drop = data['endAddress'] ??
+        (data['dropLocation'] != null
+            ? data['dropLocation']['address']
+            : null) ??
+        'Unknown Drop';
     List<dynamic> additionalDrops = data['additionalDrops'] ?? [];
     double fare = (data['totalFare'] ?? data['estimateFare'] ?? 0.0).toDouble();
     String price = fare.toStringAsFixed(2);
     String paymentMethod = data['paymentMethod'] ?? 'Cash';
-    
+
     DateTime? pickupTime;
     if (data['pickupTime'] != null) {
       pickupTime = DateTime.tryParse(data['pickupTime']);
     } else if (data['startTime'] != null && data['startTime'] is Timestamp) {
       pickupTime = (data['startTime'] as Timestamp).toDate();
     }
-    
+
     String distanceText = "";
     if (widget.currentPosition != null) {
       double? parseDouble(dynamic value) {
@@ -179,30 +206,34 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
         if (value is String) return double.tryParse(value);
         return null;
       }
-      
+
       var pickupLoc = data['pickupLocation'];
       double? pLat = parseDouble(pickupLoc?['lat'] ?? data['pickupLat']);
       double? pLng = parseDouble(pickupLoc?['lng'] ?? data['pickupLng']);
-      
+
       if (pLat != null && pLng != null) {
         double distMeters = Geolocator.distanceBetween(
-          widget.currentPosition!.latitude, 
-          widget.currentPosition!.longitude, 
-          pLat, 
-          pLng
-        );
+            widget.currentPosition!.latitude,
+            widget.currentPosition!.longitude,
+            pLat,
+            pLng);
         double distKm = distMeters / 1000;
         distanceText = "${distKm.toStringAsFixed(1)} km away from you";
       }
     }
 
-    String date = pickupTime != null ? "${pickupTime.year}-${pickupTime.month.toString().padLeft(2, '0')}-${pickupTime.day.toString().padLeft(2, '0')}" : 'N/A';
+    String date = pickupTime != null
+        ? "${pickupTime.year}-${pickupTime.month.toString().padLeft(2, '0')}-${pickupTime.day.toString().padLeft(2, '0')}"
+        : 'N/A';
     String time = pickupTime != null ? _formatTime(pickupTime) : 'N/A';
 
     int viewCount = data['views'] ?? 0;
 
-        String currentStatus = data['status']?.toString().toLowerCase() ?? 'pending';
-    bool isAcceptedByOther = currentStatus == 'accepted' || currentStatus == 'arrived' || currentStatus == 'started';
+    String currentStatus =
+        data['status']?.toString().toLowerCase() ?? 'pending';
+    bool isAcceptedByOther = currentStatus == 'accepted' ||
+        currentStatus == 'arrived' ||
+        currentStatus == 'started';
     String acceptedDriverName = data['driverName'] ?? 'Another Driver';
 
     return Stack(
@@ -210,122 +241,139 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
         Opacity(
           opacity: isAcceptedByOther ? 0.4 : 1.0,
           child: Container(
-      margin: const EdgeInsets.only(bottom: 16),
+            margin: const EdgeInsets.only(bottom: 16),
 
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.shade100, width: 1.5),
-        boxShadow: [
-          BoxShadow(color: Colors.blue.withValues(alpha: 0.1), blurRadius: 15, offset: const Offset(0, 5))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ==========================================
-          // 🛡️ 1. Verified Member & Views
-          // ==========================================
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: const BorderRadius.only(topLeft: Radius.circular(14), topRight: Radius.circular(14)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Expanded(
-                  child: Row(
-                    children: [
-                      Icon(Icons.verified, color: Colors.blue, size: 16),
-                      SizedBox(width: 4),
-                      Flexible(child: Text("Verified Member", style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12), overflow: TextOverflow.ellipsis)),
-                    ],
-                  ),
-                ),
-                // 👁️ View Count
-                Row(
-                  children: [
-                    Icon(Icons.visibility, color: Colors.grey.shade600, size: 16),
-                    const SizedBox(width: 4),
-                    Text("$viewCount views", style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold, fontSize: 12)),
-                  ],
-                ),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.blue.shade100, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.blue.withValues(alpha: 0.1),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5))
               ],
             ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 📅 Date & Price
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Row(
+                // ==========================================
+                // 🛡️ 1. Verified Member & Views
+                // ==========================================
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(14),
+                        topRight: Radius.circular(14)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Expanded(
+                        child: Row(
+                          children: [
+                            Icon(Icons.verified, color: Colors.blue, size: 16),
+                            SizedBox(width: 4),
+                            Flexible(
+                                child: Text("Verified Member",
+                                    style: TextStyle(
+                                        color: Colors.blue,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12),
+                                    overflow: TextOverflow.ellipsis)),
+                          ],
+                        ),
+                      ),
+                      // 👁️ View Count
+                      Row(
                         children: [
-                          Icon(Icons.calendar_month, color: Colors.grey.shade700, size: 16),
+                          Icon(Icons.visibility,
+                              color: Colors.grey.shade600, size: 16),
                           const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              "$date • $time", 
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey.shade800),
-                              overflow: TextOverflow.ellipsis,
+                          Text("$viewCount views",
+                              style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 📅 Date & Price
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Icon(Icons.calendar_month,
+                                    color: Colors.grey.shade700, size: 16),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    "$date • $time",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                        color: Colors.grey.shade800),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text("Rs. $price",
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16,
+                                  color: Colors.green)),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // 📍 Locations
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.my_location,
+                              color: Colors.blue, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(pickup,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis),
+                                if (distanceText.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(distanceText,
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.blue.shade700,
+                                          fontWeight: FontWeight.bold)),
+                                ],
+                              ],
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text("Rs. $price", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.green)),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // 📍 Locations
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.my_location, color: Colors.blue, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(pickup, style: const TextStyle(fontWeight: FontWeight.w600), maxLines: 2, overflow: TextOverflow.ellipsis),
-                          if (distanceText.isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Text(distanceText, style: TextStyle(fontSize: 11, color: Colors.blue.shade700, fontWeight: FontWeight.bold)),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                Container(
-                  margin: const EdgeInsets.only(left: 9, top: 4, bottom: 4),
-                  height: 15,
-                  width: 2,
-                  color: Colors.grey.shade300,
-                ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.location_on, color: Colors.red, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(drop, style: const TextStyle(fontWeight: FontWeight.w600), maxLines: 2, overflow: TextOverflow.ellipsis)),
-                  ],
-                ),
-                if (additionalDrops.isNotEmpty)
-                  ...additionalDrops.map((dropData) => Column(
-                    children: [
                       Container(
-                        margin: const EdgeInsets.only(left: 9, top: 4, bottom: 4),
-                        alignment: Alignment.centerLeft,
+                        margin:
+                            const EdgeInsets.only(left: 9, top: 4, bottom: 4),
                         height: 15,
                         width: 2,
                         color: Colors.grey.shade300,
@@ -333,110 +381,160 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.location_on_outlined, color: Colors.orange, size: 20),
+                          const Icon(Icons.location_on,
+                              color: Colors.red, size: 20),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              dropData['address'] ?? 'Unknown Drop',
-                              style: const TextStyle(fontWeight: FontWeight.w600),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                              child: Text(drop,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis)),
+                        ],
+                      ),
+                      if (additionalDrops.isNotEmpty)
+                        ...additionalDrops.map((dropData) => Column(
+                              children: [
+                                Container(
+                                  margin: const EdgeInsets.only(
+                                      left: 9, top: 4, bottom: 4),
+                                  alignment: Alignment.centerLeft,
+                                  height: 15,
+                                  width: 2,
+                                  color: Colors.grey.shade300,
+                                ),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.location_on_outlined,
+                                        color: Colors.orange, size: 20),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        dropData['address'] ?? 'Unknown Drop',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w600),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            )),
+
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Divider(height: 1),
+                      ),
+
+                      // 💳 Payment & Map Button
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Icon(
+                                    paymentMethod
+                                            .toLowerCase()
+                                            .contains('passenger')
+                                        ? Icons.person
+                                        : paymentMethod
+                                                .toLowerCase()
+                                                .contains('member')
+                                            ? Icons.group
+                                            : paymentMethod.toLowerCase() ==
+                                                    'card'
+                                                ? Icons.credit_card
+                                                : Icons.money,
+                                    color: Colors.grey.shade600,
+                                    size: 16),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    paymentMethod.toUpperCase(),
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                        color: Colors.grey.shade600),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (data['note'] != null &&
+                                    data['note'].toString().isNotEmpty) ...[
+                                  const SizedBox(width: 12),
+                                  InkWell(
+                                    onTap: () {
+                                      showDialog(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                                  title: const Row(children: [
+                                                    Icon(Icons.notes,
+                                                        color: Colors.blue),
+                                                    SizedBox(width: 8),
+                                                    Text("Booking Note"),
+                                                  ]),
+                                                  content: Text(data['note']),
+                                                  actions: [
+                                                    TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.pop(ctx),
+                                                        child:
+                                                            const Text("Close"))
+                                                  ]));
+                                    },
+                                    child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                            color: Colors.blue.shade50,
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                            border: Border.all(
+                                                color: Colors.blue.shade200)),
+                                        child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.menu_book,
+                                                  color: Colors.blue, size: 14),
+                                              SizedBox(width: 4),
+                                              Text("Note",
+                                                  style: TextStyle(
+                                                      color: Colors.blue,
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.bold)),
+                                            ])),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () => _showMapPreview(context, data),
+                            icon: const Icon(Icons.map, size: 14),
+                            label: const Text("Map",
+                                style: TextStyle(fontSize: 12)),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.blue,
+                              side: const BorderSide(color: Colors.blue),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16)),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 0),
                             ),
                           ),
                         ],
                       ),
                     ],
-                  )),
-
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Divider(height: 1),
+                  ),
                 ),
-
-                // 💳 Payment & Map Button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Icon(
-                            paymentMethod.toLowerCase().contains('passenger') ? Icons.person :
-                            paymentMethod.toLowerCase().contains('member') ? Icons.group :
-                            paymentMethod.toLowerCase() == 'card' ? Icons.credit_card : Icons.money, 
-                            color: Colors.grey.shade600, size: 16
-                          ),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              paymentMethod.toUpperCase(), 
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey.shade600),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (data['note'] != null && data['note'].toString().isNotEmpty) ...[
-                            const SizedBox(width: 12),
-                            InkWell(
-                              onTap: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (ctx) => AlertDialog(
-                                    title: const Row(
-                                      children: [
-                                        Icon(Icons.notes, color: Colors.blue),
-                                        SizedBox(width: 8),
-                                        Text("Booking Note"),
-                                      ]
-                                    ),
-                                    content: Text(data['note']),
-                                    actions: [
-                                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Close"))
-                                    ]
-                                  )
-                                );
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade50,
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(color: Colors.blue.shade200)
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.menu_book, color: Colors.blue, size: 14),
-                                    SizedBox(width: 4),
-                                    Text("Note", style: TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.bold)),
-                                  ]
-                                )
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () => _showMapPreview(context, data),
-                      icon: const Icon(Icons.map, size: 14),
-                      label: const Text("Map", style: TextStyle(fontSize: 12)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.blue,
-                        side: const BorderSide(color: Colors.blue),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ], // End of children of Column inside Container
-      ), // End of Column inside Container
-    ), // End of Container
-  ), // End of Opacity
-  if (isAcceptedByOther)
+              ], // End of children of Column inside Container
+            ), // End of Column inside Container
+          ), // End of Container
+        ), // End of Opacity
+        if (isAcceptedByOther)
           Positioned.fill(
             child: Container(
               margin: const EdgeInsets.only(bottom: 16),
@@ -448,10 +546,16 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.check_circle_outline, color: Colors.greenAccent, size: 48),
+                    const Icon(Icons.check_circle_outline,
+                        color: Colors.greenAccent, size: 48),
                     const SizedBox(height: 8),
-                    const Text("Accepted by", style: TextStyle(color: Colors.white70, fontSize: 14)),
-                    Text(acceptedDriverName, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text("Accepted by",
+                        style: TextStyle(color: Colors.white70, fontSize: 14)),
+                    Text(acceptedDriverName,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -494,8 +598,12 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
 
     List<dynamic> additionalDrops = data['additionalDrops'] ?? [];
 
-    if (pickupLat == null || pickupLng == null || dropLat == null || dropLng == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Location coordinates not available")));
+    if (pickupLat == null ||
+        pickupLng == null ||
+        dropLat == null ||
+        dropLng == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Location coordinates not available")));
       return;
     }
 
@@ -517,10 +625,14 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
       ),
     };
 
-    double minLat = pickup.latitude < drop.latitude ? pickup.latitude : drop.latitude;
-    double maxLat = pickup.latitude > drop.latitude ? pickup.latitude : drop.latitude;
-    double minLng = pickup.longitude < drop.longitude ? pickup.longitude : drop.longitude;
-    double maxLng = pickup.longitude > drop.longitude ? pickup.longitude : drop.longitude;
+    double minLat =
+        pickup.latitude < drop.latitude ? pickup.latitude : drop.latitude;
+    double maxLat =
+        pickup.latitude > drop.latitude ? pickup.latitude : drop.latitude;
+    double minLng =
+        pickup.longitude < drop.longitude ? pickup.longitude : drop.longitude;
+    double maxLng =
+        pickup.longitude > drop.longitude ? pickup.longitude : drop.longitude;
 
     // Process additional drops
     int dropIndex = 1;
@@ -530,16 +642,15 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
         double? dLng = parseDouble(dropData['lng']);
         if (dLat != null && dLng != null) {
           LatLng addDrop = LatLng(dLat, dLng);
-          markers.add(
-            Marker(
-              markerId: MarkerId('drop_$dropIndex'),
-              position: addDrop,
-              infoWindow: InfoWindow(title: "Drop $dropIndex"),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
-            )
-          );
+          markers.add(Marker(
+            markerId: MarkerId('drop_$dropIndex'),
+            position: addDrop,
+            infoWindow: InfoWindow(title: "Drop $dropIndex"),
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+                BitmapDescriptor.hueOrange),
+          ));
           dropIndex++;
-          
+
           if (dLat < minLat) minLat = dLat;
           if (dLat > maxLat) maxLat = dLat;
           if (dLng < minLng) minLng = dLng;
@@ -589,18 +700,23 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
               ),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Text("Route Preview", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                child: Text("Route Preview",
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ),
               Expanded(
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(16)),
                   child: GoogleMap(
-                    initialCameraPosition: CameraPosition(target: pickup, zoom: 14),
+                    initialCameraPosition:
+                        CameraPosition(target: pickup, zoom: 14),
                     markers: markers,
                     onMapCreated: (controller) {
                       Future.delayed(const Duration(milliseconds: 300), () {
                         try {
-                          controller.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+                          controller.animateCamera(
+                              CameraUpdate.newLatLngBounds(bounds, 50));
                         } catch (e) {
                           debugPrint("Map zoom error: $e");
                         }

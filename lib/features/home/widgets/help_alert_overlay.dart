@@ -49,8 +49,10 @@ class _HelpAlertOverlayState extends State<HelpAlertOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    final assistanceProvider = Provider.of<CommunityAssistanceProvider>(context);
-    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+    final assistanceProvider =
+        Provider.of<CommunityAssistanceProvider>(context);
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
 
     if (assistanceProvider.nearbyRequests.isEmpty) {
       return const SizedBox.shrink(); // Hide if no requests
@@ -72,7 +74,10 @@ class _HelpAlertOverlayState extends State<HelpAlertOverlay> {
             color: Colors.red.shade600,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
-              BoxShadow(color: Colors.red.withValues(alpha: 0.4), blurRadius: 20, spreadRadius: 5)
+              BoxShadow(
+                  color: Colors.red.withValues(alpha: 0.4),
+                  blurRadius: 20,
+                  spreadRadius: 5)
             ],
           ),
           child: Column(
@@ -80,24 +85,32 @@ class _HelpAlertOverlayState extends State<HelpAlertOverlay> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 28),
+                  const Icon(Icons.warning_amber_rounded,
+                      color: Colors.white, size: 28),
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
                       "SOS: Member Needs Help!",
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16),
                     ),
                   ),
                   Text(
                     "${distanceKm.toStringAsFixed(1)} km away",
-                    style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        color: Colors.white70, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               Text(
                 "Issue: ${request['issueType']}",
-                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold),
               ),
               Text(
                 "Member: ${request['requesterName']}",
@@ -111,11 +124,12 @@ class _HelpAlertOverlayState extends State<HelpAlertOverlay> {
                     ElevatedButton.icon(
                       onPressed: () => _playAudio(request['voiceNoteUrl']),
                       icon: Icon(
-                        _isPlaying && _currentlyPlayingUrl == request['voiceNoteUrl'] 
-                          ? Icons.stop 
-                          : Icons.play_arrow,
-                        color: Colors.red.shade700
-                      ),
+                          _isPlaying &&
+                                  _currentlyPlayingUrl ==
+                                      request['voiceNoteUrl']
+                              ? Icons.stop
+                              : Icons.play_arrow,
+                          color: Colors.red.shade700),
                       label: Text(_isPlaying ? "STOP" : "LISTEN"),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
@@ -124,11 +138,12 @@ class _HelpAlertOverlayState extends State<HelpAlertOverlay> {
                     ),
                   ElevatedButton(
                     onPressed: () async {
-                      bool accepted = await assistanceProvider.acceptRequest(request['requestId'], profileProvider);
+                      bool accepted = await assistanceProvider.acceptRequest(
+                          request['requestId'], profileProvider);
                       if (accepted && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Request Accepted! Navigating to tracking..."))
-                        );
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            content: Text(
+                                "Request Accepted! Navigating to tracking...")));
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -144,7 +159,8 @@ class _HelpAlertOverlayState extends State<HelpAlertOverlay> {
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text("I CAN HELP", style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text("I CAN HELP",
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
               )

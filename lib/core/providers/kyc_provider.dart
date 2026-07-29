@@ -68,7 +68,7 @@ class KYCProvider with ChangeNotifier {
       final WriteBatch batch = _firestore.batch();
 
       final DocumentReference verifyRef =
-      _firestore.collection('verify_kyc').doc(membershipNo);
+          _firestore.collection('verify_kyc').doc(membershipNo);
 
       batch.set(verifyRef, {
         'membershipNo': membershipNo,
@@ -89,23 +89,29 @@ class KYCProvider with ChangeNotifier {
       });
 
       final DocumentReference memberRef =
-      _firestore.collection('member').doc(documentId);
+          _firestore.collection('member').doc(documentId);
 
-      batch.set(memberRef, {
-        'kycApprovalStatus': 'pending',
-        'faceKycStatus': 'pending',
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      batch.set(
+          memberRef,
+          {
+            'kycApprovalStatus': 'pending',
+            'faceKycStatus': 'pending',
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true));
 
       // Update new Single Source of Truth collection
-      final DocumentReference statusRef = 
+      final DocumentReference statusRef =
           _firestore.collection('member_inactive_reasons').doc(membershipNo);
-      
-      batch.set(statusRef, {
-        'id_card_image': 'pending_approval',
-        'kyc_details': 'pending_approval',
-        'status': 'INACTIVE',
-      }, SetOptions(merge: true));
+
+      batch.set(
+          statusRef,
+          {
+            'id_card_image': 'pending_approval',
+            'kyc_details': 'pending_approval',
+            'status': 'INACTIVE',
+          },
+          SetOptions(merge: true));
 
       await batch.commit();
 
@@ -127,10 +133,10 @@ class KYCProvider with ChangeNotifier {
   // 📸 🎯 Step 2: FACE UPLOAD (Send to Admin for Approval)
   // ==========================================================
   Future<bool> saveFaceVerification(
-      String membershipNo,
-      String documentId,
-      File faceFile,
-      ) async {
+    String membershipNo,
+    String documentId,
+    File faceFile,
+  ) async {
     _isLocalLoading = true;
     notifyListeners();
 
@@ -139,11 +145,12 @@ class KYCProvider with ChangeNotifier {
       final String faceUrl = await _uploadToFirebaseStorage(faceFile, path);
 
       // 💡 Fetch raw data from web_sync_member to include in the verify_kyc request
-      final QuerySnapshot<Map<String, dynamic>> webSyncSnapshot = await _firestore
-          .collection('web_sync_member')
-          .where('membershipNo', isEqualTo: membershipNo)
-          .limit(1)
-          .get();
+      final QuerySnapshot<Map<String, dynamic>> webSyncSnapshot =
+          await _firestore
+              .collection('web_sync_member')
+              .where('membershipNo', isEqualTo: membershipNo)
+              .limit(1)
+              .get();
 
       Map<String, dynamic> rawData = {};
       if (webSyncSnapshot.docs.isNotEmpty) {
@@ -160,7 +167,7 @@ class KYCProvider with ChangeNotifier {
           'membershipNo': membershipNo,
           'faceVerificationUrl': faceUrl,
           'kycApprovalStatus': 'pending', // 🔴 Waiting for admin
-          'faceKycStatus': 'pending',     // 🔴 Waiting for admin
+          'faceKycStatus': 'pending', // 🔴 Waiting for admin
           'submittedAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         },
@@ -179,13 +186,16 @@ class KYCProvider with ChangeNotifier {
       );
 
       // Update new Single Source of Truth collection
-      final DocumentReference statusRef = 
+      final DocumentReference statusRef =
           _firestore.collection('member_inactive_reasons').doc(membershipNo);
-      
-      batch.set(statusRef, {
-        'face_verification': 'pending_approval',
-        'status': 'INACTIVE',
-      }, SetOptions(merge: true));
+
+      batch.set(
+          statusRef,
+          {
+            'face_verification': 'pending_approval',
+            'status': 'INACTIVE',
+          },
+          SetOptions(merge: true));
 
       await batch.commit();
 
@@ -207,9 +217,9 @@ class KYCProvider with ChangeNotifier {
   // 🖼️ PROFILE IMAGE REQUEST MANAGER
   // ==========================================================
   Future<bool> submitProfileImageRequest(
-      String memNo,
-      File imageFile,
-      ) async {
+    String memNo,
+    File imageFile,
+  ) async {
     _isLocalLoading = true;
     notifyListeners();
 
@@ -219,30 +229,30 @@ class KYCProvider with ChangeNotifier {
 
       final WriteBatch batch = _firestore.batch();
 
-      batch.set(
-        _firestore.collection('profile_image_requests').doc(memNo),
-        {
-          'membershipNo': memNo,
-          'newImageUrl': imageUrl,
-          'status': 'pending',
-          'submittedAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-          'approvedAt': null,
-          'approvedBy': null,
-          'rejectedAt': null,
-          'rejectedBy': null,
-          'rejectReason': null,
-        }
-      );
+      batch.set(_firestore.collection('profile_image_requests').doc(memNo), {
+        'membershipNo': memNo,
+        'newImageUrl': imageUrl,
+        'status': 'pending',
+        'submittedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'approvedAt': null,
+        'approvedBy': null,
+        'rejectedAt': null,
+        'rejectedBy': null,
+        'rejectReason': null,
+      });
 
       // Update new Single Source of Truth collection
-      final DocumentReference statusRef = 
+      final DocumentReference statusRef =
           _firestore.collection('member_inactive_reasons').doc(memNo);
-      
-      batch.set(statusRef, {
-        'profile_image': 'pending_approval',
-        'status': 'INACTIVE',
-      }, SetOptions(merge: true));
+
+      batch.set(
+          statusRef,
+          {
+            'profile_image': 'pending_approval',
+            'status': 'INACTIVE',
+          },
+          SetOptions(merge: true));
 
       await batch.commit();
 
@@ -260,4 +270,3 @@ class KYCProvider with ChangeNotifier {
     }
   }
 }
-

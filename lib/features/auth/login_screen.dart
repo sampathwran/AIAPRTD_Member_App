@@ -46,7 +46,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     if (!_acceptTerms) {
-      _showSnackBar("You must accept the Privacy Policy and Terms & Conditions");
+      _showSnackBar(
+          "You must accept the Privacy Policy and Terms & Conditions");
       return;
     }
 
@@ -56,13 +57,13 @@ class _LoginScreenState extends State<LoginScreen> {
       // 1. STRICT CHECK: Must exist in `member` collection!
       String targetEmail = '';
       String inputDocId = '';
-      
+
       var memberSnapshot = await FirebaseFirestore.instance
           .collection('member')
           .where('user_email', isEqualTo: input)
           .limit(1)
           .get();
-          
+
       if (memberSnapshot.docs.isEmpty) {
         memberSnapshot = await FirebaseFirestore.instance
             .collection('member')
@@ -79,14 +80,16 @@ class _LoginScreenState extends State<LoginScreen> {
         // STRICT RULE: MUST GO TO FIRST TIME LOGIN
         _showSnackBar("Please activate your account via First Time Login.");
         if (mounted) {
-           Navigator.of(context).push(MaterialPageRoute(builder: (context) => const FirstTimeLoginScreen()));
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => const FirstTimeLoginScreen()));
         }
         setState(() => _isLoading = false);
         return;
       }
 
       if (targetEmail.isEmpty) {
-        _showSnackBar("Could not find a valid email associated with this account.");
+        _showSnackBar(
+            "Could not find a valid email associated with this account.");
         setState(() => _isLoading = false);
         return;
       }
@@ -100,8 +103,11 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       } on FirebaseAuthException catch (e) {
         String errorMsg = "Login Failed. Please try again.";
-        if (e.code == 'user-not-found' || e.code == 'invalid-credential' || e.code == 'wrong-password') {
-          errorMsg = "Invalid Login credentials. Please check your Email/ID and Password.";
+        if (e.code == 'user-not-found' ||
+            e.code == 'invalid-credential' ||
+            e.code == 'wrong-password') {
+          errorMsg =
+              "Invalid Login credentials. Please check your Email/ID and Password.";
         } else if (e.code == 'too-many-requests') {
           errorMsg = "Too many attempts. Account temporarily locked.";
         }
@@ -113,7 +119,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (userCredential.user != null) {
-        final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+        final profileProvider =
+            Provider.of<ProfileProvider>(context, listen: false);
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
         // Fetch data into Provider
@@ -134,14 +141,16 @@ class _LoginScreenState extends State<LoginScreen> {
             MaterialPageRoute(builder: (context) => const HomePage()),
           );
         } else {
-          _showSnackBar("Auth Success, but failed to sync Firestore data. Please contact Admin.");
+          _showSnackBar(
+              "Auth Success, but failed to sync Firestore data. Please contact Admin.");
           await _auth.signOut();
         }
       }
     } on FirebaseAuthException catch (e) {
       String errorMsg = "Login Failed. Please try again.";
       if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
-        errorMsg = "Invalid Login credentials. Please check your Email/ID and Password.";
+        errorMsg =
+            "Invalid Login credentials. Please check your Email/ID and Password.";
       } else if (e.code == 'wrong-password') {
         errorMsg = "Incorrect password. Please try again.";
       } else if (e.code == 'too-many-requests') {
@@ -157,7 +166,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Theme.of(context).colorScheme.error),
+      SnackBar(
+          content: Text(message),
+          backgroundColor: Theme.of(context).colorScheme.error),
     );
   }
 
@@ -183,9 +194,8 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Center(
           child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(
-              horizontal: size.width > 600 ? size.width * 0.2 : 30.0, 
-              vertical: 20.0
-            ),
+                horizontal: size.width > 600 ? size.width * 0.2 : 30.0,
+                vertical: 20.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -196,7 +206,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: 140,
                   height: 140,
                   errorBuilder: (context, error, stackTrace) {
-                    return Icon(Icons.local_taxi_rounded, size: 90, color: colorScheme.primary);
+                    return Icon(Icons.local_taxi_rounded,
+                        size: 90, color: colorScheme.primary);
                   },
                 ),
                 const SizedBox(height: 15),
@@ -207,7 +218,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: colorScheme.primary,
                     letterSpacing: 1.5,
                   ),
-
                 ),
                 const SizedBox(height: 5),
 
@@ -224,7 +234,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(color: colorScheme.onSurface),
                   decoration: InputDecoration(
                     labelText: 'Membership No / Email',
-                    prefixIcon: Icon(Icons.person_outline, color: colorScheme.primary),
+                    prefixIcon:
+                        Icon(Icons.person_outline, color: colorScheme.primary),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -236,9 +247,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(color: colorScheme.onSurface),
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    prefixIcon: Icon(Icons.lock_open_outlined, color: colorScheme.primary),
+                    prefixIcon: Icon(Icons.lock_open_outlined,
+                        color: colorScheme.primary),
                     suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: theme.iconTheme.color),
+                      icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: theme.iconTheme.color),
                       onPressed: () {
                         setState(() {
                           _obscurePassword = !_obscurePassword;
@@ -255,12 +271,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: TextButton(
                     onPressed: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => const ForgotPasswordScreen()),
                       );
                     },
                     child: Text(
                       'Forgot Password?',
-                      style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),
@@ -285,22 +304,30 @@ class _LoginScreenState extends State<LoginScreen> {
                             const TextSpan(text: 'I accept the '),
                             TextSpan(
                               text: 'Privacy Policy',
-                              style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.bold),
                               recognizer: TapGestureRecognizer()
                                 ..onTap = () {
                                   Navigator.of(context).push(
-                                    MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()),
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const PrivacyPolicyScreen()),
                                   );
                                 },
                             ),
                             const TextSpan(text: ' and '),
                             TextSpan(
                               text: 'Terms & Conditions',
-                              style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.bold),
                               recognizer: TapGestureRecognizer()
                                 ..onTap = () {
                                   Navigator.of(context).push(
-                                    MaterialPageRoute(builder: (context) => const TermsConditionsScreen()),
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const TermsConditionsScreen()),
                                   );
                                 },
                             ),
@@ -321,7 +348,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ? const SizedBox(
                             width: 24,
                             height: 24,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2),
                           )
                         : const Text('LOGIN'),
                   ),
@@ -332,16 +360,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const FirstTimeLoginScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => const FirstTimeLoginScreen()),
                     );
                   },
                   child: Text(
                     'First time login? Click here',
                     style: TextStyle(
-                      color: colorScheme.secondary, 
-                      decoration: TextDecoration.underline, 
-                      fontWeight: FontWeight.w600
-                    ),
+                        color: colorScheme.secondary,
+                        decoration: TextDecoration.underline,
+                        fontWeight: FontWeight.w600),
                   ),
                 ),
                 const SizedBox(height: 15),
@@ -362,7 +390,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
                             Navigator.of(context).push(
-                              MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                              MaterialPageRoute(
+                                  builder: (context) => const RegisterScreen()),
                             );
                           },
                       ),

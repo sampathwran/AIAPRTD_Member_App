@@ -8,7 +8,11 @@ class OutstandingBalanceCard extends StatelessWidget {
   final double limit;
   final double pendingAmount;
 
-  const OutstandingBalanceCard({super.key, required this.balance, required this.limit, this.pendingAmount = 0.0});
+  const OutstandingBalanceCard(
+      {super.key,
+      required this.balance,
+      required this.limit,
+      this.pendingAmount = 0.0});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +22,10 @@ class OutstandingBalanceCard extends StatelessWidget {
       padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppTheme.primaryBlue, AppTheme.primaryBlue.withValues(alpha: 0.8)],
+          colors: [
+            AppTheme.primaryBlue,
+            AppTheme.primaryBlue.withValues(alpha: 0.8)
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -39,7 +46,10 @@ class OutstandingBalanceCard extends StatelessWidget {
             children: [
               const Text(
                 "Outstanding Balance",
-                style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500),
               ),
               GestureDetector(
                 onTap: () {
@@ -49,13 +59,19 @@ class OutstandingBalanceCard extends StatelessWidget {
                     builder: (context) => Container(
                       decoration: const BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+                        borderRadius:
+                            BorderRadius.vertical(top: Radius.circular(25)),
                       ),
                       padding: const EdgeInsets.only(top: 15, bottom: 30),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(width: 50, height: 5, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10))),
+                          Container(
+                              width: 50,
+                              height: 5,
+                              decoration: BoxDecoration(
+                                  color: Colors.grey.shade300,
+                                  borderRadius: BorderRadius.circular(10))),
                           const SizedBox(height: 10),
                           const CommissionRatesCard(),
                         ],
@@ -74,11 +90,18 @@ class OutstandingBalanceCard extends StatelessWidget {
             children: [
               const Text(
                 "- LKR ",
-                style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold),
               ),
               Text(
-                NumberFormat('#,##0.00').format((balance - pendingAmount).clamp(0.0, double.infinity)),
-                style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
+                NumberFormat('#,##0.00').format(
+                    (balance - pendingAmount).clamp(0.0, double.infinity)),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -87,11 +110,15 @@ class OutstandingBalanceCard extends StatelessWidget {
               padding: const EdgeInsets.only(top: 4.0),
               child: Row(
                 children: [
-                  const Icon(Icons.access_time_rounded, color: Colors.orangeAccent, size: 14),
+                  const Icon(Icons.access_time_rounded,
+                      color: Colors.orangeAccent, size: 14),
                   const SizedBox(width: 4),
                   Text(
                     "Pending Approval: LKR ${NumberFormat('#,##0.00').format(pendingAmount)}",
-                    style: const TextStyle(color: Colors.orangeAccent, fontSize: 13, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                        color: Colors.orangeAccent,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -104,9 +131,11 @@ class OutstandingBalanceCard extends StatelessWidget {
   }
 
   Widget _buildProgressBar() {
-    final double effectiveBalance = (balance - pendingAmount).clamp(0.0, double.infinity);
-    final double percentage = limit > 0 ? (effectiveBalance / limit).clamp(0.0, 1.0) : 0.0;
-    
+    final double effectiveBalance =
+        (balance - pendingAmount).clamp(0.0, double.infinity);
+    final double percentage =
+        limit > 0 ? (effectiveBalance / limit).clamp(0.0, 1.0) : 0.0;
+
     Color progressColor = Colors.greenAccent;
     if (percentage > 0.8) {
       progressColor = Colors.redAccent;
@@ -120,8 +149,10 @@ class OutstandingBalanceCard extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text("Credit Limit", style: TextStyle(color: Colors.white70, fontSize: 12)),
-            Text("LKR ${NumberFormat('#,##0').format(limit)}", style: const TextStyle(color: Colors.white70, fontSize: 12)),
+            const Text("Credit Limit",
+                style: TextStyle(color: Colors.white70, fontSize: 12)),
+            Text("LKR ${NumberFormat('#,##0').format(limit)}",
+                style: const TextStyle(color: Colors.white70, fontSize: 12)),
           ],
         ),
         const SizedBox(height: 8),
@@ -139,7 +170,10 @@ class OutstandingBalanceCard extends StatelessWidget {
             padding: EdgeInsets.only(top: 8.0),
             child: Text(
               "⚠️ Limit exceeded. Please settle dues.",
-              style: TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.redAccent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold),
             ),
           ),
       ],

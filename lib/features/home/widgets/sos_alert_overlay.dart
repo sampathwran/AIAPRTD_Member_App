@@ -49,7 +49,8 @@ class _SosAlertOverlayState extends State<SosAlertOverlay> {
   @override
   Widget build(BuildContext context) {
     final sosProvider = Provider.of<SosProvider>(context);
-    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
 
     if (sosProvider.nearbySosAlerts.isEmpty) {
       return const SizedBox.shrink(); // Hide if no requests
@@ -58,7 +59,7 @@ class _SosAlertOverlayState extends State<SosAlertOverlay> {
     // Only show the closest one for now
     final alert = sosProvider.nearbySosAlerts.first;
     double distanceKm = (alert['distance'] as double) / 1000;
-    
+
     // Get the latest audio url if any
     List<dynamic> audioUrls = alert['voiceRecordingUrls'] ?? [];
     String? latestAudioUrl = audioUrls.isNotEmpty ? audioUrls.last : null;
@@ -76,7 +77,10 @@ class _SosAlertOverlayState extends State<SosAlertOverlay> {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.redAccent, width: 2),
             boxShadow: [
-              BoxShadow(color: Colors.red.withValues(alpha: 0.4), blurRadius: 20, spreadRadius: 5)
+              BoxShadow(
+                  color: Colors.red.withValues(alpha: 0.4),
+                  blurRadius: 20,
+                  spreadRadius: 5)
             ],
           ),
           child: Column(
@@ -85,7 +89,8 @@ class _SosAlertOverlayState extends State<SosAlertOverlay> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.emergency_share_rounded, color: Colors.redAccent, size: 28),
+                  const Icon(Icons.emergency_share_rounded,
+                      color: Colors.redAccent, size: 28),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -93,11 +98,16 @@ class _SosAlertOverlayState extends State<SosAlertOverlay> {
                       children: [
                         const Text(
                           "SECRET SOS TRIGGERED!",
-                          style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 16),
+                          style: TextStyle(
+                              color: Colors.redAccent,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16),
                         ),
                         Text(
                           "${distanceKm.toStringAsFixed(1)} km away",
-                          style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              color: Colors.white70,
+                              fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -115,7 +125,10 @@ class _SosAlertOverlayState extends State<SosAlertOverlay> {
               const SizedBox(height: 12),
               Text(
                 "Driver: ${alert['memberName']} needs emergency help!",
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
               Text(
@@ -133,11 +146,10 @@ class _SosAlertOverlayState extends State<SosAlertOverlay> {
                     ElevatedButton.icon(
                       onPressed: () => _playAudio(latestAudioUrl),
                       icon: Icon(
-                        _isPlaying && _currentlyPlayingUrl == latestAudioUrl 
-                          ? Icons.stop 
-                          : Icons.play_arrow,
-                        color: Colors.white
-                      ),
+                          _isPlaying && _currentlyPlayingUrl == latestAudioUrl
+                              ? Icons.stop
+                              : Icons.play_arrow,
+                          color: Colors.white),
                       label: Text(_isPlaying ? "STOP" : "PLAY AUDIO"),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.redAccent,
@@ -147,17 +159,18 @@ class _SosAlertOverlayState extends State<SosAlertOverlay> {
                   else
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 8.0),
-                      child: Text("No audio yet", style: TextStyle(color: Colors.white54)),
+                      child: Text("No audio yet",
+                          style: TextStyle(color: Colors.white54)),
                     ),
-                    
                   ElevatedButton(
                     onPressed: () async {
-                      bool accepted = await sosProvider.acceptSosAlert(alert['sosId'], profileProvider);
+                      bool accepted = await sosProvider.acceptSosAlert(
+                          alert['sosId'], profileProvider);
                       if (accepted && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("You marked yourself as a responder! Head to their location."))
-                        );
-                        // Hide this specific alert from the local view if needed, 
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            content: Text(
+                                "You marked yourself as a responder! Head to their location.")));
+                        // Hide this specific alert from the local view if needed,
                         // but since the admin tracks it, the member just responds.
                       }
                     },
@@ -165,7 +178,8 @@ class _SosAlertOverlayState extends State<SosAlertOverlay> {
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text("I AM GOING", style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text("I AM GOING",
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
               )

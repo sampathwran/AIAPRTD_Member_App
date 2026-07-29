@@ -79,7 +79,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           'password': _passwordController.text,
           'first_name': _firstNameController.text.trim(),
           'last_name': _lastNameController.text.trim(),
-          'whatsapp': _whatsappController.text.trim(), // Added WhatsApp number to API
+          'whatsapp':
+              _whatsappController.text.trim(), // Added WhatsApp number to API
         },
       );
 
@@ -105,23 +106,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          title: const Text('🎉 Success!', style: TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          title: const Text('🎉 Success!',
+              style: TextStyle(
+                  color: Color(0xFF1E3A8A), fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Your account has been created successfully. Your membership number:', textAlign: TextAlign.center),
+              const Text(
+                  'Your account has been created successfully. Your membership number:',
+                  textAlign: TextAlign.center),
               const SizedBox(height: 15),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E3A8A).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(membershipId, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
+                child: Text(membershipId,
+                    style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E3A8A))),
               ),
               const SizedBox(height: 15),
-              const Text('An email with details and instructions has been sent to you. Follow the instructions to activate your account.', style: TextStyle(fontSize: 12, color: Colors.grey), textAlign: TextAlign.center),
+              const Text(
+                  'An email with details and instructions has been sent to you. Follow the instructions to activate your account.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  textAlign: TextAlign.center),
             ],
           ),
           actions: [
@@ -130,7 +145,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Navigator.of(context).pop();
                 Navigator.of(context).pop();
               },
-              child: const Text('Awesome', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text('Awesome',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -140,7 +156,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _showSnackBar(String message, {bool isError = true}) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: isError ? Colors.redAccent : Colors.green),
+      SnackBar(
+          content: Text(message),
+          backgroundColor: isError ? Colors.redAccent : Colors.green),
     );
   }
 
@@ -186,7 +204,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: 5),
-                Text('Please verify your email to continue', style: theme.textTheme.bodyMedium),
+                Text('Please verify your email to continue',
+                    style: theme.textTheme.bodyMedium),
                 const SizedBox(height: 25),
 
                 // ✉️ 1. Email Input Field
@@ -196,18 +215,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     labelText: 'Email Address',
-                    prefixIcon: Icon(Icons.email_outlined, color: colorScheme.primary),
+                    prefixIcon:
+                        Icon(Icons.email_outlined, color: colorScheme.primary),
                   ).copyWith(
                     suffixIcon: !_otpSent
                         ? TextButton(
-                      onPressed: _isLoading ? null : _sendOTP,
-                      child: Text('Send OTP', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold)),
-                    )
+                            onPressed: _isLoading ? null : _sendOTP,
+                            child: Text('Send OTP',
+                                style: TextStyle(
+                                    color: colorScheme.primary,
+                                    fontWeight: FontWeight.bold)),
+                          )
                         : const Icon(Icons.check_circle, color: Colors.green),
                   ),
                   validator: (value) {
                     if (value!.trim().isEmpty) return 'Enter your email';
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) return 'Enter a valid email';
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                        .hasMatch(value.trim())) return 'Enter a valid email';
                     return null;
                   },
                 ),
@@ -223,7 +247,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       labelText: 'Enter 6-Digit OTP Code',
                       prefixIcon: Icon(Icons.pin, color: colorScheme.primary),
                     ),
-                    validator: (value) => value!.trim().length != 6 ? 'Enter valid 6-digit OTP' : null,
+                    validator: (value) => value!.trim().length != 6
+                        ? 'Enter valid 6-digit OTP'
+                        : null,
                   ),
                   const SizedBox(height: 15),
 
@@ -232,9 +258,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     controller: _firstNameController,
                     decoration: InputDecoration(
                       labelText: 'First Name',
-                      prefixIcon: Icon(Icons.person_outline, color: colorScheme.primary),
+                      prefixIcon: Icon(Icons.person_outline,
+                          color: colorScheme.primary),
                     ),
-                    validator: (value) => value!.trim().isEmpty ? 'Enter your first name' : null,
+                    validator: (value) =>
+                        value!.trim().isEmpty ? 'Enter your first name' : null,
                   ),
                   const SizedBox(height: 15),
 
@@ -243,9 +271,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     controller: _lastNameController,
                     decoration: InputDecoration(
                       labelText: 'Last Name',
-                      prefixIcon: Icon(Icons.person_outline, color: colorScheme.primary),
+                      prefixIcon: Icon(Icons.person_outline,
+                          color: colorScheme.primary),
                     ),
-                    validator: (value) => value!.trim().isEmpty ? 'Enter your last name' : null,
+                    validator: (value) =>
+                        value!.trim().isEmpty ? 'Enter your last name' : null,
                   ),
                   const SizedBox(height: 15),
 
@@ -255,9 +285,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     keyboardType: TextInputType.phone,
                     decoration: InputDecoration(
                       labelText: 'WhatsApp Number',
-                      prefixIcon: Icon(Icons.phone_android_outlined, color: colorScheme.primary),
+                      prefixIcon: Icon(Icons.phone_android_outlined,
+                          color: colorScheme.primary),
                     ),
-                    validator: (value) => value!.trim().isEmpty ? 'Enter your WhatsApp number' : null,
+                    validator: (value) => value!.trim().isEmpty
+                        ? 'Enter your WhatsApp number'
+                        : null,
                   ),
                   const SizedBox(height: 15),
 
@@ -267,14 +300,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      prefixIcon: Icon(Icons.lock_outline, color: colorScheme.primary),
+                      prefixIcon:
+                          Icon(Icons.lock_outline, color: colorScheme.primary),
                     ).copyWith(
                       suffixIcon: IconButton(
-                        icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
-                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: Colors.grey),
+                        onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword),
                       ),
                     ),
-                    validator: (value) => value!.length < 6 ? 'Password must be at least 6 characters' : null,
+                    validator: (value) => value!.length < 6
+                        ? 'Password must be at least 6 characters'
+                        : null,
                   ),
                   const SizedBox(height: 15),
 
@@ -284,16 +325,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     obscureText: _obscureConfirmPassword,
                     decoration: InputDecoration(
                       labelText: 'Confirm Password',
-                      prefixIcon: Icon(Icons.lock_clock_outlined, color: colorScheme.primary),
+                      prefixIcon: Icon(Icons.lock_clock_outlined,
+                          color: colorScheme.primary),
                     ).copyWith(
                       suffixIcon: IconButton(
-                        icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
-                        onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                        icon: Icon(
+                            _obscureConfirmPassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: Colors.grey),
+                        onPressed: () => setState(() =>
+                            _obscureConfirmPassword = !_obscureConfirmPassword),
                       ),
                     ),
                     validator: (value) {
                       if (value!.isEmpty) return 'Confirm your password';
-                      if (value != _passwordController.text) return 'Passwords do not match';
+                      if (value != _passwordController.text)
+                        return 'Passwords do not match';
                       return null;
                     },
                   ),
@@ -306,7 +354,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1E3A8A),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         elevation: 2,
                       ),
                       onPressed: _isLoading ? null : _registerUser,
@@ -329,5 +378,4 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
-
 }

@@ -26,7 +26,8 @@ class _ImageUploadPageState extends State<ImageUploadPage> {
     final inputImage = InputImage.fromFile(imageFile);
 
     // Security Update: Enabled Classification and Tracking
-    final faceDetector = FaceDetector(options: FaceDetectorOptions(
+    final faceDetector = FaceDetector(
+        options: FaceDetectorOptions(
       performanceMode: FaceDetectorMode.accurate,
       enableClassification: true,
       enableTracking: true,
@@ -67,7 +68,8 @@ class _ImageUploadPageState extends State<ImageUploadPage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library, color: Color(0xFF1E3A8A)),
+                leading:
+                    const Icon(Icons.photo_library, color: Color(0xFF1E3A8A)),
                 title: const Text("Choose from Gallery"),
                 onTap: () {
                   Navigator.pop(context);
@@ -104,9 +106,12 @@ class _ImageUploadPageState extends State<ImageUploadPage> {
 
       if (hasFace) {
         setState(() => _selectedImage = tempFile);
-        _showSnackBar("Live Face Verification Passed! Ready to send to Admin.", Colors.green);
+        _showSnackBar("Live Face Verification Passed! Ready to send to Admin.",
+            Colors.green);
       } else {
-        _showSnackBar("Face Verification Failed! Please take a clear selfie in good lighting.", Colors.redAccent);
+        _showSnackBar(
+            "Face Verification Failed! Please take a clear selfie in good lighting.",
+            Colors.redAccent);
       }
     }
   }
@@ -124,12 +129,14 @@ class _ImageUploadPageState extends State<ImageUploadPage> {
   Widget build(BuildContext context) {
     // FIXED: Using KYCProvider instead of MemberProvider
     final provider = Provider.of<KYCProvider>(context);
-    final isUploading = provider.isLocalLoading; // Local loading state from KYCProvider
+    final isUploading =
+        provider.isLocalLoading; // Local loading state from KYCProvider
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text("Update Profile Picture", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("Update Profile Picture",
+            style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.black,
@@ -140,47 +147,57 @@ class _ImageUploadPageState extends State<ImageUploadPage> {
             child: Center(
               child: _isVerifyingFace
                   ? const Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A))),
-                  SizedBox(height: 15),
-                  Text("Scanning Face Liveness... Please wait...", style: TextStyle(fontWeight: FontWeight.w600, color: Colors.blueGrey)),
-                ],
-              )
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFF1E3A8A))),
+                        SizedBox(height: 15),
+                        Text("Scanning Face Liveness... Please wait...",
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blueGrey)),
+                      ],
+                    )
                   : Stack(
-                alignment: Alignment.bottomRight,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.blue.shade100, width: 4),
-                    ),
-                    child: CircleAvatar(
-                      radius: 100,
-                      backgroundColor: Colors.grey.shade200,
-                      backgroundImage: _selectedImage != null ? FileImage(_selectedImage!) : null,
-                      child: _selectedImage == null
-                          ? const Icon(Icons.person, size: 100, color: Color(0xFF1E3A8A))
-                          : null,
-                    ),
-                  ),
+                      alignment: Alignment.bottomRight,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                                color: Colors.blue.shade100, width: 4),
+                          ),
+                          child: CircleAvatar(
+                            radius: 100,
+                            backgroundColor: Colors.grey.shade200,
+                            backgroundImage: _selectedImage != null
+                                ? FileImage(_selectedImage!)
+                                : null,
+                            child: _selectedImage == null
+                                ? const Icon(Icons.person,
+                                    size: 100, color: Color(0xFF1E3A8A))
+                                : null,
+                          ),
+                        ),
 
-                  // Button to change photo
-                  GestureDetector(
-                    onTap: isUploading ? null : _showImageSourceDialog,
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E3A8A),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 3),
-                      ),
-                      child: const Icon(Icons.camera_alt, color: Colors.white, size: 25),
+                        // Button to change photo
+                        GestureDetector(
+                          onTap: isUploading ? null : _showImageSourceDialog,
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E3A8A),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 3),
+                            ),
+                            child: const Icon(Icons.camera_alt,
+                                color: Colors.white, size: 25),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
             ),
           ),
 
@@ -195,44 +212,56 @@ class _ImageUploadPageState extends State<ImageUploadPage> {
                   onPressed: isUploading
                       ? null
                       : () async {
-                    // FIXED: Capture variables early to avoid async gap warning
-                    final navigator = Navigator.of(context);
-                    final messenger = ScaffoldMessenger.of(context);
-                    final kycProvider = Provider.of<KYCProvider>(context, listen: false);
+                          // FIXED: Capture variables early to avoid async gap warning
+                          final navigator = Navigator.of(context);
+                          final messenger = ScaffoldMessenger.of(context);
+                          final kycProvider =
+                              Provider.of<KYCProvider>(context, listen: false);
 
-                    bool success = await kycProvider.submitProfileImageRequest(
-                      widget.membershipNo,
-                      _selectedImage!,
-                    );
+                          bool success =
+                              await kycProvider.submitProfileImageRequest(
+                            widget.membershipNo,
+                            _selectedImage!,
+                          );
 
-                    if (!context.mounted) return; // FIXED
+                          if (!context.mounted) return; // FIXED
 
-                    if (success) {
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: const Row(
-                            children: [
-                              Icon(Icons.admin_panel_settings, color: Colors.white),
-                              SizedBox(width: 10),
-                              Expanded(child: Text("Sent for Admin Face Verification! Profile will update once approved.")),
-                            ],
-                          ),
-                          backgroundColor: Colors.orange.shade700,
-                          duration: const Duration(seconds: 5),
-                        ),
-                      );
-                      navigator.pop();
-                    } else {
-                      _showSnackBar("Failed to send request. Please try again.", Colors.redAccent);
-                    }
-                  },
+                          if (success) {
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: const Row(
+                                  children: [
+                                    Icon(Icons.admin_panel_settings,
+                                        color: Colors.white),
+                                    SizedBox(width: 10),
+                                    Expanded(
+                                        child: Text(
+                                            "Sent for Admin Face Verification! Profile will update once approved.")),
+                                  ],
+                                ),
+                                backgroundColor: Colors.orange.shade700,
+                                duration: const Duration(seconds: 5),
+                              ),
+                            );
+                            navigator.pop();
+                          } else {
+                            _showSnackBar(
+                                "Failed to send request. Please try again.",
+                                Colors.redAccent);
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1E3A8A),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15)),
                   ),
                   child: isUploading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("SEND FOR VERIFICATION", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                      : const Text("SEND FOR VERIFICATION",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16)),
                 ),
               ),
             ),

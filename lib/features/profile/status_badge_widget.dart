@@ -54,7 +54,7 @@ class _StatusBadgeWidgetState extends State<StatusBadgeWidget>
     // Fetch vehicle data on load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final String? membershipNo =
-      widget.memberData['membershipNo']?.toString();
+          widget.memberData['membershipNo']?.toString();
       if (membershipNo != null && membershipNo.trim().isNotEmpty) {
         Provider.of<VehicleProvider>(context, listen: false)
             .fetchVehicleData(membershipNo);
@@ -71,10 +71,10 @@ class _StatusBadgeWidgetState extends State<StatusBadgeWidget>
   }
 
   Map<String, dynamic> _mergeMemberData(
-      Map<String, dynamic>? vehicleData,
-      ) {
+    Map<String, dynamic>? vehicleData,
+  ) {
     final Map<String, dynamic> activeData =
-    Map<String, dynamic>.from(widget.memberData);
+        Map<String, dynamic>.from(widget.memberData);
 
     if (vehicleData != null && vehicleData.isNotEmpty) {
       activeData.addAll(vehicleData);
@@ -84,22 +84,20 @@ class _StatusBadgeWidgetState extends State<StatusBadgeWidget>
   }
 
   Map<String, dynamic> _calculateStatus(
-      Map<String, dynamic> activeData,
-      ) {
-    final Map<String, dynamic> feeCheck =
-    checkMembershipFeeStatus(activeData);
+    Map<String, dynamic> activeData,
+  ) {
+    final Map<String, dynamic> feeCheck = checkMembershipFeeStatus(activeData);
 
     if (feeCheck['isFeePaidValid'] == false) {
       return {
         'isActive': false,
-        'reason': feeCheck['reason'] ??
-            'Membership fee verification required.',
+        'reason': feeCheck['reason'] ?? 'Membership fee verification required.',
         'source': 'fee',
       };
     }
 
     final Map<String, dynamic> kycCheck =
-    PersonalKYCChecker.checkKYCStatus(activeData);
+        PersonalKYCChecker.checkKYCStatus(activeData);
 
     if (kycCheck['isVerified'] == false) {
       return {
@@ -111,7 +109,7 @@ class _StatusBadgeWidgetState extends State<StatusBadgeWidget>
     }
 
     final Map<String, dynamic> vehicleCheck =
-    checkMemberSystemStatus(activeData);
+        checkMemberSystemStatus(activeData);
 
     return {
       ...vehicleCheck,
@@ -135,7 +133,7 @@ class _StatusBadgeWidgetState extends State<StatusBadgeWidget>
 
     _blinkTimer = Timer(
       const Duration(seconds: 3),
-          () {
+      () {
         if (!mounted) {
           return;
         }
@@ -147,7 +145,7 @@ class _StatusBadgeWidgetState extends State<StatusBadgeWidget>
 
     _dismissTimer = Timer(
       const Duration(seconds: 10),
-          () {
+      () {
         if (!mounted) {
           return;
         }
@@ -161,8 +159,8 @@ class _StatusBadgeWidgetState extends State<StatusBadgeWidget>
 
   @override
   void didUpdateWidget(
-      covariant StatusBadgeWidget oldWidget,
-      ) {
+    covariant StatusBadgeWidget oldWidget,
+  ) {
     super.didUpdateWidget(oldWidget);
 
     if (widget.isProfileView && !_showErrorBlock) {
@@ -175,7 +173,8 @@ class _StatusBadgeWidgetState extends State<StatusBadgeWidget>
     final oldNo = oldWidget.memberData['membershipNo']?.toString();
     final newNo = widget.memberData['membershipNo']?.toString();
     if (newNo != null && newNo.trim().isNotEmpty && newNo != oldNo) {
-      Provider.of<VehicleProvider>(context, listen: false).fetchVehicleData(newNo);
+      Provider.of<VehicleProvider>(context, listen: false)
+          .fetchVehicleData(newNo);
     }
   }
 
@@ -183,10 +182,10 @@ class _StatusBadgeWidgetState extends State<StatusBadgeWidget>
   Widget build(BuildContext context) {
     return Consumer<VehicleProvider>(
       builder: (
-          context,
-          vehicleProvider,
-          child,
-          ) {
+        context,
+        vehicleProvider,
+        child,
+      ) {
         // Do not show error while fetching data
         if (vehicleProvider.isLoading && vehicleProvider.vehicleData == null) {
           if (widget.isProfileView) {
@@ -201,15 +200,15 @@ class _StatusBadgeWidgetState extends State<StatusBadgeWidget>
         }
 
         final Map<String, dynamic> activeData =
-        _mergeMemberData(vehicleProvider.vehicleData);
+            _mergeMemberData(vehicleProvider.vehicleData);
 
-        final Map<String, dynamic> statusResult =
-        _calculateStatus(activeData);
+        final Map<String, dynamic> statusResult = _calculateStatus(activeData);
 
         final bool isActive = statusResult['isActive'] == true;
         final String reason = statusResult['reason']?.toString() ?? '';
 
-        final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+        final profileProvider =
+            Provider.of<ProfileProvider>(context, listen: false);
 
         // Removed automatic toggleDriverStatus(false) here per user request.
         // The member must manually go offline.

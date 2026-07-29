@@ -21,20 +21,23 @@ class AcceptanceWidget extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle_outline, color: Colors.green, size: 15),
+            const Icon(Icons.check_circle_outline,
+                color: Colors.green, size: 15),
             const SizedBox(width: 4),
             Text(
-              displayValue, 
+              displayValue,
               style: theme.textTheme.titleMedium?.copyWith(
-                fontSize: 16, 
-                fontWeight: FontWeight.bold, 
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
                 color: colorScheme.onSurface,
               ),
             ),
           ],
         ),
         const SizedBox(height: 2),
-        Text("Acceptance", style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+        Text("Acceptance",
+            style: theme.textTheme.bodySmall
+                ?.copyWith(fontWeight: FontWeight.w600)),
       ],
     );
   }

@@ -290,9 +290,8 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
 
         final bool isAdminApproved = kycApprovalStatus == 'approved';
 
-        final bool isPending =
-            kycApprovalStatus == 'pending' ||
-                data['isDetailsSubmitted'] == true;
+        final bool isPending = kycApprovalStatus == 'pending' ||
+            data['isDetailsSubmitted'] == true;
 
         final bool isRejected = kycApprovalStatus == 'rejected';
 
@@ -327,9 +326,7 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                 children: [
                   _buildHeaderCard(),
                   const SizedBox(height: 18),
-
                   _sectionTitle("Step 1: Identity & Contact", isDark),
-
                   _buildCardSection([
                     _buildTextField(
                       controller: _fullNameController,
@@ -365,10 +362,8 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                       isDark: isDark,
                     ),
                   ], isDark),
-
                   const SizedBox(height: 22),
                   _sectionTitle("Step 2: Personal Details", isDark),
-
                   _buildCardSection([
                     TextFormField(
                       controller: _dobController,
@@ -384,26 +379,28 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                         isDark: isDark,
                         suffixIcon: Icons.touch_app_rounded,
                       ),
-                      validator: (v) =>
-                      v == null || v.isEmpty ? "Select your date of birth" : null,
+                      validator: (v) => v == null || v.isEmpty
+                          ? "Select your date of birth"
+                          : null,
                     ),
                     _divider(isDark),
-
                     DropdownButtonFormField<String>(
                       initialValue: _selectedGender,
-                      dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      dropdownColor:
+                          isDark ? const Color(0xFF1E293B) : Colors.white,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: isDark ? Colors.white : Colors.black87,
                       ),
-                      decoration: _dropdownDecoration("Select Gender", isDark: isDark),
+                      decoration:
+                          _dropdownDecoration("Select Gender", isDark: isDark),
                       items: _genders
                           .map(
                             (g) => DropdownMenuItem(
-                          value: g,
-                          child: Text(g),
-                        ),
-                      )
+                              value: g,
+                              child: Text(g),
+                            ),
+                          )
                           .toList(),
                       onChanged: (v) {
                         setState(() => _selectedGender = v);
@@ -411,30 +408,31 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                       validator: (v) => v == null ? "Select your gender" : null,
                     ),
                     _divider(isDark),
-
                     DropdownButtonFormField<String>(
                       initialValue: _selectedReligion,
-                      dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      dropdownColor:
+                          isDark ? const Color(0xFF1E293B) : Colors.white,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: isDark ? Colors.white : Colors.black87,
                       ),
-                      decoration: _dropdownDecoration("Select Religion", isDark: isDark),
+                      decoration: _dropdownDecoration("Select Religion",
+                          isDark: isDark),
                       items: _religions
                           .map(
                             (r) => DropdownMenuItem(
-                          value: r,
-                          child: Text(r),
-                        ),
-                      )
+                              value: r,
+                              child: Text(r),
+                            ),
+                          )
                           .toList(),
                       onChanged: (v) {
                         setState(() => _selectedReligion = v);
                       },
-                      validator: (v) => v == null ? "Select your religion" : null,
+                      validator: (v) =>
+                          v == null ? "Select your religion" : null,
                     ),
                     _divider(isDark),
-
                     _buildTextField(
                       controller: _addressController,
                       label: "Permanent Address",
@@ -444,10 +442,9 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                       isDark: isDark,
                     ),
                   ], isDark),
-
                   const SizedBox(height: 22),
-                  _sectionTitle("Step 3: Upload Official Identity Cards", isDark),
-
+                  _sectionTitle(
+                      "Step 3: Upload Official Identity Cards", isDark),
                   _buildImageCaptureTile(
                     title: "Capture ID Card Front",
                     subtitle: "Take a clear real-time photo of NIC front side",
@@ -456,9 +453,7 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                     onTap: () => _captureImage(1),
                     isDark: isDark,
                   ),
-
                   const SizedBox(height: 15),
-
                   _buildImageCaptureTile(
                     title: "Capture ID Card Back",
                     subtitle: "Take a clear real-time photo of NIC back side",
@@ -467,9 +462,7 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                     onTap: () => _captureImage(2),
                     isDark: isDark,
                   ),
-
                   const SizedBox(height: 28),
-
                   SizedBox(
                     height: 56,
                     child: ElevatedButton.icon(
@@ -495,7 +488,6 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 40),
                 ],
               ),
@@ -521,26 +513,26 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
     final Color mainColor = isFullyVerified
         ? Colors.green
         : isRejected
-        ? Colors.redAccent
-        : Colors.orange;
+            ? Colors.redAccent
+            : Colors.orange;
 
     final IconData mainIcon = isFullyVerified
         ? Icons.verified_rounded
         : isRejected
-        ? Icons.cancel_rounded
-        : Icons.pending_actions_rounded;
+            ? Icons.cancel_rounded
+            : Icons.pending_actions_rounded;
 
     final String title = isFullyVerified
         ? "Profile Fully Verified"
         : isRejected
-        ? "Verification Rejected"
-        : "Verification in Progress";
+            ? "Verification Rejected"
+            : "Verification in Progress";
 
     final String description = isFullyVerified
         ? "Your personal details and biometric scan are fully verified."
         : isRejected
-        ? "Your submitted details were rejected. Please contact admin or submit correct details again."
-        : "Your details are under admin review. Permanent changes will apply after approval.";
+            ? "Your submitted details were rejected. Please contact admin or submit correct details again."
+            : "Your details are under admin review. Permanent changes will apply after approval.";
 
     return Center(
       child: SingleChildScrollView(
@@ -569,9 +561,13 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.red.shade900.withValues(alpha: 0.3) : Colors.red.shade50,
+                  color: isDark
+                      ? Colors.red.shade900.withValues(alpha: 0.3)
+                      : Colors.red.shade50,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: isDark ? Colors.red.shade800 : Colors.red.shade100),
+                  border: Border.all(
+                      color:
+                          isDark ? Colors.red.shade800 : Colors.red.shade100),
                 ),
                 child: Text(
                   "Reason: $rejectReason",
@@ -604,14 +600,14 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                     subtitle: isAdminApproved
                         ? "Approved by admin"
                         : isRejected
-                        ? "Rejected by admin"
-                        : "Pending admin review",
+                            ? "Rejected by admin"
+                            : "Pending admin review",
                     icon: Icons.domain_verification_rounded,
                     color: isAdminApproved
                         ? Colors.green
                         : isRejected
-                        ? Colors.redAccent
-                        : Colors.orange,
+                            ? Colors.redAccent
+                            : Colors.orange,
                     completed: isAdminApproved,
                   ),
                   const Divider(height: 1, indent: 65),
@@ -625,29 +621,29 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                     completed: isFaceApproved,
                     trailing: !isFaceApproved && isAdminApproved
                         ? ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E3A8A),
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(0, 34),
-                        padding:
-                        const EdgeInsets.symmetric(horizontal: 12),
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => FaceVerificationPage(
-                              membershipNo: membershipNo,
-                              documentId: documentId,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1E3A8A),
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size(0, 34),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
                             ),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        "Scan Now",
-                        style: TextStyle(fontSize: 11),
-                      ),
-                    )
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => FaceVerificationPage(
+                                    membershipNo: membershipNo,
+                                    documentId: documentId,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              "Scan Now",
+                              style: TextStyle(fontSize: 11),
+                            ),
+                          )
                         : null,
                   ),
                 ],
@@ -783,15 +779,17 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
   }
 
   InputDecoration _inputDecoration(
-      String label,
-      IconData icon, {
-        required bool isDark,
-        IconData suffixIcon = Icons.edit_rounded,
-      }) {
+    String label,
+    IconData icon, {
+    required bool isDark,
+    IconData suffixIcon = Icons.edit_rounded,
+  }) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
-      prefixIcon: Icon(icon, color: isDark ? Colors.blue[300] : const Color(0xFF1E3A8A)),
+      labelStyle:
+          TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+      prefixIcon: Icon(icon,
+          color: isDark ? Colors.blue[300] : const Color(0xFF1E3A8A)),
       suffixIcon: Icon(suffixIcon, size: 16, color: Colors.grey),
       border: InputBorder.none,
     );
@@ -800,14 +798,17 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
   InputDecoration _dropdownDecoration(String label, {required bool isDark}) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
-      prefixIcon: Icon(Icons.check_circle_outline, color: isDark ? Colors.blue[300] : const Color(0xFF1E3A8A)),
+      labelStyle:
+          TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+      prefixIcon: Icon(Icons.check_circle_outline,
+          color: isDark ? Colors.blue[300] : const Color(0xFF1E3A8A)),
       border: InputBorder.none,
     );
   }
 
   Widget _divider(bool isDark) {
-    return Divider(height: 1, color: isDark ? Colors.grey[800] : const Color(0xFFF1F5F9));
+    return Divider(
+        height: 1, color: isDark ? Colors.grey[800] : const Color(0xFFF1F5F9));
   }
 
   Widget _buildImageCaptureTile({
@@ -854,11 +855,15 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                       children: [
                         Text(title,
                             style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : Colors.black)),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: isDark ? Colors.white : Colors.black)),
                         const SizedBox(height: 3),
                         Text(subtitle,
                             style: TextStyle(
-                                fontSize: 11, color: isDark ? Colors.grey[400] : Colors.grey)),
+                                fontSize: 11,
+                                color:
+                                    isDark ? Colors.grey[400] : Colors.grey)),
                       ],
                     ),
                   ),
@@ -913,16 +918,21 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                   decoration: BoxDecoration(
                     color: isDark ? Colors.grey[800] : Colors.grey.shade50,
                     borderRadius: BorderRadius.circular(13),
-                    border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey.shade200),
+                    border: Border.all(
+                        color:
+                            isDark ? Colors.grey[700]! : Colors.grey.shade200),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.camera_alt_outlined, color: isDark ? Colors.grey[400] : Colors.grey),
+                      Icon(Icons.camera_alt_outlined,
+                          color: isDark ? Colors.grey[400] : Colors.grey),
                       const SizedBox(width: 8),
                       Text(
                         "Tap to Open Camera",
-                        style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey, fontSize: 13),
+                        style: TextStyle(
+                            color: isDark ? Colors.grey[400] : Colors.grey,
+                            fontSize: 13),
                       ),
                     ],
                   ),

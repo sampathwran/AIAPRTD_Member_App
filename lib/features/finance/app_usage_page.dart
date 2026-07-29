@@ -36,7 +36,9 @@ class _AppUsagePageState extends State<AppUsagePage> {
       child: Scaffold(
         backgroundColor: Colors.grey.shade50,
         appBar: AppBar(
-          title: const Text("App Usage Charge", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+          title: const Text("App Usage Charge",
+              style:
+                  TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
           centerTitle: true,
           elevation: 0,
           backgroundColor: AppTheme.primaryBlue,
@@ -54,22 +56,28 @@ class _AppUsagePageState extends State<AppUsagePage> {
         ),
         body: Consumer<FinanceProvider>(
           builder: (context, financeProv, child) {
-            final earningsProv = Provider.of<EarningsProvider>(context, listen: false);
+            final earningsProv =
+                Provider.of<EarningsProvider>(context, listen: false);
             double balance = financeProv.myAppUsageChargeBalance;
             if (earningsProv.hasFetched && earningsProv.totalTrips == 0) {
               balance = 0.0;
             }
             final pendingAmount = financeProv.pendingAppUsagePayments;
-            final effectiveBalance = (balance - pendingAmount).clamp(0.0, double.infinity);
-            
+            final effectiveBalance =
+                (balance - pendingAmount).clamp(0.0, double.infinity);
+
             return TabBarView(
               children: [
                 // Tab 1: Outstanding (Union Charge & History)
                 Column(
                   children: [
-                    OutstandingBalanceCard(balance: balance, limit: financeProv.appUsageLimit, pendingAmount: pendingAmount),
+                    OutstandingBalanceCard(
+                        balance: balance,
+                        limit: financeProv.appUsageLimit,
+                        pendingAmount: pendingAmount),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 5),
                       child: SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
@@ -80,35 +88,49 @@ class _AppUsagePageState extends State<AppUsagePage> {
                             builder: (sheetContext) => Container(
                               decoration: const BoxDecoration(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                                borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(20)),
                               ),
                               margin: const EdgeInsets.only(top: 60.0),
                               padding: EdgeInsets.only(
-                                top: 24, 
-                                left: 24, 
-                                right: 24, 
-                                bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24
-                              ),
-                              child: SingleChildScrollView(child: UploadSlipForm(balance: effectiveBalance)),
+                                  top: 24,
+                                  left: 24,
+                                  right: 24,
+                                  bottom: MediaQuery.of(sheetContext)
+                                          .viewInsets
+                                          .bottom +
+                                      24),
+                              child: SingleChildScrollView(
+                                  child: UploadSlipForm(
+                                      balance: effectiveBalance)),
                             ),
                           ),
-                          icon: const Icon(Icons.upload_file_rounded, color: Colors.white),
-                          label: const Text("Upload Bank Slip", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          icon: const Icon(Icons.upload_file_rounded,
+                              color: Colors.white),
+                          label: const Text("Upload Bank Slip",
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryBlue,
                             padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
                           ),
                         ),
                       ),
                     ),
                     const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
                           "Transaction History",
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87),
                         ),
                       ),
                     ),
@@ -117,7 +139,7 @@ class _AppUsagePageState extends State<AppUsagePage> {
                     ),
                   ],
                 ),
-                
+
                 // Tab 2: To Pay (P2P Payables - I accepted the hire, I owe 7% to the member who shared)
                 const Column(
                   children: [
@@ -131,7 +153,7 @@ class _AppUsagePageState extends State<AppUsagePage> {
                     Expanded(child: P2PDebtsList(isPayable: true)),
                   ],
                 ),
-                
+
                 // Tab 3: Receiver (P2P Receivables - I shared the hire, they owe me 7%)
                 const Column(
                   children: [

@@ -97,7 +97,8 @@ class _VehicleInfoPageState extends State<VehicleInfoPage> {
             return const Center(
               child: Padding(
                 padding: EdgeInsets.all(20.0),
-                child: Text("No vehicle registered yet. Please click 'Add New'."),
+                child:
+                    Text("No vehicle registered yet. Please click 'Add New'."),
               ),
             );
           }
@@ -113,7 +114,8 @@ class _VehicleInfoPageState extends State<VehicleInfoPage> {
           // =========================================================================
           // 🧠 SMART REG BOOK DETECTOR ENGINE (Type Safe Copying)
           // =========================================================================
-          final List<dynamic> documents = data['documents'] != null ? List.from(data['documents']) : [];
+          final List<dynamic> documents =
+              data['documents'] != null ? List.from(data['documents']) : [];
           Map<String, dynamic> regBookData = {};
 
           for (var doc in documents) {
@@ -124,7 +126,8 @@ class _VehicleInfoPageState extends State<VehicleInfoPage> {
               });
 
               // Checking a unique Key to identify the Reg Book
-              if (reviewMap.containsKey('Plate Number') || reviewMap.containsKey('Chassis Number')) {
+              if (reviewMap.containsKey('Plate Number') ||
+                  reviewMap.containsKey('Chassis Number')) {
                 regBookData = reviewMap;
                 break;
               }
@@ -153,7 +156,8 @@ class _VehicleInfoPageState extends State<VehicleInfoPage> {
                 vehicleDetails['vehicleNumber'] ??
                 "N/A",
 
-            'vehicle_category': data['vehicle_category'] ?? data['selectedCategory'] ?? "N/A",
+            'vehicle_category':
+                data['vehicle_category'] ?? data['selectedCategory'] ?? "N/A",
             'frontImage': data['vehiclePhotos']?['Front']?['url'] ?? '',
           };
 

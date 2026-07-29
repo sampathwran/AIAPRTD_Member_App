@@ -26,15 +26,18 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        Provider.of<ProfileProvider>(context, listen: false).fetchAndStoreMemberData();
+        Provider.of<ProfileProvider>(context, listen: false)
+            .fetchAndStoreMemberData();
       }
     });
   }
 
   // Logic to calculate 5-level Rank based on criteria
   String determineRank(Map<String, dynamic> data) {
-    final String joinDateStr = data['joinDate'] ?? DateTime.now().toString().split(' ')[0];
-    final double rating = (data['rating'] is num) ? (data['rating'] as num).toDouble() : 0.0;
+    final String joinDateStr =
+        data['joinDate'] ?? DateTime.now().toString().split(' ')[0];
+    final double rating =
+        (data['rating'] is num) ? (data['rating'] as num).toDouble() : 0.0;
     final int trips = int.tryParse(data['tripCount']?.toString() ?? '0') ?? 0;
 
     int monthsJoined = 0;
@@ -93,7 +96,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 left: 10,
                 child: IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                  icon:
+                      const Icon(Icons.arrow_back_ios_new, color: Colors.white),
                   style: IconButton.styleFrom(
                     backgroundColor: Colors.black.withValues(alpha: 0.3),
                   ),
@@ -106,7 +110,8 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildCoverAndProfile(BuildContext context, Map<String, dynamic> data, ProfileProvider provider) {
+  Widget _buildCoverAndProfile(BuildContext context, Map<String, dynamic> data,
+      ProfileProvider provider) {
     return Column(
       children: [
         Container(
@@ -114,12 +119,12 @@ class _ProfilePageState extends State<ProfilePage> {
           width: double.infinity,
           decoration: const BoxDecoration(
             image: DecorationImage(
-              image: NetworkImage("https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2070&auto=format&fit=cover"),
+              image: NetworkImage(
+                  "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2070&auto=format&fit=cover"),
               fit: BoxFit.cover,
             ),
           ),
         ),
-
         Transform.translate(
           offset: const Offset(0, -50),
           child: Column(
@@ -127,11 +132,16 @@ class _ProfilePageState extends State<ProfilePage> {
               GestureDetector(
                 onTap: () async {
                   final String memNo = data['membershipNo'] ?? 'N/A';
-                  await Navigator.push(context, MaterialPageRoute(builder: (context) => ImageUploadPage(membershipNo: memNo)));
+                  await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              ImageUploadPage(membershipNo: memNo)));
 
                   if (!context.mounted) return;
 
-                  Provider.of<ProfileProvider>(context, listen: false).fetchAndStoreMemberData();
+                  Provider.of<ProfileProvider>(context, listen: false)
+                      .fetchAndStoreMemberData();
                 },
                 child: CircleAvatar(
                   radius: 48,
@@ -139,19 +149,24 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: CircleAvatar(
                     radius: 44,
                     backgroundColor: Colors.grey.shade200,
-                    backgroundImage: provider.profileImageUrl.isNotEmpty ? NetworkImage(provider.profileImageUrl) : null,
-                    child: provider.profileImageUrl.isEmpty ? const Icon(Icons.person, size: 45, color: Colors.blue) : null,
+                    backgroundImage: provider.profileImageUrl.isNotEmpty
+                        ? NetworkImage(provider.profileImageUrl)
+                        : null,
+                    child: provider.profileImageUrl.isEmpty
+                        ? const Icon(Icons.person, size: 45, color: Colors.blue)
+                        : null,
                   ),
                 ),
               ),
               const SizedBox(height: 12),
-
               Text(
                 data['fullName'] ?? "No Name",
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
-                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white
+                      : const Color(0xFF0F172A),
                   letterSpacing: 0.3,
                 ),
                 textAlign: TextAlign.center,
@@ -161,14 +176,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 "Membership ID: ${data['membershipNo'] ?? 'N/A'}",
                 style: TextStyle(
                   fontSize: 13,
-                  color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : const Color(0xFF64748B),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey[400]
+                      : const Color(0xFF64748B),
                   fontWeight: FontWeight.w600,
                 ),
                 textAlign: TextAlign.center,
               ),
-
               const SizedBox(height: 16),
-
               StatusBadgeWidget(
                 memberData: data,
                 isProfileView: true,
@@ -181,44 +196,46 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildStatsRow(Map<String, dynamic> data) {
-    return Builder(
-      builder: (context) {
-        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              )
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              RatingWidget(memberData: data),
-              TripCountWidget(memberData: data),
-              TenureWidget(memberData: data),
-            ],
-          ),
-        );
-      }
-    );
+    return Builder(builder: (context) {
+      final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            )
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            RatingWidget(memberData: data),
+            TripCountWidget(memberData: data),
+            TenureWidget(memberData: data),
+          ],
+        ),
+      );
+    });
   }
 
-  Widget _buildAchievementBadge(BuildContext context, Map<String, dynamic> data) {
+  Widget _buildAchievementBadge(
+      BuildContext context, Map<String, dynamic> data) {
     final String currentRank = determineRank(data);
 
     // Added 'Widget' suffix
     return AchievementBadgeWidget(
       rank: currentRank,
       onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => RankPage(memberData: data)));
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => RankPage(memberData: data)));
       },
     );
   }

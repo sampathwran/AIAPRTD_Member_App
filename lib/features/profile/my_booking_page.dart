@@ -11,7 +11,7 @@ import 'package:aiaprtd_member/core/providers/theme_provider.dart';
 
 class MyBookingPage extends StatefulWidget {
   final int initialIndex;
-  
+
   const MyBookingPage({super.key, this.initialIndex = 0});
 
   @override
@@ -20,7 +20,8 @@ class MyBookingPage extends StatefulWidget {
 
 class _MyBookingPageState extends State<MyBookingPage> {
   // Fire and forget cancellation for expired bookings
-  void _autoCancelBooking(String tripId, String memberId, Map<String, dynamic> data) async {
+  void _autoCancelBooking(
+      String tripId, String memberId, Map<String, dynamic> data) async {
     try {
       Map<String, dynamic> updates = {
         'status': 'Cancelled',
@@ -30,8 +31,11 @@ class _MyBookingPageState extends State<MyBookingPage> {
       };
 
       // Update all_bookings
-      await FirebaseFirestore.instance.collection('all_bookings').doc(tripId).set(updates, SetOptions(merge: true));
-      
+      await FirebaseFirestore.instance
+          .collection('all_bookings')
+          .doc(tripId)
+          .set(updates, SetOptions(merge: true));
+
       // Update my_bookings
       await FirebaseFirestore.instance
           .collection('members')
@@ -39,7 +43,7 @@ class _MyBookingPageState extends State<MyBookingPage> {
           .collection('my_bookings')
           .doc(tripId)
           .set(updates, SetOptions(merge: true));
-          
+
       // Update dayly_trips
       DateTime? createdAt;
       if (data['timestamp'] is Timestamp) {
@@ -47,9 +51,10 @@ class _MyBookingPageState extends State<MyBookingPage> {
       } else if (data['createdAt'] is Timestamp) {
         createdAt = (data['createdAt'] as Timestamp).toDate();
       }
-      
+
       if (createdAt != null) {
-        String dateStr = "${createdAt.year}.${createdAt.month.toString().padLeft(2, '0')}.${createdAt.day.toString().padLeft(2, '0')}";
+        String dateStr =
+            "${createdAt.year}.${createdAt.month.toString().padLeft(2, '0')}.${createdAt.day.toString().padLeft(2, '0')}";
         await FirebaseFirestore.instance
             .collection('dayly_trips')
             .doc(dateStr)
@@ -70,7 +75,8 @@ class _MyBookingPageState extends State<MyBookingPage> {
 
     if (memberId == 'N/A' || memberId.isEmpty) {
       return Scaffold(
-        backgroundColor: isDark ? const Color(0xff121212) : const Color(0xFFF8FAFC),
+        backgroundColor:
+            isDark ? const Color(0xff121212) : const Color(0xFFF8FAFC),
         body: Center(
           child: Text(
             "Please login to view bookings",
@@ -84,9 +90,11 @@ class _MyBookingPageState extends State<MyBookingPage> {
       initialIndex: widget.initialIndex,
       length: 4,
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xff121212) : const Color(0xFFF8FAFC),
+        backgroundColor:
+            isDark ? const Color(0xff121212) : const Color(0xFFF8FAFC),
         appBar: AppBar(
-          title: const Text("My Bookings", style: TextStyle(fontWeight: FontWeight.w800)),
+          title: const Text("My Bookings",
+              style: TextStyle(fontWeight: FontWeight.w800)),
           backgroundColor: isDark ? const Color(0xff1B2735) : Colors.white,
           foregroundColor: isDark ? Colors.white : Colors.black87,
           elevation: 0,
@@ -117,7 +125,8 @@ class _MyBookingPageState extends State<MyBookingPage> {
             }
 
             if (snapshot.hasError) {
-              return Center(child: Text("Error loading bookings: ${snapshot.error}"));
+              return Center(
+                  child: Text("Error loading bookings: ${snapshot.error}"));
             }
 
             if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -136,10 +145,18 @@ class _MyBookingPageState extends State<MyBookingPage> {
             docs.sort((a, b) {
               final aData = a.data() as Map<String, dynamic>;
               final bData = b.data() as Map<String, dynamic>;
-              
-              Timestamp? aTime = (aData['createdAt'] is Timestamp) ? aData['createdAt'] : (aData['timestamp'] is Timestamp ? aData['timestamp'] : null);
-              Timestamp? bTime = (bData['createdAt'] is Timestamp) ? bData['createdAt'] : (bData['timestamp'] is Timestamp ? bData['timestamp'] : null);
-              
+
+              Timestamp? aTime = (aData['createdAt'] is Timestamp)
+                  ? aData['createdAt']
+                  : (aData['timestamp'] is Timestamp
+                      ? aData['timestamp']
+                      : null);
+              Timestamp? bTime = (bData['createdAt'] is Timestamp)
+                  ? bData['createdAt']
+                  : (bData['timestamp'] is Timestamp
+                      ? bData['timestamp']
+                      : null);
+
               if (aTime != null && bTime != null) {
                 return bTime.compareTo(aTime);
               }
@@ -157,12 +174,15 @@ class _MyBookingPageState extends State<MyBookingPage> {
             for (var doc in docs) {
               final data = doc.data() as Map<String, dynamic>;
               String status = data['status']?.toString().toLowerCase() ?? '';
-              
-              if (status == 'pending' || status == 'upcoming' || status == 'scheduled') {
+
+              if (status == 'pending' ||
+                  status == 'upcoming' ||
+                  status == 'scheduled') {
                 bool isExpired = false;
                 if (status == 'pending' && data['pickupTime'] != null) {
                   try {
-                    DateTime pickup = DateTime.parse(data['pickupTime'].toString());
+                    DateTime pickup =
+                        DateTime.parse(data['pickupTime'].toString());
                     if (DateTime.now().isAfter(pickup)) {
                       isExpired = true;
                     }
@@ -177,14 +197,17 @@ class _MyBookingPageState extends State<MyBookingPage> {
                 } else {
                   upcoming.add(doc);
                 }
-              } else if (status == 'ongoing' || status == 'accepted' || status == 'started' || status == 'arrived') {
+              } else if (status == 'ongoing' ||
+                  status == 'accepted' ||
+                  status == 'started' ||
+                  status == 'arrived') {
                 ongoing.add(doc);
               } else if (status == 'completed' || status == 'collected') {
                 completed.add(doc);
               } else if (status == 'cancelled' || status == 'rejected') {
                 cancelled.add(doc);
               } else {
-                upcoming.add(doc); 
+                upcoming.add(doc);
               }
             }
 

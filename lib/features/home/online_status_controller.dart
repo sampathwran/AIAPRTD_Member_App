@@ -8,67 +8,92 @@ import 'package:aiaprtd_member/core/providers/vehicle_provider.dart';
 import 'package:aiaprtd_member/core/providers/payment_provider.dart';
 import 'package:aiaprtd_member/core/providers/finance_provider.dart';
 import 'package:aiaprtd_member/features/profile/member_status/membership_fee_status_check.dart';
-import 'package:aiaprtd_member/features/profile/member_status/personal_kyc_checker.dart'; 
+import 'package:aiaprtd_member/features/profile/member_status/personal_kyc_checker.dart';
 import 'package:aiaprtd_member/features/profile/member_status/vehicle_status_check.dart';
 
 class OnlineStatusController {
-  
   static Map<String, dynamic> checkSystemActive(BuildContext context) {
-    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
-    final vehicleProvider = Provider.of<VehicleProvider>(context, listen: false);
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
+    final vehicleProvider =
+        Provider.of<VehicleProvider>(context, listen: false);
 
     final Map<String, dynamic> activeData = {};
     if (profileProvider.memberData != null) {
       try {
-        activeData.addAll(Map<String, dynamic>.from(profileProvider.memberData as Map));
+        activeData.addAll(
+            Map<String, dynamic>.from(profileProvider.memberData as Map));
       } catch (_) {}
     }
     if (vehicleProvider.vehicleData != null) {
       activeData.addAll(vehicleProvider.vehicleData!);
     }
-    
-    final paymentProvider = Provider.of<PaymentProvider>(context, listen: false);
+
+    final paymentProvider =
+        Provider.of<PaymentProvider>(context, listen: false);
     if (paymentProvider.paymentData != null) {
-      final Map<String, dynamic> pData = Map<String, dynamic>.from(paymentProvider.paymentData!);
+      final Map<String, dynamic> pData =
+          Map<String, dynamic>.from(paymentProvider.paymentData!);
       pData.remove('payment_history');
       activeData.addAll(pData);
     }
 
     // 🔴 DEBUG PRINT ADDED
     debugPrint("🔍 [FEE CHECK] Starting Fee Evaluation...");
-    debugPrint("🔍 [FEE CHECK] Payment History from ActiveData: ${activeData['payment_history']}");
+    debugPrint(
+        "🔍 [FEE CHECK] Payment History from ActiveData: ${activeData['payment_history']}");
 
     final feeCheck = checkMembershipFeeStatus(activeData);
-    
+
     // 🔴 DEBUG PRINT ADDED
-    debugPrint("🔍 [FEE CHECK] Result: isFeePaidValid=${feeCheck['isFeePaidValid']}, Reason=${feeCheck['reason']}");
+    debugPrint(
+        "🔍 [FEE CHECK] Result: isFeePaidValid=${feeCheck['isFeePaidValid']}, Reason=${feeCheck['reason']}");
 
     if (feeCheck['isFeePaidValid'] == false) {
-      return {'isActive': false, 'reason': feeCheck['reason'] ?? 'Membership fee verification required.'};
+      return {
+        'isActive': false,
+        'reason': feeCheck['reason'] ?? 'Membership fee verification required.'
+      };
     }
 
     final kycCheck = PersonalKYCChecker.checkKYCStatus(activeData);
     if (kycCheck['isVerified'] == false) {
-      return {'isActive': false, 'reason': kycCheck['reason'] ?? 'Personal profile or face verification pending.'};
+      return {
+        'isActive': false,
+        'reason': kycCheck['reason'] ??
+            'Personal profile or face verification pending.'
+      };
     }
 
     final vehicleCheck = checkMemberSystemStatus(activeData);
     if (vehicleCheck['isActive'] == false) {
-      return {'isActive': false, 'reason': vehicleCheck['reason'] ?? 'Vehicle verification pending.'};
+      return {
+        'isActive': false,
+        'reason': vehicleCheck['reason'] ?? 'Vehicle verification pending.'
+      };
     }
 
-    final financeProvider = Provider.of<FinanceProvider>(context, listen: false);
-    if (financeProvider.myAppUsageChargeBalance > financeProvider.appUsageLimit) {
-      return {'isActive': false, 'reason': 'Outstanding balance limit exceeded. Please settle Union dues.'};
+    final financeProvider =
+        Provider.of<FinanceProvider>(context, listen: false);
+    if (financeProvider.myAppUsageChargeBalance >
+        financeProvider.appUsageLimit) {
+      return {
+        'isActive': false,
+        'reason':
+            'Outstanding balance limit exceeded. Please settle Union dues.'
+      };
     }
 
     return {'isActive': true, 'reason': 'Active'};
   }
-  
+
   static String? _getFirstPendingReason(Map<String, dynamic> data) {
-    if (data['admin_block_permanently'] == true) return 'Account Permanently Blocked by Admin';
-    if (data['admin_block_temporarily'] == true) return 'Account Temporarily Blocked by Admin';
-    if (data['membership_fee'] != 'approved') return 'Pending Membership Fee 💰';
+    if (data['admin_block_permanently'] == true)
+      return 'Account Permanently Blocked by Admin';
+    if (data['admin_block_temporarily'] == true)
+      return 'Account Temporarily Blocked by Admin';
+    if (data['membership_fee'] != 'approved')
+      return 'Pending Membership Fee 💰';
 
     final Map<String, String> requiredDocs = {
       'profile_image': 'Profile Image',
@@ -88,15 +113,17 @@ class OnlineStatusController {
 
     // First check for missing or rejected documents so the user knows what to upload next
     for (var entry in requiredDocs.entries) {
-      if (data[entry.key] == 'missing' || data[entry.key] == 'rejected' || data[entry.key] == null) {
-         return 'Pending ${entry.value}';
+      if (data[entry.key] == 'missing' ||
+          data[entry.key] == 'rejected' ||
+          data[entry.key] == null) {
+        return 'Pending ${entry.value}';
       }
     }
 
     // If all documents are at least uploaded, check if any are waiting for admin approval
     for (var entry in requiredDocs.entries) {
       if (data[entry.key] != 'approved') {
-         return 'Pending Admin Approval for ${entry.value}';
+        return 'Pending Admin Approval for ${entry.value}';
       }
     }
 
@@ -112,8 +139,8 @@ class OnlineStatusController {
     dynamic currentPosition,
     double? currentHeading,
   }) async {
-
-    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
 
     if (profileProvider.isLocalLoading) return;
 
@@ -121,7 +148,9 @@ class OnlineStatusController {
 
     if (data == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Profile data syncing. Please wait!"), behavior: SnackBarBehavior.floating),
+        const SnackBar(
+            content: Text("Profile data syncing. Please wait!"),
+            behavior: SnackBarBehavior.floating),
       );
       return;
     }
@@ -139,11 +168,16 @@ class OnlineStatusController {
     final String membershipNo = data['membershipNo']?.toString() ?? '';
     if (membershipNo.isEmpty) return;
 
-    final docSnapshot = await FirebaseFirestore.instance.collection('member_inactive_reasons').doc(membershipNo).get();
-    
+    final docSnapshot = await FirebaseFirestore.instance
+        .collection('member_inactive_reasons')
+        .doc(membershipNo)
+        .get();
+
     if (!docSnapshot.exists) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Member status not initialized. Please wait!"), behavior: SnackBarBehavior.floating),
+        const SnackBar(
+            content: Text("Member status not initialized. Please wait!"),
+            behavior: SnackBarBehavior.floating),
       );
       return;
     }
@@ -155,9 +189,11 @@ class OnlineStatusController {
 
     // Perform a live evaluation just in case the database is out of sync (e.g., fee expired today)
     if (errorMessage == null) {
-      debugPrint("🔍 [TOGGLE STATUS] Database says OK. Running Live Evaluation...");
+      debugPrint(
+          "🔍 [TOGGLE STATUS] Database says OK. Running Live Evaluation...");
       final liveStatus = checkSystemActive(context);
-      debugPrint("🔍 [TOGGLE STATUS] Live Status Result: ${liveStatus['isActive']}, Reason: ${liveStatus['reason']}");
+      debugPrint(
+          "🔍 [TOGGLE STATUS] Live Status Result: ${liveStatus['isActive']}, Reason: ${liveStatus['reason']}");
       if (liveStatus['isActive'] == false) {
         errorMessage = liveStatus['reason']?.toString();
       }
@@ -202,8 +238,10 @@ class OnlineStatusController {
       onStateChanged();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Connection error. Failed to go online!"), behavior: SnackBarBehavior.floating),
+        const SnackBar(
+            content: Text("Connection error. Failed to go online!"),
+            behavior: SnackBarBehavior.floating),
       );
     }
   }
-}
+}

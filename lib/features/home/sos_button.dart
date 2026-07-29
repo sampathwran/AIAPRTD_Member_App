@@ -6,7 +6,8 @@ class SosPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("SOS Alert"), backgroundColor: Colors.red),
+      appBar:
+          AppBar(title: const Text("SOS Alert"), backgroundColor: Colors.red),
       body: const Center(
         child: Text("SOS Page - SOS Logic should be implemented here"),
       ),

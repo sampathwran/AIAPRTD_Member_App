@@ -36,7 +36,10 @@ class TotalSavingCard extends StatelessWidget {
             children: [
               const Text(
                 "Total Savings",
-                style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500),
               ),
               GestureDetector(
                 onTap: () {
@@ -46,13 +49,19 @@ class TotalSavingCard extends StatelessWidget {
                     builder: (context) => Container(
                       decoration: const BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+                        borderRadius:
+                            BorderRadius.vertical(top: Radius.circular(25)),
                       ),
                       padding: const EdgeInsets.only(top: 15, bottom: 30),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(width: 50, height: 5, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10))),
+                          Container(
+                              width: 50,
+                              height: 5,
+                              decoration: BoxDecoration(
+                                  color: Colors.grey.shade300,
+                                  borderRadius: BorderRadius.circular(10))),
                           const SizedBox(height: 10),
                           const SavingRulesCard(),
                         ],
@@ -71,11 +80,17 @@ class TotalSavingCard extends StatelessWidget {
             children: [
               const Text(
                 "LKR ",
-                style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold),
               ),
               Text(
                 NumberFormat('#,##0.00').format(balance),
-                style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold),
               ),
             ],
           ),

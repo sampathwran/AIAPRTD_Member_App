@@ -7,7 +7,8 @@ class OneWayFormWidget extends StatelessWidget {
   const OneWayFormWidget({super.key});
 
   // Open Bottom Sheet function
-  void _openSearchSheet(BuildContext context, {required bool isPickup, int dropIndex = 0}) {
+  void _openSearchSheet(BuildContext context,
+      {required bool isPickup, int dropIndex = 0}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -21,7 +22,8 @@ class OneWayFormWidget extends StatelessWidget {
 
   // Save Location Dialog
   void _showSaveLocationDialog(BuildContext context, BookingProvider provider) {
-    if (provider.pickupController.text.isEmpty || provider.currentPickupLatLng == null) {
+    if (provider.pickupController.text.isEmpty ||
+        provider.currentPickupLatLng == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please select a pickup location first!")),
       );
@@ -56,7 +58,9 @@ class OneWayFormWidget extends StatelessWidget {
                 );
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("${nameController.text} saved successfully!")),
+                  SnackBar(
+                      content:
+                          Text("${nameController.text} saved successfully!")),
                 );
               }
             },
@@ -82,7 +86,11 @@ class OneWayFormWidget extends StatelessWidget {
           children: [
             const SizedBox(
               width: 50,
-              child: Text("PICKUP", style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 11)),
+              child: Text("PICKUP",
+                  style: TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11)),
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -91,18 +99,25 @@ class OneWayFormWidget extends StatelessWidget {
                 readOnly: true,
                 maxLines: 2,
                 minLines: 1,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black87),
+                style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87),
                 onTap: () => _openSearchSheet(context, isPickup: true),
                 decoration: const InputDecoration(
                   hintText: "Your Location",
                   border: InputBorder.none,
                   isDense: true,
-                  hintStyle: TextStyle(fontSize: 15, color: Colors.grey, fontWeight: FontWeight.w500),
+                  hintStyle: TextStyle(
+                      fontSize: 15,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500),
                 ),
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.bookmark_border_rounded, color: Colors.black87),
+              icon: const Icon(Icons.bookmark_border_rounded,
+                  color: Colors.black87),
               onPressed: () => _showSaveLocationDialog(context, provider),
             ),
           ],
@@ -113,7 +128,12 @@ class OneWayFormWidget extends StatelessWidget {
           children: [
             const SizedBox(width: 25),
             Container(height: 20, width: 1, color: Colors.grey.shade300),
-            const Expanded(child: Divider(color: Color(0xFFF1F5F9), thickness: 1.5, indent: 30, endIndent: 20)),
+            const Expanded(
+                child: Divider(
+                    color: Color(0xFFF1F5F9),
+                    thickness: 1.5,
+                    indent: 30,
+                    endIndent: 20)),
           ],
         ),
 
@@ -123,22 +143,35 @@ class OneWayFormWidget extends StatelessWidget {
           children: [
             const SizedBox(
               width: 50,
-              child: Text("DROP", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 11)),
+              child: Text("DROP",
+                  style: TextStyle(
+                      color: Colors.orange,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11)),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: TextField(
-                controller: provider.dropControllers.isNotEmpty ? provider.dropControllers[0] : TextEditingController(),
+                controller: provider.dropControllers.isNotEmpty
+                    ? provider.dropControllers[0]
+                    : TextEditingController(),
                 readOnly: true,
                 maxLines: 2,
                 minLines: 1,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black87),
-                onTap: () => _openSearchSheet(context, isPickup: false, dropIndex: 0),
+                style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87),
+                onTap: () =>
+                    _openSearchSheet(context, isPickup: false, dropIndex: 0),
                 decoration: InputDecoration(
                   hintText: "Where are you going?",
                   border: InputBorder.none,
                   isDense: true,
-                  hintStyle: TextStyle(fontSize: 15, color: Colors.grey.shade400, fontWeight: FontWeight.w500),
+                  hintStyle: TextStyle(
+                      fontSize: 15,
+                      color: Colors.grey.shade400,
+                      fontWeight: FontWeight.w500),
                 ),
               ),
             ),

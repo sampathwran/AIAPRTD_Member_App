@@ -27,21 +27,30 @@ class VehiclePhotosSection extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text("Upload $label Photo", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        title: Text("Upload $label Photo",
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         content: const Text("Select image source from below:"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, ImageSource.camera),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
-              children: [Icon(Icons.camera_alt_rounded, size: 18), SizedBox(width: 4), Text("Camera")],
+              children: [
+                Icon(Icons.camera_alt_rounded, size: 18),
+                SizedBox(width: 4),
+                Text("Camera")
+              ],
             ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, ImageSource.gallery),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
-              children: [Icon(Icons.image_rounded, size: 18), SizedBox(width: 4), Text("Gallery")],
+              children: [
+                Icon(Icons.image_rounded, size: 18),
+                SizedBox(width: 4),
+                Text("Gallery")
+              ],
             ),
           ),
         ],
@@ -49,7 +58,8 @@ class VehiclePhotosSection extends StatelessWidget {
     );
 
     if (source != null) {
-      final image = await ImagePicker().pickImage(source: source, imageQuality: 85);
+      final image =
+          await ImagePicker().pickImage(source: source, imageQuality: 85);
       if (image != null && context.mounted) {
         Provider.of<VehicleProvider>(context, listen: false)
             .uploadVehiclePhoto(membershipNo, label, image.path);
@@ -65,12 +75,18 @@ class VehiclePhotosSection extends StatelessWidget {
 
   String _getAssetPlaceholder(String label) {
     switch (label) {
-      case 'Front': return 'assets/front.png';
-      case 'Back': return 'assets/back.png';
-      case 'Left Side': return 'assets/left_side.png';
-      case 'Right Side': return 'assets/right_side.png';
-      case 'Interior': return 'assets/interior.png';
-      default: return 'assets/front.png';
+      case 'Front':
+        return 'assets/front.png';
+      case 'Back':
+        return 'assets/back.png';
+      case 'Left Side':
+        return 'assets/left_side.png';
+      case 'Right Side':
+        return 'assets/right_side.png';
+      case 'Interior':
+        return 'assets/interior.png';
+      default:
+        return 'assets/front.png';
     }
   }
 
@@ -79,14 +95,21 @@ class VehiclePhotosSection extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final List<String> photoLabels = ['Front', 'Back', 'Left Side', 'Right Side', 'Interior'];
+    final List<String> photoLabels = [
+      'Front',
+      'Back',
+      'Left Side',
+      'Right Side',
+      'Interior'
+    ];
 
     final Map<String, dynamic> photos = data['vehiclePhotos'] != null
         ? Map<String, dynamic>.from(data['vehiclePhotos'])
         : {};
 
-    bool allApproved = photoLabels.isNotEmpty && photoLabels.every((label) =>
-    photos[label] != null && photos[label]['status'] == 'approved');
+    bool allApproved = photoLabels.isNotEmpty &&
+        photoLabels.every((label) =>
+            photos[label] != null && photos[label]['status'] == 'approved');
 
     if (allApproved) return const SizedBox.shrink();
 
@@ -114,14 +137,18 @@ class VehiclePhotosSection extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.camera_enhance_rounded, color: colorScheme.primary, size: 22),
+                Icon(Icons.camera_enhance_rounded,
+                    color: colorScheme.primary, size: 22),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     "Vehicle Inspection Photos",
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : const Color(0xff1B2735)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: isDark ? Colors.white : const Color(0xff1B2735)),
                   ),
                 ),
               ],
@@ -132,7 +159,6 @@ class VehiclePhotosSection extends StatelessWidget {
               style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
             ),
             const SizedBox(height: 16),
-
             Wrap(
               spacing: 14,
               runSpacing: 14,
@@ -161,7 +187,8 @@ class VehiclePhotosSection extends StatelessWidget {
                   statusIcon = Icons.check_circle_outline_rounded;
                 }
 
-                final bool hasOnlineImage = url != null && url.isNotEmpty && url.startsWith('http');
+                final bool hasOnlineImage =
+                    url != null && url.isNotEmpty && url.startsWith('http');
 
                 return SizedBox(
                   width: itemWidth,
@@ -176,7 +203,9 @@ class VehiclePhotosSection extends StatelessWidget {
                           width: double.infinity,
                           height: itemHeight,
                           decoration: BoxDecoration(
-                            color: isDark ? theme.scaffoldBackgroundColor : Colors.grey.shade50,
+                            color: isDark
+                                ? theme.scaffoldBackgroundColor
+                                : Colors.grey.shade50,
                             border: Border.all(color: borderColor, width: 2),
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -195,7 +224,6 @@ class VehiclePhotosSection extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-
                               if (hasOnlineImage)
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(14),
@@ -208,15 +236,17 @@ class VehiclePhotosSection extends StatelessWidget {
                                       child: SizedBox(
                                         width: 20,
                                         height: 20,
-                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.blue),
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2, color: Colors.blue),
                                       ),
                                     ),
-                                    errorWidget: (context, url, error) => const Center(
-                                      child: Icon(Icons.broken_image_rounded, color: Colors.red),
+                                    errorWidget: (context, url, error) =>
+                                        const Center(
+                                      child: Icon(Icons.broken_image_rounded,
+                                          color: Colors.red),
                                     ),
                                   ),
                                 ),
-
                               Positioned(
                                 top: 6,
                                 right: 6,
@@ -226,10 +256,10 @@ class VehiclePhotosSection extends StatelessWidget {
                                     color: badgeColor.withValues(alpha: 0.9),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: Icon(statusIcon, color: Colors.white, size: 12),
+                                  child: Icon(statusIcon,
+                                      color: Colors.white, size: 12),
                                 ),
                               ),
-
                               if (status == 'pending')
                                 Container(
                                   decoration: BoxDecoration(
@@ -237,7 +267,10 @@ class VehiclePhotosSection extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                   child: const Center(
-                                    child: Icon(Icons.access_time_filled_rounded, color: Colors.white, size: 24),
+                                    child: Icon(
+                                        Icons.access_time_filled_rounded,
+                                        color: Colors.white,
+                                        size: 24),
                                   ),
                                 ),
                             ],
@@ -247,18 +280,27 @@ class VehiclePhotosSection extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         label,
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : const Color(0xff1B2735)),
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: isDark
+                                ? Colors.white70
+                                : const Color(0xff1B2735)),
                         textAlign: TextAlign.center,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-
-                      if (status == 'rejected' && reason != null && reason.isNotEmpty)
+                      if (status == 'rejected' &&
+                          reason != null &&
+                          reason.isNotEmpty)
                         Container(
                           margin: const EdgeInsets.only(top: 2),
                           child: Text(
                             reason,
-                            style: TextStyle(color: Colors.red.shade700, fontSize: 10, fontWeight: FontWeight.w500),
+                            style: TextStyle(
+                                color: Colors.red.shade700,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500),
                             textAlign: TextAlign.center,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,

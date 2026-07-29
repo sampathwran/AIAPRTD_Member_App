@@ -13,7 +13,8 @@ class TripCountWidget extends StatelessWidget {
 
     return Column(
       children: [
-        Text(trips, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        Text(trips,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         const Text("Trips", style: TextStyle(color: Colors.grey, fontSize: 12)),
       ],
     );

@@ -20,8 +20,10 @@ class _EarningsPageState extends State<EarningsPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
-      final earningsProvider = Provider.of<EarningsProvider>(context, listen: false);
+      final profileProvider =
+          Provider.of<ProfileProvider>(context, listen: false);
+      final earningsProvider =
+          Provider.of<EarningsProvider>(context, listen: false);
       if (profileProvider.memberNo != 'N/A') {
         earningsProvider.fetchEarnings(profileProvider.memberNo);
       }
@@ -51,9 +53,11 @@ class _EarningsPageState extends State<EarningsPage> {
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             onPressed: () {
-              final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+              final profileProvider =
+                  Provider.of<ProfileProvider>(context, listen: false);
               if (profileProvider.memberNo != 'N/A') {
-                Provider.of<EarningsProvider>(context, listen: false).fetchEarnings(profileProvider.memberNo);
+                Provider.of<EarningsProvider>(context, listen: false)
+                    .fetchEarnings(profileProvider.memberNo);
               }
             },
           )
@@ -64,21 +68,24 @@ class _EarningsPageState extends State<EarningsPage> {
           // Filtering logic
           final trips = provider.trips.where((trip) {
             if (_selectedFilter == 'All') return true;
-            if (_selectedFilter == 'Bookings') return trip.type == 'booking' && trip.status != 'cancelled';
-            if (_selectedFilter == 'Pickups') return trip.type == 'road_pickup' && trip.status != 'cancelled';
-            if (_selectedFilter == 'Cancelled') return trip.status == 'cancelled';
+            if (_selectedFilter == 'Bookings')
+              return trip.type == 'booking' && trip.status != 'cancelled';
+            if (_selectedFilter == 'Pickups')
+              return trip.type == 'road_pickup' && trip.status != 'cancelled';
+            if (_selectedFilter == 'Cancelled')
+              return trip.status == 'cancelled';
             return true;
           }).toList();
 
           return Column(
             children: [
-              if (provider.isLoading)
-                const LinearProgressIndicator(),
+              if (provider.isLoading) const LinearProgressIndicator(),
               Expanded(
                 child: RefreshIndicator(
                   // Fixed Pull to refresh to work again
                   onRefresh: () async {
-                    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+                    final profileProvider =
+                        Provider.of<ProfileProvider>(context, listen: false);
                     if (profileProvider.memberNo != 'N/A') {
                       await provider.fetchEarnings(profileProvider.memberNo);
                     }
@@ -97,9 +104,11 @@ class _EarningsPageState extends State<EarningsPage> {
                               children: [
                                 _buildTimePeriodChip("Daily", provider, isDark),
                                 const SizedBox(width: 8),
-                                _buildTimePeriodChip("Weekly", provider, isDark),
+                                _buildTimePeriodChip(
+                                    "Weekly", provider, isDark),
                                 const SizedBox(width: 8),
-                                _buildTimePeriodChip("Monthly", provider, isDark),
+                                _buildTimePeriodChip(
+                                    "Monthly", provider, isDark),
                               ],
                             ),
                           ),
@@ -109,7 +118,8 @@ class _EarningsPageState extends State<EarningsPage> {
                           EarningSummaryCard(
                             totalEarnings: provider.totalEarnings,
                             bookingsEarnings: provider.totalBookingsEarnings,
-                            roadPickupEarnings: provider.totalRoadPickupEarnings,
+                            roadPickupEarnings:
+                                provider.totalRoadPickupEarnings,
                             isDark: isDark,
                           ),
 
@@ -150,11 +160,16 @@ class _EarningsPageState extends State<EarningsPage> {
                               alignment: Alignment.center,
                               child: Column(
                                 children: [
-                                  Icon(Icons.receipt_long_rounded, size: 64, color: Colors.grey.withValues(alpha: 0.5)),
+                                  Icon(Icons.receipt_long_rounded,
+                                      size: 64,
+                                      color:
+                                          Colors.grey.withValues(alpha: 0.5)),
                                   const SizedBox(height: 16),
                                   Text(
                                     "No trips found",
-                                    style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey.shade500),
                                   ),
                                 ],
                               ),
@@ -194,7 +209,8 @@ class _EarningsPageState extends State<EarningsPage> {
 
     final unselectedColor = Theme.of(context).cardTheme.color;
     const selectedTextColor = Colors.white;
-    final unselectedTextColor = isDark ? Colors.grey.shade400 : Colors.grey.shade700;
+    final unselectedTextColor =
+        isDark ? Colors.grey.shade400 : Colors.grey.shade700;
 
     return GestureDetector(
       onTap: () {
@@ -209,7 +225,9 @@ class _EarningsPageState extends State<EarningsPage> {
           color: isSelected ? selectedColor : unselectedColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? Colors.transparent : (isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+            color: isSelected
+                ? Colors.transparent
+                : (isDark ? Colors.grey.shade800 : Colors.grey.shade300),
           ),
         ),
         child: Text(
@@ -224,13 +242,15 @@ class _EarningsPageState extends State<EarningsPage> {
     );
   }
 
-  Widget _buildTimePeriodChip(String label, EarningsProvider provider, bool isDark) {
+  Widget _buildTimePeriodChip(
+      String label, EarningsProvider provider, bool isDark) {
     final bool isSelected = provider.timePeriod == label;
 
     final selectedColor = isDark ? Colors.teal.shade500 : Colors.teal.shade600;
     final unselectedColor = Theme.of(context).cardTheme.color;
     const selectedTextColor = Colors.white;
-    final unselectedTextColor = isDark ? Colors.grey.shade400 : Colors.grey.shade700;
+    final unselectedTextColor =
+        isDark ? Colors.grey.shade400 : Colors.grey.shade700;
 
     return GestureDetector(
       onTap: () {
@@ -243,7 +263,9 @@ class _EarningsPageState extends State<EarningsPage> {
           color: isSelected ? selectedColor : unselectedColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? Colors.transparent : (isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+            color: isSelected
+                ? Colors.transparent
+                : (isDark ? Colors.grey.shade800 : Colors.grey.shade300),
           ),
         ),
         child: Text(

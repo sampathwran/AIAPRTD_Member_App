@@ -32,15 +32,16 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
 
   Future<void> loadVehiclesFromFirestore() async {
     try {
-      final snapshot = await FirebaseFirestore.instance.collection('vehicle_brands').get();
+      final snapshot =
+          await FirebaseFirestore.instance.collection('vehicle_brands').get();
       Map<String, List<String>> fetchedData = {};
-      
+
       for (var doc in snapshot.docs) {
         String brandName = doc.id;
         List<dynamic> modelsRaw = doc.data()['models'] ?? [];
         fetchedData[brandName] = modelsRaw.map((e) => e.toString()).toList();
       }
-      
+
       // Sort brands alphabetically
       var sortedKeys = fetchedData.keys.toList()..sort();
       Map<String, List<String>> sortedData = {};
@@ -48,7 +49,7 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
         fetchedData[key]!.sort(); // Sort models alphabetically
         sortedData[key] = fetchedData[key]!;
       }
-      
+
       setState(() {
         vehicleData = sortedData;
         isLoading = false;
@@ -61,23 +62,23 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
     }
   }
 
-  void _showSelectionSheet(BuildContext context, String title, List<String> items, Function(String) onSelected) {
+  void _showSelectionSheet(BuildContext context, String title,
+      List<String> items, Function(String) onSelected) {
     if (items.isEmpty) return;
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     // Controller for search
     TextEditingController searchController = TextEditingController();
     List<String> filteredItems = List.from(items);
 
     showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setSheetState) {
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (BuildContext ctx) {
+          return StatefulBuilder(builder: (ctx, setSheetState) {
             return Container(
               height: MediaQuery.of(context).size.height * 0.7,
               decoration: BoxDecoration(
@@ -101,16 +102,18 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
                       ),
                     ),
                   ),
-                  
+
                   // Title
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         IconButton(
                           icon: const Icon(Icons.close),
@@ -119,17 +122,20 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
                       ],
                     ),
                   ),
-                  
+
                   // Search Bar
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     child: TextField(
                       controller: searchController,
                       decoration: InputDecoration(
                         hintText: "Search $title...",
                         prefixIcon: const Icon(Icons.search),
                         filled: true,
-                        fillColor: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
+                        fillColor: isDark
+                            ? Colors.grey.shade900
+                            : Colors.grey.shade100,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -142,49 +148,52 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
                             filteredItems = List.from(items);
                           } else {
                             filteredItems = items
-                                .where((item) => item.toLowerCase().contains(value.toLowerCase()))
+                                .where((item) => item
+                                    .toLowerCase()
+                                    .contains(value.toLowerCase()))
                                 .toList();
                           }
                         });
                       },
                     ),
                   ),
-                  
+
                   const Divider(),
-                  
+
                   // List
                   Expanded(
                     child: filteredItems.isEmpty
-                      ? const Center(child: Text("No results found"))
-                      : ListView.builder(
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: filteredItems.length,
-                          itemBuilder: (context, index) {
-                            return ListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-                              title: Text(filteredItems[index], style: const TextStyle(fontSize: 16)),
-                              trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
-                              onTap: () {
-                                onSelected(filteredItems[index]);
-                                Navigator.pop(ctx);
-                              },
-                            );
-                          },
-                        ),
+                        ? const Center(child: Text("No results found"))
+                        : ListView.builder(
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: filteredItems.length,
+                            itemBuilder: (context, index) {
+                              return ListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 4),
+                                title: Text(filteredItems[index],
+                                    style: const TextStyle(fontSize: 16)),
+                                trailing: const Icon(Icons.arrow_forward_ios,
+                                    size: 14, color: Colors.grey),
+                                onTap: () {
+                                  onSelected(filteredItems[index]);
+                                  Navigator.pop(ctx);
+                                },
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),
             );
-          }
-        );
-      }
-    );
+          });
+        });
   }
 
   Widget _buildSelectionBox({
-    required String label, 
-    required String? value, 
-    required IconData icon, 
+    required String label,
+    required String? value,
+    required IconData icon,
     required VoidCallback onTap,
     required bool isEnabled,
   }) {
@@ -197,36 +206,40 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
-          color: isEnabled 
+          color: isEnabled
               ? (isDark ? Colors.grey.shade900 : Colors.white)
-              : (isDark ? Colors.grey.shade900.withValues(alpha: 0.5) : Colors.grey.shade100),
+              : (isDark
+                  ? Colors.grey.shade900.withValues(alpha: 0.5)
+                  : Colors.grey.shade100),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: value != null 
-                ? theme.colorScheme.primary 
+            color: value != null
+                ? theme.colorScheme.primary
                 : (isDark ? Colors.grey.shade800 : Colors.grey.shade300),
             width: value != null ? 1.5 : 1.0,
           ),
-          boxShadow: isEnabled && value == null && !isDark ? [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ] : [],
+          boxShadow: isEnabled && value == null && !isDark
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : [],
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: value != null 
-                    ? theme.colorScheme.primary.withValues(alpha: 0.1) 
+                color: value != null
+                    ? theme.colorScheme.primary.withValues(alpha: 0.1)
                     : (isDark ? Colors.grey.shade800 : Colors.grey.shade100),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
-                icon, 
+                icon,
                 color: value != null ? theme.colorScheme.primary : Colors.grey,
                 size: 20,
               ),
@@ -249,8 +262,9 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
                     value ?? "Tap to select",
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: value != null ? FontWeight.bold : FontWeight.normal,
-                      color: value != null 
+                      fontWeight:
+                          value != null ? FontWeight.bold : FontWeight.normal,
+                      color: value != null
                           ? (isDark ? Colors.white : Colors.black87)
                           : Colors.grey.shade500,
                     ),
@@ -272,23 +286,24 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return const SizedBox(
-        height: 200, 
-        child: Center(
-          child: Column(
+          height: 200,
+          child: Center(
+              child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               CircularProgressIndicator(),
               SizedBox(height: 16),
-              Text("Loading vehicle list...", style: TextStyle(color: Colors.grey)),
+              Text("Loading vehicle list...",
+                  style: TextStyle(color: Colors.grey)),
             ],
-          )
-        )
-      );
+          )));
     }
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bool canSubmit = selectedBrand != null && selectedModel != null && _yearController.text.isNotEmpty;
+    final bool canSubmit = selectedBrand != null &&
+        selectedModel != null &&
+        _yearController.text.isNotEmpty;
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -312,16 +327,14 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
             ),
           ),
           const SizedBox(height: 24),
-          
+
           Center(
-            child: Text(
-              "Add New Vehicle Request",
-              style: TextStyle(
-                fontWeight: FontWeight.bold, 
-                fontSize: 20,
-                color: isDark ? Colors.white : Colors.black87,
-              )
-            ),
+            child: Text("Add New Vehicle Request",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: isDark ? Colors.white : Colors.black87,
+                )),
           ),
           const SizedBox(height: 8),
           Center(
@@ -331,7 +344,7 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
               textAlign: TextAlign.center,
             ),
           ),
-          
+
           const SizedBox(height: 32),
 
           // 1. Brand Selection
@@ -342,19 +355,15 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
             isEnabled: vehicleData.isNotEmpty,
             onTap: () {
               _showSelectionSheet(
-                context, 
-                "Select Brand", 
-                vehicleData.keys.toList(), 
-                (brand) {
-                  setState(() {
-                    selectedBrand = brand;
-                    selectedModel = null; // Reset model when brand changes
-                  });
-                }
-              );
+                  context, "Select Brand", vehicleData.keys.toList(), (brand) {
+                setState(() {
+                  selectedBrand = brand;
+                  selectedModel = null; // Reset model when brand changes
+                });
+              });
             },
           ),
-          
+
           const SizedBox(height: 16),
 
           // 2. Model Selection
@@ -362,21 +371,19 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
             label: "Vehicle Model",
             value: selectedModel,
             icon: Icons.settings_suggest_outlined,
-            isEnabled: selectedBrand != null && vehicleData[selectedBrand!]!.isNotEmpty,
+            isEnabled: selectedBrand != null &&
+                vehicleData[selectedBrand!]!.isNotEmpty,
             onTap: () {
               _showSelectionSheet(
-                context, 
-                "Select Model", 
-                vehicleData[selectedBrand!] ?? [], 
-                (model) {
-                  setState(() {
-                    selectedModel = model;
-                  });
-                }
-              );
+                  context, "Select Model", vehicleData[selectedBrand!] ?? [],
+                  (model) {
+                setState(() {
+                  selectedModel = model;
+                });
+              });
             },
           ),
-          
+
           const SizedBox(height: 16),
 
           // 3. Register Year Field
@@ -384,22 +391,25 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
             decoration: BoxDecoration(
               color: isDark ? Colors.grey.shade900 : Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+              border: Border.all(
+                  color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
             ),
             child: TextField(
                 controller: _yearController,
                 keyboardType: TextInputType.number,
                 maxLength: 4,
-                onChanged: (v) => setState(() {}), // Trigger rebuild to update submit button
+                onChanged: (v) =>
+                    setState(() {}), // Trigger rebuild to update submit button
                 decoration: InputDecoration(
-                    labelText: "Register Year (e.g. 2018)",
-                    labelStyle: TextStyle(color: Colors.grey.shade600),
-                    border: InputBorder.none,
-                    counterText: "",
-                    prefixIcon: Icon(Icons.calendar_month_outlined, color: Colors.grey.shade500),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                )
-            ),
+                  labelText: "Register Year (e.g. 2018)",
+                  labelStyle: TextStyle(color: Colors.grey.shade600),
+                  border: InputBorder.none,
+                  counterText: "",
+                  prefixIcon: Icon(Icons.calendar_month_outlined,
+                      color: Colors.grey.shade500),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                )),
           ),
 
           const SizedBox(height: 32),
@@ -410,8 +420,11 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
             height: 56,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: canSubmit ? theme.colorScheme.primary : (isDark ? Colors.grey.shade800 : Colors.grey.shade300),
-                foregroundColor: canSubmit ? Colors.white : Colors.grey.shade500,
+                backgroundColor: canSubmit
+                    ? theme.colorScheme.primary
+                    : (isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+                foregroundColor:
+                    canSubmit ? Colors.white : Colors.grey.shade500,
                 elevation: canSubmit ? 4 : 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),

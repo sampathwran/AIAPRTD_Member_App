@@ -18,10 +18,12 @@ Map<String, dynamic> calculateMemberStatus(Map<String, dynamic> activeData) {
   }
 
   // 2. KYC Check
-  final Map<String, dynamic> kycCheck = PersonalKYCChecker.checkKYCStatus(activeData);
+  final Map<String, dynamic> kycCheck =
+      PersonalKYCChecker.checkKYCStatus(activeData);
   if (kycCheck['isVerified'] == false) {
     isActive = false;
-    if (kycCheck['reason'] != null && kycCheck['reason'] != "Verification pending ⏳") {
+    if (kycCheck['reason'] != null &&
+        kycCheck['reason'] != "Verification pending ⏳") {
       reasons.add(kycCheck['reason']);
     } else {
       reasons.add("Personal profile or face verification pending.");

@@ -4,12 +4,14 @@ import 'package:flutter/foundation.dart';
 
 class MailService {
   // TODO: Replace with your Domain Email SMTP Details
-  static const String _smtpHost = 'aiaprtd.lk'; 
-  static const int _smtpPort = 465; 
+  static const String _smtpHost = 'aiaprtd.lk';
+  static const int _smtpPort = 465;
   static const String _username = 'support@aiaprtd.lk';
-  static const String _password = r'Sri12Lanka@#'; // ඔයාගේ Email එකේ Password එක මෙතන දාන්න
+  static const String _password =
+      r'Sri12Lanka@#'; // ඔයාගේ Email එකේ Password එක මෙතන දාන්න
 
-  static Future<bool> sendOTP({required String toEmail, required String otp}) async {
+  static Future<bool> sendOTP(
+      {required String toEmail, required String otp}) async {
     // Using a custom SMTP server instead of Gmail
     final smtpServer = SmtpServer(_smtpHost,
         port: _smtpPort,

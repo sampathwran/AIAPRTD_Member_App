@@ -2,7 +2,11 @@ import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
 
 void main() async {
-  final smtpServer = SmtpServer('mail.aiaprtd.lk', port: 465, username: 'support@aiaprtd.lk', password: r'Sri12Lanka#$', ssl: true);
+  final smtpServer = SmtpServer('mail.aiaprtd.lk',
+      port: 465,
+      username: 'support@aiaprtd.lk',
+      password: r'Sri12Lanka#$',
+      ssl: true);
   final message = Message()
     ..from = const Address('support@aiaprtd.lk', 'Test')
     ..recipients.add('wijesingherans@gmail.com')
@@ -16,4 +20,3 @@ void main() async {
     print(e.toString());
   }
 }
-

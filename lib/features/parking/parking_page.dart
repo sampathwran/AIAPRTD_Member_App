@@ -8,7 +8,8 @@ class ParkingPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text("Parking Service", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("Parking Service",
+            style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.white,
@@ -27,12 +28,16 @@ class ParkingPage extends StatelessWidget {
                   color: Colors.orange.shade50,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.local_parking_rounded, size: 80, color: Colors.orange.shade400),
+                child: Icon(Icons.local_parking_rounded,
+                    size: 80, color: Colors.orange.shade400),
               ),
               const SizedBox(height: 30),
               const Text(
                 "Coming Soon!",
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black87),
+                style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87),
               ),
               const SizedBox(height: 15),
               const Text(
@@ -46,8 +51,10 @@ class ParkingPage extends StatelessWidget {
               OutlinedButton(
                 onPressed: () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15)),
                 ),
                 child: const Text("Go Back"),
               ),

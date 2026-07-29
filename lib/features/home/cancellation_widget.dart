@@ -10,7 +10,7 @@ class CancellationWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final int totalAccepted = memberData['totalAcceptedCount'] ?? 0;
     final int totalCancelled = memberData['totalCancelledCount'] ?? 0;
-    
+
     double percent = 0.0;
     if (totalAccepted > 0) {
       percent = (totalCancelled / totalAccepted) * 100;
@@ -26,20 +26,23 @@ class CancellationWidget extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cancel_schedule_send_rounded, color: Colors.redAccent, size: 15),
+            const Icon(Icons.cancel_schedule_send_rounded,
+                color: Colors.redAccent, size: 15),
             const SizedBox(width: 4),
             Text(
-              displayValue, 
+              displayValue,
               style: theme.textTheme.titleMedium?.copyWith(
-                fontSize: 16, 
-                fontWeight: FontWeight.bold, 
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
                 color: colorScheme.onSurface,
               ),
             ),
           ],
         ),
         const SizedBox(height: 2),
-        Text("Cancellation", style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+        Text("Cancellation",
+            style: theme.textTheme.bodySmall
+                ?.copyWith(fontWeight: FontWeight.w600)),
       ],
     );
   }

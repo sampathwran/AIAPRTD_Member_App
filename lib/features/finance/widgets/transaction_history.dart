@@ -10,12 +10,17 @@ class TransactionHistoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profile = Provider.of<ProfileProvider>(context, listen: false);
-    
+
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collectionGroup('transactions')
           .where('driverId', isEqualTo: profile.memberNo)
-          .where('type', whereIn: ['app_booking_commission_split', 'road_pickup_commission', 'auto_settlement', 'auto_settlement_refund'])
+          .where('type', whereIn: [
+            'app_booking_commission_split',
+            'road_pickup_commission',
+            'auto_settlement',
+            'auto_settlement_refund'
+          ])
           .orderBy('timestamp', descending: true)
           .limit(30)
           .snapshots(),
@@ -31,9 +36,12 @@ class TransactionHistoryList extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.receipt_long_outlined, size: 60, color: Colors.grey.shade300),
+                Icon(Icons.receipt_long_outlined,
+                    size: 60, color: Colors.grey.shade300),
                 const SizedBox(height: 10),
-                Text("No transactions yet.", style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
+                Text("No transactions yet.",
+                    style:
+                        TextStyle(color: Colors.grey.shade500, fontSize: 16)),
               ],
             ),
           );
@@ -45,13 +53,16 @@ class TransactionHistoryList extends StatelessWidget {
           itemBuilder: (context, index) {
             final doc = snapshot.data!.docs[index];
             final data = doc.data() as Map<String, dynamic>;
-            
+
             final type = data['type'] as String? ?? '';
-            final amount = type == 'auto_settlement' ? (data['amount'] ?? 0.0).toDouble() : (data['unionUsageCharge'] ?? 0.0).toDouble();
-            final date = (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+            final amount = type == 'auto_settlement'
+                ? (data['amount'] ?? 0.0).toDouble()
+                : (data['unionUsageCharge'] ?? 0.0).toDouble();
+            final date =
+                (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
             final tripId = data['tripId'] as String? ?? 'N/A';
             final totalFare = (data['totalFare'] ?? 0.0).toDouble();
-            
+
             final isAppBooking = type == 'app_booking_commission_split';
             final isAutoSettled = type == 'auto_settlement';
             final isRefund = type == 'auto_settlement_refund';
@@ -76,7 +87,10 @@ class TransactionHistoryList extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
-                  BoxShadow(color: Colors.grey.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 5))
+                  BoxShadow(
+                      color: Colors.grey.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5))
                 ],
               ),
               child: Row(
@@ -87,28 +101,59 @@ class TransactionHistoryList extends StatelessWidget {
                       color: itemColor.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(isAutoSettled || isRefund ? Icons.check_circle_outline : Icons.arrow_upward_rounded, color: itemColor),
+                    child: Icon(
+                        isAutoSettled || isRefund
+                            ? Icons.check_circle_outline
+                            : Icons.arrow_upward_rounded,
+                        color: itemColor),
                   ),
                   const SizedBox(width: 15),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+                        FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(title,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14))),
                         if (!isAutoSettled && !isRefund) ...[
                           const SizedBox(height: 4),
-                          FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text("Trip ID: $tripId", style: const TextStyle(color: Colors.black54, fontSize: 11))),
-                          FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text("Total Fare: LKR ${NumberFormat('#,##0.00').format(totalFare)}", style: const TextStyle(color: Colors.black54, fontSize: 11))),
+                          FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text("Trip ID: $tripId",
+                                  style: const TextStyle(
+                                      color: Colors.black54, fontSize: 11))),
+                          FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                  "Total Fare: LKR ${NumberFormat('#,##0.00').format(totalFare)}",
+                                  style: const TextStyle(
+                                      color: Colors.black54, fontSize: 11))),
                         ],
                         const SizedBox(height: 4),
-                        FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(DateFormat('MMM dd, yyyy • hh:mm a').format(date), style: const TextStyle(color: Colors.grey, fontSize: 10))),
+                        FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                                DateFormat('MMM dd, yyyy • hh:mm a')
+                                    .format(date),
+                                style: const TextStyle(
+                                    color: Colors.grey, fontSize: 10))),
                       ],
                     ),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     "${isAutoSettled || isRefund ? '+' : '-'} LKR ${NumberFormat('#,##0.00').format(amount)}",
-                    style: TextStyle(fontWeight: FontWeight.bold, color: itemColor, fontSize: 14),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: itemColor,
+                        fontSize: 14),
                   ),
                 ],
               ),

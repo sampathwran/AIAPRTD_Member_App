@@ -27,10 +27,12 @@ class _RoutePreviewPageState extends State<RoutePreviewPage> {
             top: 0,
             left: 0,
             right: 0,
-            height: MediaQuery.of(context).size.height * 0.55, // Allocate 55% of screen to Map
+            height: MediaQuery.of(context).size.height *
+                0.55, // Allocate 55% of screen to Map
             child: GoogleMap(
               initialCameraPosition: CameraPosition(
-                target: provider.currentPickupLatLng ?? const LatLng(6.9271, 79.8612),
+                target: provider.currentPickupLatLng ??
+                    const LatLng(6.9271, 79.8612),
                 zoom: 14.5,
               ),
               markers: provider.markers,
@@ -51,7 +53,8 @@ class _RoutePreviewPageState extends State<RoutePreviewPage> {
             child: CircleAvatar(
               backgroundColor: theme.colorScheme.surface,
               child: IconButton(
-                icon: Icon(Icons.arrow_back, color: theme.iconTheme.color ?? Colors.black),
+                icon: Icon(Icons.arrow_back,
+                    color: theme.iconTheme.color ?? Colors.black),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -63,10 +66,12 @@ class _RoutePreviewPageState extends State<RoutePreviewPage> {
             left: 0,
             right: 0,
             child: Container(
-              height: MediaQuery.of(context).size.height * 0.50, // Allocate bottom 50%
+              height: MediaQuery.of(context).size.height *
+                  0.50, // Allocate bottom 50%
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
@@ -82,7 +87,9 @@ class _RoutePreviewPageState extends State<RoutePreviewPage> {
                     margin: const EdgeInsets.only(top: 12, bottom: 8),
                     width: 40,
                     height: 5,
-                    decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10)),
+                    decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(10)),
                   ),
 
                   // Vehicle Categories List (Horizontal)
@@ -93,7 +100,8 @@ class _RoutePreviewPageState extends State<RoutePreviewPage> {
                   // Booking Summary (Date/Time, Payment, Confirm Button)
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20.0, vertical: 10.0),
                       child: const BookingSummaryWidget(),
                     ),
                   ),

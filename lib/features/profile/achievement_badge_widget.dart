@@ -40,7 +40,10 @@ class AchievementBadgeWidget extends StatelessWidget {
         rankIcon = Icons.workspace_premium_rounded;
         break;
       default:
-        gradientColors = [const Color(0xFF64748B), const Color(0xFF475569)]; // Default Level
+        gradientColors = [
+          const Color(0xFF64748B),
+          const Color(0xFF475569)
+        ]; // Default Level
         rankIcon = Icons.military_tech_rounded;
         rankTitle = "NEW MEMBER";
     }
@@ -117,7 +120,8 @@ class AchievementBadgeWidget extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 12),
+                  child: const Icon(Icons.arrow_forward_ios_rounded,
+                      color: Colors.white, size: 12),
                 ),
               ],
             ),

@@ -19,7 +19,8 @@ class _SponsorAdWidgetState extends State<SponsorAdWidget> {
     super.initState();
     _isVideo = widget.sponsorAd['type'] == 'video';
     if (_isVideo) {
-      _controller = VideoPlayerController.networkUrl(Uri.parse(widget.sponsorAd['mediaUrl']))
+      _controller = VideoPlayerController.networkUrl(
+          Uri.parse(widget.sponsorAd['mediaUrl']))
         ..initialize().then((_) {
           _controller!.setVolume(0); // Muted
           _controller!.setLooping(true);
@@ -59,14 +60,21 @@ class _SponsorAdWidgetState extends State<SponsorAdWidget> {
               : Image.network(
                   widget.sponsorAd['mediaUrl'] ?? '',
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image)),
+                  errorBuilder: (_, __, ___) =>
+                      const Center(child: Icon(Icons.broken_image)),
                 ),
           Positioned(
-            top: 5, right: 5,
+            top: 5,
+            right: 5,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(5)),
-              child: const Text("SPONSORED", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black)),
+              decoration: BoxDecoration(
+                  color: Colors.amber, borderRadius: BorderRadius.circular(5)),
+              child: const Text("SPONSORED",
+                  style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black)),
             ),
           )
         ],

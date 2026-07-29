@@ -25,7 +25,8 @@ class ProfileImageWidget extends StatelessWidget {
     final String loggedInUserImageUrl = profileProvider.profileImageUrl;
 
     // FIXED: Check if imageRequestStatus is Pending in the new ProfileProvider
-    final bool isUpdatePending = profileProvider.memberData?['imageRequestStatus'] == 'pending';
+    final bool isUpdatePending =
+        profileProvider.memberData?['imageRequestStatus'] == 'pending';
 
     return Stack(
       alignment: Alignment.center,
@@ -36,34 +37,35 @@ class ProfileImageWidget extends StatelessWidget {
           backgroundColor: Colors.grey.shade200,
           child: loggedInUserImageUrl.isNotEmpty
               ? ClipRRect(
-            borderRadius: BorderRadius.circular(radius),
-            child: CachedNetworkImage(
-              imageUrl: loggedInUserImageUrl,
-              width: radius * 2,
-              height: radius * 2,
-              fit: BoxFit.cover,
+                  borderRadius: BorderRadius.circular(radius),
+                  child: CachedNetworkImage(
+                    imageUrl: loggedInUserImageUrl,
+                    width: radius * 2,
+                    height: radius * 2,
+                    fit: BoxFit.cover,
 
-              // Loading indicator shown while image loads
-              placeholder: (context, url) => Center(
-                child: SizedBox(
-                  width: radius * 0.7,
-                  height: radius * 0.7,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade400),
+                    // Loading indicator shown while image loads
+                    placeholder: (context, url) => Center(
+                      child: SizedBox(
+                        width: radius * 0.7,
+                        height: radius * 0.7,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.blue.shade400),
+                        ),
+                      ),
+                    ),
+
+                    // Icon shown on Network Error
+                    errorWidget: (context, url, error) => Icon(
+                        Icons.person_rounded,
+                        size: radius * 1.2,
+                        color: Colors.grey.shade400),
                   ),
-                ),
-              ),
-
-              // Icon shown on Network Error
-              errorWidget: (context, url, error) => Icon(
-                  Icons.person_rounded,
-                  size: radius * 1.2,
-                  color: Colors.grey.shade400
-              ),
-            ),
-          )
-              : Icon(Icons.person_rounded, size: radius * 1.2, color: Colors.grey.shade400),
+                )
+              : Icon(Icons.person_rounded,
+                  size: radius * 1.2, color: Colors.grey.shade400),
         ),
 
         // 2️⃣ ⏳ 🎯 Pending Indicator Overlay
@@ -78,11 +80,10 @@ class ProfileImageWidget extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                    Icons.hourglass_top_rounded,
+                Icon(Icons.hourglass_top_rounded,
                     color: Colors.orangeAccent,
                     size: radius * 0.8 // Match circle size
-                ),
+                    ),
               ],
             ),
           ),

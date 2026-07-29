@@ -15,7 +15,8 @@ class MembershipFeePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ProfileProvider profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+    final ProfileProvider profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
     final String membershipNo = profileProvider.memberNo.trim();
     final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
 
@@ -57,7 +58,8 @@ class MembershipFeePage extends StatelessWidget {
                     .doc(membershipNo)
                     .snapshots(),
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      !snapshot.hasData) {
                     return const Center(
                       child: CircularProgressIndicator(color: Colors.blue),
                     );
@@ -79,7 +81,8 @@ class MembershipFeePage extends StatelessWidget {
                     );
                   }
 
-                  final Map<String, dynamic> paymentData = snapshot.data?.data() ?? <String, dynamic>{};
+                  final Map<String, dynamic> paymentData =
+                      snapshot.data?.data() ?? <String, dynamic>{};
 
                   return Column(
                     children: [
@@ -88,8 +91,10 @@ class MembershipFeePage extends StatelessWidget {
                         child: TabBarView(
                           physics: const BouncingScrollPhysics(),
                           children: [
-                            PaymentHistoryTab(memberData: paymentData, isDark: isDark),
-                            BankDetailsTab(membershipNo: membershipNo, isDark: isDark),
+                            PaymentHistoryTab(
+                                memberData: paymentData, isDark: isDark),
+                            BankDetailsTab(
+                                membershipNo: membershipNo, isDark: isDark),
                             UploadSlipTab(isDark: isDark),
                           ],
                         ),
@@ -103,11 +108,16 @@ class MembershipFeePage extends StatelessWidget {
   }
 
   Widget _buildTabBar(bool isDark) {
-    final tabBgColor = isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade200;
+    final tabBgColor =
+        isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade200;
     final indicatorColor = isDark ? const Color(0xff2A3A4D) : Colors.white;
-    final unselectedColor = isDark ? Colors.grey.shade500 : Colors.grey.shade600;
-    final selectedColor = isDark ? Colors.blue.shade300 : const Color(0xFF1565C0);
-    final shadowColor = isDark ? Colors.black.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.07);
+    final unselectedColor =
+        isDark ? Colors.grey.shade500 : Colors.grey.shade600;
+    final selectedColor =
+        isDark ? Colors.blue.shade300 : const Color(0xFF1565C0);
+    final shadowColor = isDark
+        ? Colors.black.withValues(alpha: 0.3)
+        : Colors.black.withValues(alpha: 0.07);
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 10),

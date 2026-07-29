@@ -25,7 +25,8 @@ class _RoadPickupPageState extends State<RoadPickupPage> {
             if (!didPop) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text("You cannot leave this page while the meter is running."),
+                  content: Text(
+                      "You cannot leave this page while the meter is running."),
                   backgroundColor: Colors.red,
                   duration: Duration(seconds: 2),
                 ),
@@ -35,26 +36,32 @@ class _RoadPickupPageState extends State<RoadPickupPage> {
           child: Scaffold(
             backgroundColor: Colors.black,
             appBar: AppBar(
-              title: const Text("Taxi Meter", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+              title: const Text("Taxi Meter",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.white)),
               backgroundColor: Colors.black,
               elevation: 0,
               iconTheme: const IconThemeData(color: Colors.white),
             ),
             body: Builder(
               builder: (context) {
-                final profile = Provider.of<ProfileProvider>(context, listen: false);
-                
+                final profile =
+                    Provider.of<ProfileProvider>(context, listen: false);
+
                 String category = 'budget';
                 String membershipNo = 'Unknown';
                 if (profile.memberData != null) {
                   if (profile.memberData!['currentVehicle'] != null) {
-                    category = profile.memberData!['currentVehicle']['vehicle_category'] 
-                        ?? profile.memberData!['currentVehicle']['selectedCategory']
-                        ?? profile.memberData!['vehicle_category'] 
-                        ?? profile.memberData!['selectedCategory'] 
-                        ?? 'budget';
+                    category = profile.memberData!['currentVehicle']
+                            ['vehicle_category'] ??
+                        profile.memberData!['currentVehicle']
+                            ['selectedCategory'] ??
+                        profile.memberData!['vehicle_category'] ??
+                        profile.memberData!['selectedCategory'] ??
+                        'budget';
                   }
-                  membershipNo = profile.memberData!['membershipNo'] ?? 'Unknown';
+                  membershipNo =
+                      profile.memberData!['membershipNo'] ?? 'Unknown';
                 }
 
                 return SafeArea(
@@ -63,11 +70,14 @@ class _RoadPickupPageState extends State<RoadPickupPage> {
                       child: Padding(
                         padding: const EdgeInsets.all(20.0),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 20),
                           decoration: BoxDecoration(
                             color: Colors.grey.shade900,
                             borderRadius: BorderRadius.circular(28),
-                            border: Border.all(color: Colors.orange.withValues(alpha: 0.3), width: 1),
+                            border: Border.all(
+                                color: Colors.orange.withValues(alpha: 0.3),
+                                width: 1),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.orange.withValues(alpha: 0.1),
@@ -84,7 +94,8 @@ class _RoadPickupPageState extends State<RoadPickupPage> {
                                 child: Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: Colors.orange.withValues(alpha: 0.15),
+                                    color:
+                                        Colors.orange.withValues(alpha: 0.15),
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(
@@ -111,12 +122,14 @@ class _RoadPickupPageState extends State<RoadPickupPage> {
                               MeterFareDisplay(totalFare: meter.totalFare),
                               const SizedBox(height: 16),
                               MeterMetricsRow(
-                                distanceKm: meter.totalDistanceKm, 
-                                waitTimeSeconds: meter.waitingTimeSeconds, 
-                                speedKmh: meter.currentSpeedKmh
-                              ),
+                                  distanceKm: meter.totalDistanceKm,
+                                  waitTimeSeconds: meter.waitingTimeSeconds,
+                                  speedKmh: meter.currentSpeedKmh),
                               const SizedBox(height: 20),
-                              MeterControls(meter: meter, category: category, membershipNo: membershipNo),
+                              MeterControls(
+                                  meter: meter,
+                                  category: category,
+                                  membershipNo: membershipNo),
                             ],
                           ),
                         ),

@@ -53,7 +53,7 @@ class _AssistanceTrackingPageState extends State<AssistanceTrackingPage> {
           });
 
           _updateMarkers();
-          
+
           if (_otherMemberData == null) {
             await _fetchOtherMemberDetails();
           }
@@ -61,8 +61,7 @@ class _AssistanceTrackingPageState extends State<AssistanceTrackingPage> {
           if (data['status'] == 'completed') {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Assistance completed!"))
-              );
+                  const SnackBar(content: Text("Assistance completed!")));
               Navigator.pop(context);
             }
           }
@@ -72,26 +71,32 @@ class _AssistanceTrackingPageState extends State<AssistanceTrackingPage> {
 
     // 2. Stream My Own Location and push to Firestore
     _positionSub = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 5)
-    ).listen((Position position) {
-      String locationField = widget.isHelper ? 'helperLocation' : 'requesterLocation';
+            locationSettings: const LocationSettings(
+                accuracy: LocationAccuracy.high, distanceFilter: 5))
+        .listen((Position position) {
+      String locationField =
+          widget.isHelper ? 'helperLocation' : 'requesterLocation';
       FirebaseFirestore.instance
           .collection('community_assistance_requests')
           .doc(widget.requestId)
-          .update({
-        locationField: GeoPoint(position.latitude, position.longitude)
-      });
+          .update(
+              {locationField: GeoPoint(position.latitude, position.longitude)});
     });
   }
 
   Future<void> _fetchOtherMemberDetails() async {
     if (_requestData == null) return;
-    String otherMemberId = widget.isHelper ? _requestData!['requesterId'] : _requestData!['helperId'];
-    
+    String otherMemberId = widget.isHelper
+        ? _requestData!['requesterId']
+        : _requestData!['helperId'];
+
     try {
       // First try to fetch by document ID
-      final doc = await FirebaseFirestore.instance.collection('member').doc(otherMemberId).get();
-      
+      final doc = await FirebaseFirestore.instance
+          .collection('member')
+          .doc(otherMemberId)
+          .get();
+
       if (doc.exists && doc.data() != null) {
         setState(() {
           _otherMemberData = doc.data();
@@ -104,7 +109,7 @@ class _AssistanceTrackingPageState extends State<AssistanceTrackingPage> {
             .where('membershipNo', isEqualTo: otherMemberId)
             .limit(1)
             .get();
-        
+
         if (qs.docs.isNotEmpty) {
           setState(() {
             _otherMemberData = qs.docs.first.data();
@@ -114,8 +119,11 @@ class _AssistanceTrackingPageState extends State<AssistanceTrackingPage> {
           // If still not found, just use the name we have in request data
           setState(() {
             _otherMemberData = {
-              'fullName': widget.isHelper ? _requestData!['requesterName'] : _requestData!['helperName'],
-              'mobile': widget.isHelper ? _requestData!['requesterPhone'] : null,
+              'fullName': widget.isHelper
+                  ? _requestData!['requesterName']
+                  : _requestData!['helperName'],
+              'mobile':
+                  widget.isHelper ? _requestData!['requesterPhone'] : null,
               'membershipNo': otherMemberId
             };
             _isLoading = false;
@@ -130,9 +138,9 @@ class _AssistanceTrackingPageState extends State<AssistanceTrackingPage> {
 
   void _updateMarkers() {
     if (_requestData == null) return;
-    
+
     Set<Marker> newMarkers = {};
-    
+
     GeoPoint? reqLoc = _requestData!['requesterLocation'] as GeoPoint?;
     GeoPoint? helpLoc = _requestData!['helperLocation'] as GeoPoint?;
 
@@ -160,18 +168,29 @@ class _AssistanceTrackingPageState extends State<AssistanceTrackingPage> {
 
     // Move camera to fit both if both exist
     if (reqLoc != null && helpLoc != null && _mapController != null) {
-      double minLat = reqLoc.latitude < helpLoc.latitude ? reqLoc.latitude : helpLoc.latitude;
-      double maxLat = reqLoc.latitude > helpLoc.latitude ? reqLoc.latitude : helpLoc.latitude;
-      double minLng = reqLoc.longitude < helpLoc.longitude ? reqLoc.longitude : helpLoc.longitude;
-      double maxLng = reqLoc.longitude > helpLoc.longitude ? reqLoc.longitude : helpLoc.longitude;
-      
+      double minLat = reqLoc.latitude < helpLoc.latitude
+          ? reqLoc.latitude
+          : helpLoc.latitude;
+      double maxLat = reqLoc.latitude > helpLoc.latitude
+          ? reqLoc.latitude
+          : helpLoc.latitude;
+      double minLng = reqLoc.longitude < helpLoc.longitude
+          ? reqLoc.longitude
+          : helpLoc.longitude;
+      double maxLng = reqLoc.longitude > helpLoc.longitude
+          ? reqLoc.longitude
+          : helpLoc.longitude;
+
       LatLngBounds bounds = LatLngBounds(
         southwest: LatLng(minLat, minLng),
         northeast: LatLng(maxLat, maxLng),
       );
       _mapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 100));
-    } else if (reqLoc != null && _mapController != null && newMarkers.length == 1) {
-       _mapController!.animateCamera(CameraUpdate.newLatLng(LatLng(reqLoc.latitude, reqLoc.longitude)));
+    } else if (reqLoc != null &&
+        _mapController != null &&
+        newMarkers.length == 1) {
+      _mapController!.animateCamera(
+          CameraUpdate.newLatLng(LatLng(reqLoc.latitude, reqLoc.longitude)));
     }
   }
 
@@ -197,8 +216,9 @@ class _AssistanceTrackingPageState extends State<AssistanceTrackingPage> {
         .collection('community_assistance_requests')
         .doc(widget.requestId)
         .update({'status': 'completed'});
-        
-    Provider.of<CommunityAssistanceProvider>(context, listen: false).clearMyRequest();
+
+    Provider.of<CommunityAssistanceProvider>(context, listen: false)
+        .clearMyRequest();
   }
 
   @override
@@ -228,46 +248,73 @@ class _AssistanceTrackingPageState extends State<AssistanceTrackingPage> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: const BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -5))]
-                    ),
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 10,
+                              offset: Offset(0, -5))
+                        ]),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.isHelper ? "Requester Details" : "Helper Details",
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                          widget.isHelper
+                              ? "Requester Details"
+                              : "Helper Details",
+                          style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blueAccent),
                         ),
                         const SizedBox(height: 12),
                         Row(
                           children: [
                             CircleAvatar(
                               radius: 30,
-                              backgroundImage: _otherMemberData!['profileImageUrl'] != null 
-                                  ? NetworkImage(_otherMemberData!['profileImageUrl'])
-                                  : null,
-                              child: _otherMemberData!['profileImageUrl'] == null ? const Icon(Icons.person) : null,
+                              backgroundImage:
+                                  _otherMemberData!['profileImageUrl'] != null
+                                      ? NetworkImage(
+                                          _otherMemberData!['profileImageUrl'])
+                                      : null,
+                              child:
+                                  _otherMemberData!['profileImageUrl'] == null
+                                      ? const Icon(Icons.person)
+                                      : null,
                             ),
                             const SizedBox(width: 16),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(_otherMemberData!['fullName'] ?? 'Unknown', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                                  Text("Mem No: ${_otherMemberData!['membershipNo'] ?? (widget.isHelper ? _requestData!['requesterId'] : _requestData!['helperId']) ?? 'N/A'}", style: const TextStyle(color: Colors.grey)),
-                                  
+                                  Text(
+                                      _otherMemberData!['fullName'] ??
+                                          'Unknown',
+                                      style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold)),
+                                  Text(
+                                      "Mem No: ${_otherMemberData!['membershipNo'] ?? (widget.isHelper ? _requestData!['requesterId'] : _requestData!['helperId']) ?? 'N/A'}",
+                                      style:
+                                          const TextStyle(color: Colors.grey)),
+
                                   // Extract Plate Number
                                   Builder(builder: (context) {
                                     String? plate;
                                     try {
-                                      final docs = _otherMemberData!['currentVehicle']?['documents'] as List?;
+                                      final docs =
+                                          _otherMemberData!['currentVehicle']
+                                              ?['documents'] as List?;
                                       if (docs != null && docs.length > 2) {
-                                        plate = docs[2]?['reviewData']?['Plate Number'];
+                                        plate = docs[2]?['reviewData']
+                                            ?['Plate Number'];
                                       }
                                     } catch (_) {}
-                                    
+
                                     if (plate != null && plate.isNotEmpty) {
-                                      return Text("Vehicle: $plate", style: const TextStyle(color: Colors.grey));
+                                      return Text("Vehicle: $plate",
+                                          style: const TextStyle(
+                                              color: Colors.grey));
                                     }
                                     return const SizedBox.shrink();
                                   }),
@@ -276,24 +323,29 @@ class _AssistanceTrackingPageState extends State<AssistanceTrackingPage> {
                             ),
                             IconButton(
                               onPressed: _callOtherPerson,
-                              icon: const Icon(Icons.call, color: Colors.green, size: 32),
+                              icon: const Icon(Icons.call,
+                                  color: Colors.green, size: 32),
                             )
                           ],
                         ),
-                        
+
                         // Extract Vehicle Photo
                         Builder(builder: (context) {
                           String? photoUrl;
                           try {
-                            photoUrl = _otherMemberData!['currentVehicle']?['vehiclePhotos']?['Front']?['url'];
+                            photoUrl = _otherMemberData!['currentVehicle']
+                                ?['vehiclePhotos']?['Front']?['url'];
                           } catch (_) {}
-                          
+
                           if (photoUrl != null && photoUrl.isNotEmpty) {
                             return Padding(
                               padding: const EdgeInsets.only(top: 16.0),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: Image.network(photoUrl, height: 120, width: double.infinity, fit: BoxFit.cover),
+                                child: Image.network(photoUrl,
+                                    height: 120,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover),
                               ),
                             );
                           }
@@ -306,11 +358,13 @@ class _AssistanceTrackingPageState extends State<AssistanceTrackingPage> {
                           child: ElevatedButton(
                             onPressed: _markResolved,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16)
-                            ),
-                            child: const Text("MARK AS RESOLVED", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                backgroundColor: Colors.green,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16)),
+                            child: const Text("MARK AS RESOLVED",
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold)),
                           ),
                         )
                       ],

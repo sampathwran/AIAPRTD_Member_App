@@ -10,7 +10,7 @@ import 'package:aiaprtd_member/core/theme/app_theme.dart';
 
 class UploadSlipForm extends StatefulWidget {
   final double balance;
-  
+
   const UploadSlipForm({super.key, required this.balance});
 
   @override
@@ -47,22 +47,27 @@ class _UploadSlipFormState extends State<UploadSlipForm> {
 
   Future<void> handleUpload() async {
     if (selectedImage == null) return;
-    
+
     setState(() => isUploading = true);
     try {
       final profile = Provider.of<ProfileProvider>(context, listen: false);
       final String memNo = profile.memberNo;
-      
-      final String fileName = 'app_usage_slip_${memNo}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final Reference ref = FirebaseStorage.instance.ref().child('app_usage_payments/$memNo/$fileName');
-      
+
+      final String fileName =
+          'app_usage_slip_${memNo}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final Reference ref = FirebaseStorage.instance
+          .ref()
+          .child('app_usage_payments/$memNo/$fileName');
+
       final UploadTask uploadTask = ref.putFile(selectedImage!);
       final TaskSnapshot snapshot = await uploadTask;
       final String downloadUrl = await snapshot.ref.getDownloadURL();
 
-      final double enteredAmount = double.tryParse(_amountController.text) ?? widget.balance;
+      final double enteredAmount =
+          double.tryParse(_amountController.text) ?? widget.balance;
 
-      final docRef = FirebaseFirestore.instance.collection('app_usage_payments').doc();
+      final docRef =
+          FirebaseFirestore.instance.collection('app_usage_payments').doc();
       await docRef.set({
         'paymentId': docRef.id,
         'driverId': memNo,
@@ -74,11 +79,14 @@ class _UploadSlipFormState extends State<UploadSlipForm> {
 
       if (mounted) {
         setState(() => selectedImage = null);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment slip uploaded. Waiting for admin approval.')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content:
+                Text('Payment slip uploaded. Waiting for admin approval.')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to upload slip: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Failed to upload slip: $e')));
       }
     } finally {
       if (mounted) setState(() => isUploading = false);
@@ -88,18 +96,21 @@ class _UploadSlipFormState extends State<UploadSlipForm> {
   @override
   Widget build(BuildContext context) {
     final finance = Provider.of<FinanceProvider>(context, listen: false);
-    
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text("Pay App Usage Charge", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+        const Text("Pay App Usage Charge",
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
         const SizedBox(height: 20),
-        
+
         // Commission Info Note
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(10)),
+          decoration: BoxDecoration(
+              color: Colors.orange.shade50,
+              borderRadius: BorderRadius.circular(10)),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -115,7 +126,7 @@ class _UploadSlipFormState extends State<UploadSlipForm> {
           ),
         ),
         const SizedBox(height: 20),
-        
+
         // Amount input field
         TextFormField(
           controller: _amountController,
@@ -123,21 +134,23 @@ class _UploadSlipFormState extends State<UploadSlipForm> {
           decoration: InputDecoration(
             labelText: "Payment Amount",
             prefixText: "Rs. ",
-            prefixStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+            prefixStyle: const TextStyle(
+                fontWeight: FontWeight.bold, color: Colors.black87),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             filled: true,
             fillColor: Colors.grey.shade50,
           ),
         ),
         const SizedBox(height: 25),
-        
+
         if (selectedImage != null) ...[
           Stack(
             alignment: Alignment.topRight,
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(15),
-                child: Image.file(selectedImage!, height: 150, width: double.infinity, fit: BoxFit.cover),
+                child: Image.file(selectedImage!,
+                    height: 150, width: double.infinity, fit: BoxFit.cover),
               ),
               IconButton(
                 icon: const Icon(Icons.cancel, color: Colors.white, size: 30),
@@ -176,19 +189,31 @@ class _UploadSlipFormState extends State<UploadSlipForm> {
           ),
           const SizedBox(height: 20),
         ],
-        
+
         SizedBox(
           width: double.infinity,
           height: 55,
           child: ElevatedButton.icon(
-            onPressed: isUploading || selectedImage == null ? null : handleUpload,
-            icon: isUploading ? const SizedBox.shrink() : const Icon(Icons.cloud_upload, color: Colors.white),
+            onPressed:
+                isUploading || selectedImage == null ? null : handleUpload,
+            icon: isUploading
+                ? const SizedBox.shrink()
+                : const Icon(Icons.cloud_upload, color: Colors.white),
             label: isUploading
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text("Submit Bank Slip", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2))
+                : const Text("Submit Bank Slip",
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white)),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryBlue,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)),
             ),
           ),
         ),

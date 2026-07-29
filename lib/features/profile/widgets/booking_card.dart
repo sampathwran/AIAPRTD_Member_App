@@ -6,7 +6,7 @@ import 'package:aiaprtd_member/core/providers/theme_provider.dart';
 
 class BookingCard extends StatelessWidget {
   final Map<String, dynamic> data;
-  
+
   const BookingCard({super.key, required this.data});
 
   @override
@@ -15,9 +15,17 @@ class BookingCard extends StatelessWidget {
     String tripId = data['tripId'] ?? data['bookingId'] ?? 'N/A';
     String tripType = data['tripType'] ?? 'One way';
     String status = data['status'] ?? 'Unknown';
-    String startAddress = data['startAddress'] ?? (data['pickupLocation'] != null ? data['pickupLocation']['address'] : null) ?? 'N/A';
-    String endAddress = data['endAddress'] ?? (data['dropLocation'] != null ? data['dropLocation']['address'] : null) ?? 'N/A';
-    
+    String startAddress = data['startAddress'] ??
+        (data['pickupLocation'] != null
+            ? data['pickupLocation']['address']
+            : null) ??
+        'N/A';
+    String endAddress = data['endAddress'] ??
+        (data['dropLocation'] != null
+            ? data['dropLocation']['address']
+            : null) ??
+        'N/A';
+
     double fare = 0.0;
     var rawFare = data['totalFare'] ?? data['estimateFare'];
     if (rawFare is num) {
@@ -25,9 +33,11 @@ class BookingCard extends StatelessWidget {
     } else if (rawFare is String) {
       fare = double.tryParse(rawFare) ?? 0.0;
     }
-    
-    String vehicleCategory = data['vehicleCategory'] ?? (data['vehicle'] != null ? data['vehicle']['name'] : null) ?? 'Mini';
-    
+
+    String vehicleCategory = data['vehicleCategory'] ??
+        (data['vehicle'] != null ? data['vehicle']['name'] : null) ??
+        'Mini';
+
     DateTime? pickupTime;
     if (data['pickupTime'] != null) {
       pickupTime = DateTime.tryParse(data['pickupTime'].toString());
@@ -36,12 +46,15 @@ class BookingCard extends StatelessWidget {
     // Determine status color
     Color statusColor = Colors.grey;
     if (status.toLowerCase() == 'pending') statusColor = Colors.orange;
-    if (status.toLowerCase() == 'ongoing' || status.toLowerCase() == 'accepted') statusColor = Colors.blue;
-    if (status.toLowerCase() == 'completed' || status.toLowerCase() == 'collected') statusColor = Colors.green;
+    if (status.toLowerCase() == 'ongoing' || status.toLowerCase() == 'accepted')
+      statusColor = Colors.blue;
+    if (status.toLowerCase() == 'completed' ||
+        status.toLowerCase() == 'collected') statusColor = Colors.green;
     if (status.toLowerCase() == 'cancelled') statusColor = Colors.red;
 
     final textColor = isDark ? Colors.white : Colors.black87;
-    final secondaryTextColor = isDark ? Colors.grey.shade400 : Colors.grey.shade700;
+    final secondaryTextColor =
+        isDark ? Colors.grey.shade400 : Colors.grey.shade700;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -66,13 +79,17 @@ class BookingCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   tripId,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: textColor),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -80,25 +97,38 @@ class BookingCard extends StatelessWidget {
                 ),
                 child: Text(
                   status.toUpperCase(),
-                  style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 11),
+                  style: TextStyle(
+                      color: statusColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          
+
           // Date & Vehicle Row
           Row(
             children: [
               Expanded(
                 child: Row(
                   children: [
-                    Icon(Icons.calendar_month, size: 16, color: isDark ? Colors.grey.shade500 : Colors.grey.shade600),
+                    Icon(Icons.calendar_month,
+                        size: 16,
+                        color: isDark
+                            ? Colors.grey.shade500
+                            : Colors.grey.shade600),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        pickupTime != null ? DateFormat('MMM dd, yyyy - hh:mm a').format(pickupTime) : 'N/A',
-                        style: TextStyle(color: secondaryTextColor, fontSize: 13, fontWeight: FontWeight.w500),
+                        pickupTime != null
+                            ? DateFormat('MMM dd, yyyy - hh:mm a')
+                                .format(pickupTime)
+                            : 'N/A',
+                        style: TextStyle(
+                            color: secondaryTextColor,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -110,12 +140,19 @@ class BookingCard extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Icon(Icons.directions_car, size: 16, color: isDark ? Colors.grey.shade500 : Colors.grey.shade600),
+                    Icon(Icons.directions_car,
+                        size: 16,
+                        color: isDark
+                            ? Colors.grey.shade500
+                            : Colors.grey.shade600),
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text(
                         "$vehicleCategory ($tripType)",
-                        style: TextStyle(color: secondaryTextColor, fontSize: 13, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                            color: secondaryTextColor,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -126,9 +163,11 @@ class BookingCard extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Divider(height: 1, color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+            child: Divider(
+                height: 1,
+                color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
           ),
-          
+
           // Locations
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,7 +175,11 @@ class BookingCard extends StatelessWidget {
               Column(
                 children: [
                   const Icon(Icons.circle, color: Colors.blue, size: 12),
-                  Container(height: 20, width: 2, color: isDark ? Colors.grey.shade700 : Colors.grey.shade300),
+                  Container(
+                      height: 20,
+                      width: 2,
+                      color:
+                          isDark ? Colors.grey.shade700 : Colors.grey.shade300),
                   const Icon(Icons.location_on, color: Colors.red, size: 14),
                 ],
               ),
@@ -147,14 +190,20 @@ class BookingCard extends StatelessWidget {
                   children: [
                     Text(
                       startAddress,
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textColor),
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: textColor),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 16),
                     Text(
                       endAddress,
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textColor),
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: textColor),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -164,35 +213,49 @@ class BookingCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          
+
           // Fare
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.grey.shade50,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Total Fare", style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey, fontWeight: FontWeight.bold)),
-                Text("LKR ${fare.toStringAsFixed(2)}", style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 16)),
+                Text("Total Fare",
+                    style: TextStyle(
+                        color: isDark ? Colors.grey.shade400 : Colors.grey,
+                        fontWeight: FontWeight.bold)),
+                Text("LKR ${fare.toStringAsFixed(2)}",
+                    style: TextStyle(
+                        color: textColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16)),
               ],
             ),
           ),
-          
-          if (status.toLowerCase() == 'pending' || status.toLowerCase() == 'upcoming' || status.toLowerCase() == 'scheduled') ...[
+
+          if (status.toLowerCase() == 'pending' ||
+              status.toLowerCase() == 'upcoming' ||
+              status.toLowerCase() == 'scheduled') ...[
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () => _showCancelDialog(context, tripId, data['memberId']),
+                onPressed: () =>
+                    _showCancelDialog(context, tripId, data['memberId']),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.red,
                   side: const BorderSide(color: Colors.red),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
                 ),
-                child: const Text("Cancel Booking", style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text("Cancel Booking",
+                    style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
           ]
@@ -201,7 +264,8 @@ class BookingCard extends StatelessWidget {
     );
   }
 
-  void _showCancelDialog(BuildContext context, String tripId, String? memberId) {
+  void _showCancelDialog(
+      BuildContext context, String tripId, String? memberId) {
     final TextEditingController reasonController = TextEditingController();
     bool isSubmitting = false;
 
@@ -212,12 +276,14 @@ class BookingCard extends StatelessWidget {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
               title: const Text("Cancel Booking"),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text("Are you sure you want to cancel this booking? Please provide a reason."),
+                  const Text(
+                      "Are you sure you want to cancel this booking? Please provide a reason."),
                   const SizedBox(height: 16),
                   TextField(
                     controller: reasonController,
@@ -233,24 +299,29 @@ class BookingCard extends StatelessWidget {
                 if (!isSubmitting)
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text("Close", style: TextStyle(color: Colors.grey)),
+                    child: const Text("Close",
+                        style: TextStyle(color: Colors.grey)),
                   ),
                 isSubmitting
                     ? const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 16.0),
-                        child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                        child: SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2)),
                       )
                     : ElevatedButton(
                         onPressed: () async {
                           if (reasonController.text.trim().isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Please enter a reason")),
+                              const SnackBar(
+                                  content: Text("Please enter a reason")),
                             );
                             return;
                           }
 
                           setState(() => isSubmitting = true);
-                          
+
                           try {
                             String reason = reasonController.text.trim();
                             Map<String, dynamic> updates = {
@@ -261,8 +332,11 @@ class BookingCard extends StatelessWidget {
                             };
 
                             // Update all_bookings
-                            await FirebaseFirestore.instance.collection('all_bookings').doc(tripId).set(updates, SetOptions(merge: true));
-                            
+                            await FirebaseFirestore.instance
+                                .collection('all_bookings')
+                                .doc(tripId)
+                                .set(updates, SetOptions(merge: true));
+
                             // Update my_bookings
                             if (memberId != null) {
                               await FirebaseFirestore.instance
@@ -271,31 +345,38 @@ class BookingCard extends StatelessWidget {
                                   .collection('my_bookings')
                                   .doc(tripId)
                                   .set(updates, SetOptions(merge: true));
-                                  
+
                               // Update dayly_trips
                               DateTime? createdAt;
                               if (data['timestamp'] is Timestamp) {
-                                createdAt = (data['timestamp'] as Timestamp).toDate();
+                                createdAt =
+                                    (data['timestamp'] as Timestamp).toDate();
                               } else if (data['createdAt'] is Timestamp) {
-                                createdAt = (data['createdAt'] as Timestamp).toDate();
+                                createdAt =
+                                    (data['createdAt'] as Timestamp).toDate();
                               }
-                              
+
                               if (createdAt != null) {
-                                String dateStr = "${createdAt.year}.${createdAt.month.toString().padLeft(2, '0')}.${createdAt.day.toString().padLeft(2, '0')}";
+                                String dateStr =
+                                    "${createdAt.year}.${createdAt.month.toString().padLeft(2, '0')}.${createdAt.day.toString().padLeft(2, '0')}";
                                 await FirebaseFirestore.instance
                                     .collection('dayly_trips')
                                     .doc(dateStr)
                                     .collection(memberId)
                                     .doc(tripId)
                                     .set(updates, SetOptions(merge: true))
-                                    .catchError((e) => debugPrint("dayly_trips not found, skipping.")); // Catch error if doc doesn't exist yet
+                                    .catchError((e) => debugPrint(
+                                        "dayly_trips not found, skipping.")); // Catch error if doc doesn't exist yet
                               }
                             }
 
                             if (context.mounted) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Booking cancelled successfully"), backgroundColor: Colors.green),
+                                const SnackBar(
+                                    content:
+                                        Text("Booking cancelled successfully"),
+                                    backgroundColor: Colors.green),
                               );
                             }
                           } catch (e) {
@@ -307,8 +388,10 @@ class BookingCard extends StatelessWidget {
                             }
                           }
                         },
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                        child: const Text("Confirm Cancel", style: TextStyle(color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red),
+                        child: const Text("Confirm Cancel",
+                            style: TextStyle(color: Colors.white)),
                       ),
               ],
             );

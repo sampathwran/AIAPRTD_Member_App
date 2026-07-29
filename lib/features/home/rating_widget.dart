@@ -17,7 +17,7 @@ class RatingWidget extends StatelessWidget {
         displayRating = "0.0";
       }
     }
-    
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -30,17 +30,19 @@ class RatingWidget extends StatelessWidget {
             const Icon(Icons.star, color: Colors.amber, size: 16),
             const SizedBox(width: 4),
             Text(
-              displayRating, 
+              displayRating,
               style: theme.textTheme.titleMedium?.copyWith(
-                fontSize: 16, 
-                fontWeight: FontWeight.bold, 
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
                 color: colorScheme.onSurface,
               ),
             ),
           ],
         ),
         const SizedBox(height: 2),
-        Text("Rating", style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+        Text("Rating",
+            style: theme.textTheme.bodySmall
+                ?.copyWith(fontWeight: FontWeight.w600)),
       ],
     );
   }

@@ -47,7 +47,8 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
     "Union Bank",
   ];
 
-  final LocalAuthentication auth = LocalAuthentication(); // 💡 NEW: Auth instance
+  final LocalAuthentication auth =
+      LocalAuthentication(); // 💡 NEW: Auth instance
 
   bool _isEditing = false;
 
@@ -109,7 +110,8 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Security Warning: Your device does not support screen lock. You cannot edit bank details."),
+            content: Text(
+                "Security Warning: Your device does not support screen lock. You cannot edit bank details."),
             backgroundColor: Colors.red,
           ),
         );
@@ -119,17 +121,20 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
       authenticated = await auth.authenticate(
         localizedReason: 'Verify your identity to edit bank details',
         biometricOnly: false, // Allows PIN/Pattern as fallback
-        persistAcrossBackgrounding: true, 
+        persistAcrossBackgrounding: true,
       );
     } on PlatformException catch (e) {
       debugPrint("Auth Error: $e");
       if (!mounted) return;
-      
+
       String errorMessage = "Security verification failed.";
-      
+
       // Checking common error codes for missing screen lock
-      if (e.code == 'NotEnrolled' || e.code == 'PasscodeNotSet' || e.code == 'NotAvailable') {
-        errorMessage = "Please set up a Screen Lock (PIN, Password, or Fingerprint) in your phone settings to edit bank details securely.";
+      if (e.code == 'NotEnrolled' ||
+          e.code == 'PasscodeNotSet' ||
+          e.code == 'NotAvailable') {
+        errorMessage =
+            "Please set up a Screen Lock (PIN, Password, or Fingerprint) in your phone settings to edit bank details securely.";
       } else {
         errorMessage = "Error: ${e.message} (${e.code}).";
       }
@@ -173,7 +178,8 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
     // 💡 Form is shown only if Edit is pressed or if there is no data
     final bool showForm = _isEditing || !hasData;
 
-    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
     final String documentId = profileProvider.documentId;
 
     _loadExistingData(bankData);
@@ -202,15 +208,20 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black87,
                     ),
                   ),
                 ),
                 // Show Edit/Cancel button only if there is data (New users shouldn't see this)
                 if (hasData)
                   TextButton.icon(
-                    onPressed: _authenticateAndEdit, // 💡 FIXED: Now requires Auth to Edit
-                    icon: Icon(_isEditing ? Icons.close : Icons.security_rounded, size: 18),
+                    onPressed:
+                        _authenticateAndEdit, // 💡 FIXED: Now requires Auth to Edit
+                    icon: Icon(
+                        _isEditing ? Icons.close : Icons.security_rounded,
+                        size: 18),
                     label: Text(_isEditing ? "Cancel" : "Verify & Edit"),
                   ),
               ],
@@ -226,17 +237,17 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
                 icon: Icons.person_outline,
                 enabled: true, // If shown, it must be typable
               ),
-
               const SizedBox(height: 15),
-
               DropdownButtonFormField<String>(
-                value: _bankNameController.text.isNotEmpty && _sriLankaBanks.contains(_bankNameController.text)
+                value: _bankNameController.text.isNotEmpty &&
+                        _sriLankaBanks.contains(_bankNameController.text)
                     ? _bankNameController.text
                     : null,
                 decoration: InputDecoration(
                   labelText: "Bank Name",
                   prefixIcon: const Icon(Icons.account_balance_outlined),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 items: _sriLankaBanks.map((bank) {
                   return DropdownMenuItem(
@@ -249,21 +260,18 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
                     _bankNameController.text = val;
                   }
                 },
-                validator: (v) => v == null || v.isEmpty ? "Please select a bank" : null,
+                validator: (v) =>
+                    v == null || v.isEmpty ? "Please select a bank" : null,
                 isExpanded: true,
               ),
-
               const SizedBox(height: 15),
-
               _buildTextField(
                 controller: _branchController,
                 label: "Branch Name",
                 icon: Icons.location_on_outlined,
                 enabled: true,
               ),
-
               const SizedBox(height: 15),
-
               _buildTextField(
                 controller: _branchCodeController,
                 label: "Branch Code",
@@ -271,9 +279,7 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
                 enabled: true,
                 keyboardType: TextInputType.number,
               ),
-
               const SizedBox(height: 15),
-
               _buildTextField(
                 controller: _accountNoController,
                 label: "Account Number",
@@ -281,9 +287,7 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
                 enabled: true,
                 keyboardType: TextInputType.number,
               ),
-
               const SizedBox(height: 25),
-
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -291,53 +295,53 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
                   onPressed: paymentProvider.isLocalLoading
                       ? null
                       : () async {
-                    if (!_formKey.currentState!.validate()) return;
+                          if (!_formKey.currentState!.validate()) return;
 
-                    final success =
-                    await paymentProvider.requestBankDetailsUpdate(
-                      documentId: documentId,
-                      membershipNo: widget.membershipNo,
-                      bankName: _bankNameController.text.trim(),
-                      branchName: _branchController.text.trim(),
-                      branchCode: _branchCodeController.text.trim(),
-                      accountNumber: _accountNoController.text.trim(),
-                      accountHolderName:
-                      _holderNameController.text.trim(),
-                    );
+                          final success =
+                              await paymentProvider.requestBankDetailsUpdate(
+                            documentId: documentId,
+                            membershipNo: widget.membershipNo,
+                            bankName: _bankNameController.text.trim(),
+                            branchName: _branchController.text.trim(),
+                            branchCode: _branchCodeController.text.trim(),
+                            accountNumber: _accountNoController.text.trim(),
+                            accountHolderName:
+                                _holderNameController.text.trim(),
+                          );
 
-                    if (!context.mounted) return;
+                          if (!context.mounted) return;
 
-                    if (success) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            "Bank details updated successfully! ✅",
-                          ),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
+                          if (success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  "Bank details updated successfully! ✅",
+                                ),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
 
-                      setState(() {
-                        _isEditing = false;
-                      });
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Failed to update bank details"),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  },
+                            setState(() {
+                              _isEditing = false;
+                            });
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Failed to update bank details"),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
                   child: paymentProvider.isLocalLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
-                    "Save Bank Details",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                          "Save Bank Details",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -358,7 +362,10 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
           gradient: LinearGradient(
-            colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.secondary],
+            colors: [
+              Theme.of(context).colorScheme.primary,
+              Theme.of(context).colorScheme.secondary
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -452,7 +459,7 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
   Widget _cardSmallText(String title, String value, {bool alignRight = false}) {
     return Column(
       crossAxisAlignment:
-      alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
         Text(
           title,

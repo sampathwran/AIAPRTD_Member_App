@@ -7,7 +7,11 @@ class MeterControls extends StatelessWidget {
   final String category;
   final String membershipNo;
 
-  const MeterControls({super.key, required this.meter, required this.category, required this.membershipNo});
+  const MeterControls(
+      {super.key,
+      required this.meter,
+      required this.category,
+      required this.membershipNo});
 
   @override
   Widget build(BuildContext context) {
@@ -20,10 +24,15 @@ class MeterControls extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 padding: const EdgeInsets.symmetric(vertical: 20),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
               ),
               onPressed: () => meter.startMeter(category),
-              child: const Text("START TRIP", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+              child: const Text("START TRIP",
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white)),
             ),
           )
         else if (meter.isRunning)
@@ -33,31 +42,43 @@ class MeterControls extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 padding: const EdgeInsets.symmetric(vertical: 20),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
               ),
               onPressed: () async {
                 await meter.stopMeter(membershipNo, category);
               },
-              child: const Text("STOP", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+              child: const Text("STOP",
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white)),
             ),
           ),
-          
-        if (!meter.isRunning && meter.totalFare > 0 && meter.isTripCompleted) ...[
+        if (!meter.isRunning &&
+            meter.totalFare > 0 &&
+            meter.isTripCompleted) ...[
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
                 padding: const EdgeInsets.symmetric(vertical: 20),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
               ),
               onPressed: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const TripSummaryPage()),
+                  MaterialPageRoute(
+                      builder: (context) => const TripSummaryPage()),
                 );
               },
-              child: const Text("VIEW SUMMARY", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+              child: const Text("VIEW SUMMARY",
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white)),
             ),
           )
         ]

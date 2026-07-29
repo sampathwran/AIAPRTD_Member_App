@@ -16,12 +16,13 @@ Map<String, dynamic> checkMemberSystemStatus(Map<String, dynamic>? memberData) {
     };
   }
 
-  final dynamic rawDocuments =
-      memberData['documents'] ?? 
-      memberData['complianceDocuments'] ?? 
-      memberData['vehicle_documents'] ?? 
+  final dynamic rawDocuments = memberData['documents'] ??
+      memberData['complianceDocuments'] ??
+      memberData['vehicle_documents'] ??
       memberData['vehicleDocuments'] ??
-      (memberData['currentVehicle'] is Map ? memberData['currentVehicle']['documents'] : null);
+      (memberData['currentVehicle'] is Map
+          ? memberData['currentVehicle']['documents']
+          : null);
 
   if (rawDocuments is List) {
     for (int i = 0; i < requiredComplianceDocs.length; i++) {

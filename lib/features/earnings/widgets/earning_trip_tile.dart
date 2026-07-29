@@ -47,8 +47,8 @@ class EarningTripTile extends StatelessWidget {
               color: isCancelled
                   ? Colors.red.withValues(alpha: 0.1)
                   : isBooking
-                  ? Colors.blue.withValues(alpha: 0.1)
-                  : Colors.orange.withValues(alpha: 0.1),
+                      ? Colors.blue.withValues(alpha: 0.1)
+                      : Colors.orange.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -80,27 +80,35 @@ class EarningTripTile extends StatelessWidget {
                     ),
                     isCancelled
                         ? Text(
-                      trip.cancelBy == 'passenger' ? "Passenger Cancelled" : "Driver Cancelled",
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red,
-                      ),
-                    )
+                            trip.cancelBy == 'passenger'
+                                ? "Passenger Cancelled"
+                                : "Driver Cancelled",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          )
                         : Text(
-                      "LKR ${trip.fare.toStringAsFixed(2)}",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.green.shade400 : Colors.green.shade700,
-                      ),
-                    ),
+                            "LKR ${trip.fare.toStringAsFixed(2)}",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: isDark
+                                  ? Colors.green.shade400
+                                  : Colors.green.shade700,
+                            ),
+                          ),
                   ],
                 ),
                 const SizedBox(height: 2),
                 Text(
                   "ID: ${trip.id}",
-                  style: TextStyle(fontSize: 11, color: isDark ? Colors.blue.shade200 : Colors.blue.shade700, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                      fontSize: 11,
+                      color:
+                          isDark ? Colors.blue.shade200 : Colors.blue.shade700,
+                      fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -110,7 +118,8 @@ class EarningTripTile extends StatelessWidget {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    Icon(Icons.trip_origin_rounded, size: 12, color: Colors.blue.shade400),
+                    Icon(Icons.trip_origin_rounded,
+                        size: 12, color: Colors.blue.shade400),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
@@ -125,7 +134,8 @@ class EarningTripTile extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.location_on_rounded, size: 12, color: Colors.red.shade400),
+                    Icon(Icons.location_on_rounded,
+                        size: 12, color: Colors.red.shade400),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(

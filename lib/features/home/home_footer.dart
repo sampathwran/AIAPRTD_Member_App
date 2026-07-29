@@ -64,13 +64,16 @@ class _HomeFooterState extends State<HomeFooter> {
   }
 
   void _handleCreateBooking(BuildContext context) {
-    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
-    final vehicleProvider = Provider.of<VehicleProvider>(context, listen: false);
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
+    final vehicleProvider =
+        Provider.of<VehicleProvider>(context, listen: false);
 
     final Map<String, dynamic> activeData = {};
     if (profileProvider.memberData != null) {
       try {
-        activeData.addAll(Map<String, dynamic>.from(profileProvider.memberData as Map));
+        activeData.addAll(
+            Map<String, dynamic>.from(profileProvider.memberData as Map));
       } catch (_) {}
     }
     if (vehicleProvider.vehicleData != null) {
@@ -81,13 +84,15 @@ class _HomeFooterState extends State<HomeFooter> {
 
     final kycCheck = PersonalKYCChecker.checkKYCStatus(activeData);
     if (kycCheck['isVerified'] == false) {
-      blockReason = kycCheck['reason']?.toString() ?? 'Personal profile or face verification pending.';
+      blockReason = kycCheck['reason']?.toString() ??
+          'Personal profile or face verification pending.';
     }
 
     if (blockReason == null) {
       final vehicleCheck = checkMemberSystemStatus(activeData);
       if (vehicleCheck['isActive'] == false) {
-        blockReason = vehicleCheck['reason']?.toString() ?? 'Vehicle verification pending.';
+        blockReason = vehicleCheck['reason']?.toString() ??
+            'Vehicle verification pending.';
       }
     }
 
@@ -95,13 +100,17 @@ class _HomeFooterState extends State<HomeFooter> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text("Action Required", style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Text("Please complete the following requirements before creating a booking:\n\n$blockReason"),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text("Action Required",
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          content: Text(
+              "Please complete the following requirements before creating a booking:\n\n$blockReason"),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context), 
-              child: const Text("OK", style: TextStyle(fontWeight: FontWeight.bold)),
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -113,7 +122,8 @@ class _HomeFooterState extends State<HomeFooter> {
     if (feeStatus['isFeePaidValid'] == false) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Reminder: ${feeStatus['reason']} Please settle it soon."),
+          content:
+              Text("Reminder: ${feeStatus['reason']} Please settle it soon."),
           backgroundColor: Colors.orange.shade800,
           duration: const Duration(seconds: 4),
         ),
@@ -154,11 +164,11 @@ class _HomeFooterState extends State<HomeFooter> {
                 const SizedBox(height: 12),
                 Center(
                   child: Container(
-                    width: 50, height: 6,
+                    width: 50,
+                    height: 6,
                     decoration: BoxDecoration(
                         color: Colors.grey.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(10)
-                    ),
+                        borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -181,23 +191,33 @@ class _HomeFooterState extends State<HomeFooter> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      width: 8, height: 8,
+                      width: 8,
+                      height: 8,
                       decoration: BoxDecoration(
-                        color: widget.isSharingLocation ? Colors.green : Colors.grey,
+                        color: widget.isSharingLocation
+                            ? Colors.green
+                            : Colors.grey,
                         shape: BoxShape.circle,
                         boxShadow: widget.isSharingLocation
-                            ? [BoxShadow(color: Colors.green.withValues(alpha: 0.4), blurRadius: 6)]
+                            ? [
+                                BoxShadow(
+                                    color: Colors.green.withValues(alpha: 0.4),
+                                    blurRadius: 6)
+                              ]
                             : null,
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      widget.isSharingLocation ? "You're online" : "You're offline",
+                      widget.isSharingLocation
+                          ? "You're online"
+                          : "You're offline",
                       style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: widget.isSharingLocation ? Colors.green.shade700 : const Color(0xFF64748B)
-                      ),
+                          color: widget.isSharingLocation
+                              ? Colors.green.shade700
+                              : const Color(0xFF64748B)),
                     ),
                   ],
                 ),
@@ -209,11 +229,17 @@ class _HomeFooterState extends State<HomeFooter> {
                 // ==========================================================
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 20),
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFF8FAFC),
+                    color: isDarkMode
+                        ? const Color(0xFF2A2A2A)
+                        : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isDarkMode ? const Color(0xFF333333) : const Color(0xFFF1F5F9)),
+                    border: Border.all(
+                        color: isDarkMode
+                            ? const Color(0xFF333333)
+                            : const Color(0xFFF1F5F9)),
                   ),
                   child: Consumer<ProfileProvider>(
                     builder: (context, profileProvider, child) {
@@ -223,9 +249,19 @@ class _HomeFooterState extends State<HomeFooter> {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           AcceptanceWidget(memberData: memberData),
-                          Container(width: 1, height: 30, color: isDarkMode ? Colors.grey[700] : const Color(0xFFE2E8F0)),
+                          Container(
+                              width: 1,
+                              height: 30,
+                              color: isDarkMode
+                                  ? Colors.grey[700]
+                                  : const Color(0xFFE2E8F0)),
                           RatingWidget(memberData: memberData),
-                          Container(width: 1, height: 30, color: isDarkMode ? Colors.grey[700] : const Color(0xFFE2E8F0)),
+                          Container(
+                              width: 1,
+                              height: 30,
+                              color: isDarkMode
+                                  ? Colors.grey[700]
+                                  : const Color(0xFFE2E8F0)),
                           CancellationWidget(memberData: memberData),
                         ],
                       );
@@ -234,25 +270,48 @@ class _HomeFooterState extends State<HomeFooter> {
                 ),
 
                 const SizedBox(height: 10),
-                Divider(height: 30, thickness: 1, color: isDarkMode ? Colors.grey[800] : const Color(0xFFF1F5F9)),
+                Divider(
+                    height: 30,
+                    thickness: 1,
+                    color: isDarkMode
+                        ? Colors.grey[800]
+                        : const Color(0xFFF1F5F9)),
 
                 Padding(
                   padding: const EdgeInsets.only(left: 20, bottom: 12),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text("Shortcuts", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : const Color(0xFF0F172A))),
+                    child: Text("Shortcuts",
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode
+                                ? Colors.white
+                                : const Color(0xFF0F172A))),
                   ),
                 ),
 
-                ScheduledButton(onTap: () => Navigator.pushNamed(context, '/scheduled')),
-                Divider(indent: 20, endIndent: 20, color: isDarkMode ? Colors.grey[850] : const Color(0xFFF8FAFC)),
+                ScheduledButton(
+                    onTap: () => Navigator.pushNamed(context, '/scheduled')),
+                Divider(
+                    indent: 20,
+                    endIndent: 20,
+                    color: isDarkMode
+                        ? Colors.grey[850]
+                        : const Color(0xFFF8FAFC)),
                 CreateJobButton(onTap: () => _handleCreateBooking(context)),
-                Divider(indent: 20, endIndent: 20, color: isDarkMode ? Colors.grey[850] : const Color(0xFFF8FAFC)),
+                Divider(
+                    indent: 20,
+                    endIndent: 20,
+                    color: isDarkMode
+                        ? Colors.grey[850]
+                        : const Color(0xFFF8FAFC)),
                 RoadPickupButton(onTap: () {
                   if (!widget.isSharingLocation) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text("You must be Online to start a Road Pickup."),
+                        content:
+                            Text("You must be Online to start a Road Pickup."),
                         backgroundColor: Colors.red,
                         duration: Duration(seconds: 3),
                       ),
@@ -264,7 +323,8 @@ class _HomeFooterState extends State<HomeFooter> {
 
                 Consumer<ProfileProvider>(
                   builder: (context, profileProvider, child) {
-                    if (!widget.isSharingLocation) return const SizedBox(height: 32);
+                    if (!widget.isSharingLocation)
+                      return const SizedBox(height: 32);
 
                     return Padding(
                       padding: const EdgeInsets.only(top: 24, bottom: 32),
@@ -272,28 +332,33 @@ class _HomeFooterState extends State<HomeFooter> {
                         onTap: profileProvider.isLocalLoading
                             ? null
                             : () async {
-                          final ScaffoldMessengerState scaffoldMessenger = ScaffoldMessenger.of(context);
-                          await _playInternalSound();
+                                final ScaffoldMessengerState scaffoldMessenger =
+                                    ScaffoldMessenger.of(context);
+                                await _playInternalSound();
 
-                          bool success = await profileProvider.toggleDriverStatus(false);
+                                bool success = await profileProvider
+                                    .toggleDriverStatus(false);
 
-                          if (success) {
-                            widget.onToggleLocation();
-                          } else {
-                            scaffoldMessenger.showSnackBar(
-                              const SnackBar(
-                                  content: Text("Failed to go offline. Try again! ❌"),
-                                  behavior: SnackBarBehavior.floating
-                              ),
-                            );
-                          }
-                        },
+                                if (success) {
+                                  widget.onToggleLocation();
+                                } else {
+                                  scaffoldMessenger.showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            "Failed to go offline. Try again! ❌"),
+                                        behavior: SnackBarBehavior.floating),
+                                  );
+                                }
+                              },
                         child: Container(
                           width: 80,
                           height: 80,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [Colors.red.shade400, Colors.red.shade600],
+                              colors: [
+                                Colors.red.shade400,
+                                Colors.red.shade600
+                              ],
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                             ),
@@ -308,16 +373,17 @@ class _HomeFooterState extends State<HomeFooter> {
                           ),
                           child: Center(
                             child: profileProvider.isLocalLoading
-                                ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 3)
                                 : const Text(
-                              "OFF",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 19,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
+                                    "OFF",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 19,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
                           ),
                         ),
                       ),

@@ -36,25 +36,47 @@ class ProfileMenuWidget extends StatelessWidget {
       child: Column(
         children: [
           _buildSection(context, "Personal Information", [
-            _buildTile(context, Icons.person_outline, "Personal Information", () => _nav(context, const PersonalInfoPage())),
-            _buildTile(context, Icons.directions_car_outlined, "Vehicle Information", () {
-              final String memberNo = Provider.of<ProfileProvider>(context, listen: false).memberNo;
-              _nav(context, VehicleInfoPage(membershipNo: memberNo == 'N/A' ? Provider.of<ProfileProvider>(context, listen: false).documentId : memberNo));
+            _buildTile(context, Icons.person_outline, "Personal Information",
+                () => _nav(context, const PersonalInfoPage())),
+            _buildTile(
+                context, Icons.directions_car_outlined, "Vehicle Information",
+                () {
+              final String memberNo =
+                  Provider.of<ProfileProvider>(context, listen: false).memberNo;
+              _nav(
+                  context,
+                  VehicleInfoPage(
+                      membershipNo: memberNo == 'N/A'
+                          ? Provider.of<ProfileProvider>(context, listen: false)
+                              .documentId
+                          : memberNo));
             }),
           ]),
           _buildSection(context, "My Finance", [
-            _buildTile(context, Icons.account_balance_wallet_outlined, "Earning", () => _nav(context, const EarningsPage())),
-            _buildTile(context, Icons.card_membership_outlined, "Membership Fee", () => _nav(context, const MembershipFeePage())),
-            _buildTile(context, Icons.receipt_long_outlined, "App Usage Charge", () => _nav(context, const AppUsagePage())),
-            _buildTile(context, Icons.savings_outlined, "Saving", () => _nav(context, const SavingPage())),
+            _buildTile(context, Icons.account_balance_wallet_outlined,
+                "Earning", () => _nav(context, const EarningsPage())),
+            _buildTile(
+                context,
+                Icons.card_membership_outlined,
+                "Membership Fee",
+                () => _nav(context, const MembershipFeePage())),
+            _buildTile(context, Icons.receipt_long_outlined, "App Usage Charge",
+                () => _nav(context, const AppUsagePage())),
+            _buildTile(context, Icons.savings_outlined, "Saving",
+                () => _nav(context, const SavingPage())),
           ]),
           _buildSection(context, "General", [
             // Newly added My Bookings Menu (above Ride History)
-            _buildTile(context, Icons.library_books_outlined, "My Bookings", () => _nav(context, const MyBookingPage())),
-            _buildTile(context, Icons.star_outline, "Member Benefits", () => _nav(context, const MemberBenefitsPage())),
-            _buildTile(context, Icons.support_agent, "Support Tickets", () => _nav(context, const SupportTicketsPage())),
-            _buildTile(context, Icons.how_to_vote, "Votes", () => _nav(context, const VotesPage())),
-            _buildTile(context, Icons.notifications_none, "Notification", () => _nav(context, const NotificationPage())),
+            _buildTile(context, Icons.library_books_outlined, "My Bookings",
+                () => _nav(context, const MyBookingPage())),
+            _buildTile(context, Icons.star_outline, "Member Benefits",
+                () => _nav(context, const MemberBenefitsPage())),
+            _buildTile(context, Icons.support_agent, "Support Tickets",
+                () => _nav(context, const SupportTicketsPage())),
+            _buildTile(context, Icons.how_to_vote, "Votes",
+                () => _nav(context, const VotesPage())),
+            _buildTile(context, Icons.notifications_none, "Notification",
+                () => _nav(context, const NotificationPage())),
           ]),
           _buildSettingsSection(context),
 
@@ -71,17 +93,25 @@ class ProfileMenuWidget extends StatelessWidget {
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          title: const Text('Confirm Logout', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: const Text('Are you sure you want to log out? All active sessions will be closed.'),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          title: const Text('Confirm Logout',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          content: const Text(
+              'Are you sure you want to log out? All active sessions will be closed.'),
           actions: <Widget>[
             TextButton(
-                child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-                onPressed: () => Navigator.of(dialogContext).pop()
-            ),
+                child:
+                    const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                onPressed: () => Navigator.of(dialogContext).pop()),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-              child: const Text('Logout', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8))),
+              child: const Text('Logout',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
               onPressed: () {
                 Navigator.of(dialogContext).pop();
                 AuthService.logout(context);
@@ -102,20 +132,30 @@ class ProfileMenuWidget extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 25, bottom: 12, left: 10),
-          child: Text("ACCOUNT", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: isDarkMode ? Colors.grey[400] : Colors.blueGrey, letterSpacing: 1.5)),
+          child: Text("ACCOUNT",
+              style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12,
+                  color: isDarkMode ? Colors.grey[400] : Colors.blueGrey,
+                  letterSpacing: 1.5)),
         ),
         Container(
           clipBehavior: Clip.hardEdge,
           decoration: BoxDecoration(
             color: theme.cardColor,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: isDarkMode ? Colors.red.withValues(alpha: 0.3) : Colors.red.shade100),
+            border: Border.all(
+                color: isDarkMode
+                    ? Colors.red.withValues(alpha: 0.3)
+                    : Colors.red.shade100),
           ),
           child: Material(
             color: Colors.transparent,
             child: ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text("Logout", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              title: const Text("Logout",
+                  style: TextStyle(
+                      color: Colors.red, fontWeight: FontWeight.bold)),
               onTap: () => _showLogoutDialog(context),
             ),
           ),
@@ -128,7 +168,8 @@ class ProfileMenuWidget extends StatelessWidget {
     Navigator.push(context, MaterialPageRoute(builder: (context) => page));
   }
 
-  Widget _buildSection(BuildContext context, String title, List<Widget> children) {
+  Widget _buildSection(
+      BuildContext context, String title, List<Widget> children) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
 
@@ -138,15 +179,28 @@ class ProfileMenuWidget extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(top: 25, bottom: 12, left: 10),
           child: Text(title.toUpperCase(),
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: isDarkMode ? Colors.grey[400] : Colors.blueGrey.shade400, letterSpacing: 1.5)),
+              style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12,
+                  color:
+                      isDarkMode ? Colors.grey[400] : Colors.blueGrey.shade400,
+                  letterSpacing: 1.5)),
         ),
         Container(
           clipBehavior: Clip.hardEdge,
           decoration: BoxDecoration(
             color: theme.cardColor,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: isDarkMode ? Colors.grey[800]! : Colors.grey.shade100),
-            boxShadow: [BoxShadow(color: isDarkMode ? Colors.black.withValues(alpha: 0.3) : Colors.blue.shade100.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 10))],
+            border: Border.all(
+                color: isDarkMode ? Colors.grey[800]! : Colors.grey.shade100),
+            boxShadow: [
+              BoxShadow(
+                  color: isDarkMode
+                      ? Colors.black.withValues(alpha: 0.3)
+                      : Colors.blue.shade100.withValues(alpha: 0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10))
+            ],
           ),
           child: Material(
             color: Colors.transparent,
@@ -157,7 +211,8 @@ class ProfileMenuWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildTile(BuildContext context, IconData icon, String title, VoidCallback onTap) {
+  Widget _buildTile(
+      BuildContext context, IconData icon, String title, VoidCallback onTap) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
       onTap: onTap,
@@ -165,13 +220,19 @@ class ProfileMenuWidget extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [Colors.blue.shade300, Colors.blue.shade500]),
+          gradient: LinearGradient(
+              colors: [Colors.blue.shade300, Colors.blue.shade500]),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, size: 20, color: Colors.white),
       ),
-      title: Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDarkMode ? Colors.white : Colors.black87)),
-      trailing: Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey.shade400),
+      title: Text(title,
+          style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: isDarkMode ? Colors.white : Colors.black87)),
+      trailing:
+          Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey.shade400),
     );
   }
 
@@ -184,15 +245,28 @@ class ProfileMenuWidget extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 25, bottom: 12, left: 10),
-          child: Text("APP SETTINGS", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: isDarkMode ? Colors.grey[400] : Colors.blueGrey, letterSpacing: 1.5)),
+          child: Text("APP SETTINGS",
+              style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12,
+                  color: isDarkMode ? Colors.grey[400] : Colors.blueGrey,
+                  letterSpacing: 1.5)),
         ),
         Container(
           clipBehavior: Clip.hardEdge,
           decoration: BoxDecoration(
             color: theme.cardColor,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: isDarkMode ? Colors.grey[800]! : Colors.grey.shade100),
-            boxShadow: [BoxShadow(color: isDarkMode ? Colors.black.withValues(alpha: 0.3) : Colors.blue.shade100.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 10))],
+            border: Border.all(
+                color: isDarkMode ? Colors.grey[800]! : Colors.grey.shade100),
+            boxShadow: [
+              BoxShadow(
+                  color: isDarkMode
+                      ? Colors.black.withValues(alpha: 0.3)
+                      : Colors.blue.shade100.withValues(alpha: 0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10))
+            ],
           ),
           child: Material(
             color: Colors.transparent,
@@ -200,17 +274,33 @@ class ProfileMenuWidget extends StatelessWidget {
               tilePadding: const EdgeInsets.symmetric(horizontal: 20),
               leading: Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: isDarkMode ? Colors.grey[700] : Colors.grey.shade100, borderRadius: BorderRadius.circular(12)),
-                child: Icon(Icons.settings_outlined, color: isDarkMode ? Colors.white : Colors.black87),
+                decoration: BoxDecoration(
+                    color: isDarkMode ? Colors.grey[700] : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12)),
+                child: Icon(Icons.settings_outlined,
+                    color: isDarkMode ? Colors.white : Colors.black87),
               ),
-              title: const Text("App Configuration", style: TextStyle(fontWeight: FontWeight.w600)),
+              title: const Text("App Configuration",
+                  style: TextStyle(fontWeight: FontWeight.w600)),
               children: [
-                _buildTile(context, Icons.dark_mode_outlined, "Dark Mode", () => _nav(context, const DarkModePage())),
-                _buildTile(context, Icons.volume_up_outlined, "App Volume", () => _nav(context, const AppVolumePage())),
-                _buildTile(context, Icons.language, "Language", () => _nav(context, const LanguagePage())),
-                _buildTile(context, Icons.help_outline, "Help Center", () => _nav(context, const HelpCenterPage())),
-                _buildTile(context, Icons.privacy_tip_outlined, "Privacy Policy", () => _nav(context, const PrivacyPolicyPage())),
-                _buildTile(context, Icons.description_outlined, "Terms & Conditions", () => _nav(context, const TermsConditionsPage())),
+                _buildTile(context, Icons.dark_mode_outlined, "Dark Mode",
+                    () => _nav(context, const DarkModePage())),
+                _buildTile(context, Icons.volume_up_outlined, "App Volume",
+                    () => _nav(context, const AppVolumePage())),
+                _buildTile(context, Icons.language, "Language",
+                    () => _nav(context, const LanguagePage())),
+                _buildTile(context, Icons.help_outline, "Help Center",
+                    () => _nav(context, const HelpCenterPage())),
+                _buildTile(
+                    context,
+                    Icons.privacy_tip_outlined,
+                    "Privacy Policy",
+                    () => _nav(context, const PrivacyPolicyPage())),
+                _buildTile(
+                    context,
+                    Icons.description_outlined,
+                    "Terms & Conditions",
+                    () => _nav(context, const TermsConditionsPage())),
               ],
             ),
           ),

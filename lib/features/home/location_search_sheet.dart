@@ -51,7 +51,8 @@ class _LocationSearchSheetState extends State<LocationSearchSheet> {
     // Add Material widget to fix error
     return Padding(
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 40, // Space from top screen edge
+        top: MediaQuery.of(context).padding.top +
+            40, // Space from top screen edge
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Material(
@@ -62,64 +63,68 @@ class _LocationSearchSheetState extends State<LocationSearchSheet> {
             color: theme.colorScheme.surface,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
-        child: Column(
-          children: [
-            // Handle Bar (Top Dash)
-            Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 12),
-              width: 40,
-              height: 5,
-              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10)),
-            ),
+          child: Column(
+            children: [
+              // Handle Bar (Top Dash)
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 12),
+                width: 40,
+                height: 5,
+                decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10)),
+              ),
 
-            // Title
-            Text(
-              widget.isPickup ? "Set Pickup Location" : "Set Drop Location",
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
+              // Title
+              Text(
+                widget.isPickup ? "Set Pickup Location" : "Set Drop Location",
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
 
-            // Search Bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: TextField(
-                controller: _searchController,
-                autofocus: true,
-                onChanged: (val) => _onSearchChanged(val, provider),
-                decoration: InputDecoration(
-                  hintText: "Search for a location...",
-                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                    icon: const Icon(Icons.clear, color: Colors.grey),
-                    onPressed: () {
-                      _searchController.clear();
-                      _onSearchChanged("", provider);
-                    },
-                  )
-                      : null,
-                  filled: true,
-                  fillColor: isDark ? const Color(0xFF1E293B) : Colors.grey.shade100,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+              // Search Bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  onChanged: (val) => _onSearchChanged(val, provider),
+                  decoration: InputDecoration(
+                    hintText: "Search for a location...",
+                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, color: Colors.grey),
+                            onPressed: () {
+                              _searchController.clear();
+                              _onSearchChanged("", provider);
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor:
+                        isDark ? const Color(0xFF1E293B) : Colors.grey.shade100,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-            const Divider(),
+              const SizedBox(height: 10),
+              const Divider(),
 
-            // Options / Results List
-            Expanded(
-              child: _searchController.text.isEmpty
-                  ? _buildDefaultOptions(provider)
-                  : _buildSearchResults(provider),
-            ),
-          ],
-        ), // Close Column
-      ), // Close Container
-     ), // Close Material
+              // Options / Results List
+              Expanded(
+                child: _searchController.text.isEmpty
+                    ? _buildDefaultOptions(provider)
+                    : _buildSearchResults(provider),
+              ),
+            ],
+          ), // Close Column
+        ), // Close Container
+      ), // Close Material
     ); // Close Padding
   }
 
@@ -129,11 +134,15 @@ class _LocationSearchSheetState extends State<LocationSearchSheet> {
       children: [
         // 📍 Choose on Map
         ListTile(
-          leading: const CircleAvatar(backgroundColor: Colors.blue, child: Icon(Icons.map, color: Colors.white, size: 20)),
-          title: const Text("Choose on Map", style: TextStyle(fontWeight: FontWeight.w600)),
+          leading: const CircleAvatar(
+              backgroundColor: Colors.blue,
+              child: Icon(Icons.map, color: Colors.white, size: 20)),
+          title: const Text("Choose on Map",
+              style: TextStyle(fontWeight: FontWeight.w600)),
           subtitle: const Text("Pin a location on the map"),
           onTap: () {
-            provider.enableChooseOnMap(isPickup: widget.isPickup, dropIndex: widget.dropIndex);
+            provider.enableChooseOnMap(
+                isPickup: widget.isPickup, dropIndex: widget.dropIndex);
             Navigator.pop(context);
           },
         ),
@@ -143,23 +152,26 @@ class _LocationSearchSheetState extends State<LocationSearchSheet> {
         if (provider.savedLocations.isNotEmpty) ...[
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Text("Saved Places", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+            child: Text("Saved Places",
+                style:
+                    TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
           ),
           ...provider.savedLocations.map((loc) => ListTile(
-            leading: const Icon(Icons.star_rounded, color: Colors.amber),
-            title: Text(loc['name'], style: const TextStyle(fontWeight: FontWeight.w600)),
-            subtitle: Text(loc['address']),
-            onTap: () {
-              LatLng latLng = LatLng(loc['lat'], loc['lng']);
-              if (widget.isPickup) {
-                provider.setPickupLocation(latLng, loc['address']);
-              } else {
-                provider.setDropLocation(widget.dropIndex, latLng, loc['address']);
-              }
-              Navigator.pop(context);
-              
-            },
-          )),
+                leading: const Icon(Icons.star_rounded, color: Colors.amber),
+                title: Text(loc['name'],
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text(loc['address']),
+                onTap: () {
+                  LatLng latLng = LatLng(loc['lat'], loc['lng']);
+                  if (widget.isPickup) {
+                    provider.setPickupLocation(latLng, loc['address']);
+                  } else {
+                    provider.setDropLocation(
+                        widget.dropIndex, latLng, loc['address']);
+                  }
+                  Navigator.pop(context);
+                },
+              )),
           const Divider(),
         ],
 
@@ -167,22 +179,24 @@ class _LocationSearchSheetState extends State<LocationSearchSheet> {
         if (provider.recentLocations.isNotEmpty) ...[
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Text("Recent Places", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+            child: Text("Recent Places",
+                style:
+                    TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
           ),
           ...provider.recentLocations.map((loc) => ListTile(
-            leading: const Icon(Icons.history, color: Colors.grey),
-            title: Text(loc['address']),
-            onTap: () {
-              LatLng latLng = LatLng(loc['lat'], loc['lng']);
-              if (widget.isPickup) {
-                provider.setPickupLocation(latLng, loc['address']);
-              } else {
-                provider.setDropLocation(widget.dropIndex, latLng, loc['address']);
-              }
-              Navigator.pop(context);
-              
-            },
-          )),
+                leading: const Icon(Icons.history, color: Colors.grey),
+                title: Text(loc['address']),
+                onTap: () {
+                  LatLng latLng = LatLng(loc['lat'], loc['lng']);
+                  if (widget.isPickup) {
+                    provider.setPickupLocation(latLng, loc['address']);
+                  } else {
+                    provider.setDropLocation(
+                        widget.dropIndex, latLng, loc['address']);
+                  }
+                  Navigator.pop(context);
+                },
+              )),
         ]
       ],
     );
@@ -203,7 +217,8 @@ class _LocationSearchSheetState extends State<LocationSearchSheet> {
       itemBuilder: (context, index) {
         final option = _searchResults[index];
         return ListTile(
-          leading: Icon(Icons.location_on, color: Theme.of(context).iconTheme.color ?? Colors.black54),
+          leading: Icon(Icons.location_on,
+              color: Theme.of(context).iconTheme.color ?? Colors.black54),
           title: Text(option['name']),
           onTap: () async {
             await provider.fetchPlaceDetailsAndSetLocation(

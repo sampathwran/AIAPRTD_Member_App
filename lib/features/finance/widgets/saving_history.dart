@@ -10,7 +10,7 @@ class SavingHistoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profile = Provider.of<ProfileProvider>(context, listen: false);
-    
+
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collectionGroup('transactions')
@@ -30,9 +30,12 @@ class SavingHistoryList extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.savings_outlined, size: 60, color: Colors.grey.shade300),
+                Icon(Icons.savings_outlined,
+                    size: 60, color: Colors.grey.shade300),
                 const SizedBox(height: 10),
-                Text("No savings yet.", style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
+                Text("No savings yet.",
+                    style:
+                        TextStyle(color: Colors.grey.shade500, fontSize: 16)),
               ],
             ),
           );
@@ -44,7 +47,7 @@ class SavingHistoryList extends StatelessWidget {
           itemBuilder: (context, index) {
             final doc = snapshot.data!.docs[index];
             final data = doc.data() as Map<String, dynamic>;
-            
+
             double _parseDouble(dynamic val) {
               if (val == null) return 0.0;
               if (val is num) return val.toDouble();
@@ -52,14 +55,18 @@ class SavingHistoryList extends StatelessWidget {
               return 0.0;
             }
 
-            final type = data['type'] as String? ?? 'app_booking_commission_split';
-            final amount = type == 'app_booking_commission_split' ? _parseDouble(data['passengerSavings']) : _parseDouble(data['amount']);
-            final date = (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
-            
+            final type =
+                data['type'] as String? ?? 'app_booking_commission_split';
+            final amount = type == 'app_booking_commission_split'
+                ? _parseDouble(data['passengerSavings'])
+                : _parseDouble(data['amount']);
+            final date =
+                (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+
             final tripId = data['tripId'] as String? ?? 'N/A';
             final totalFare = _parseDouble(data['totalFare']);
             final isEarning = type == 'app_booking_commission_split';
-            
+
             String title = "Unknown Transaction";
             if (type == 'app_booking_commission_split') {
               title = "Shared Booking Reward";
@@ -78,7 +85,10 @@ class SavingHistoryList extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
-                  BoxShadow(color: Colors.grey.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 5))
+                  BoxShadow(
+                      color: Colors.grey.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5))
                 ],
               ),
               child: Row(
@@ -86,11 +96,15 @@ class SavingHistoryList extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: isEarning ? Colors.teal.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
+                      color: isEarning
+                          ? Colors.teal.withValues(alpha: 0.1)
+                          : Colors.orange.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      isEarning ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, 
+                      isEarning
+                          ? Icons.arrow_downward_rounded
+                          : Icons.arrow_upward_rounded,
                       color: isEarning ? Colors.teal : Colors.orange,
                     ),
                   ),
@@ -99,21 +113,48 @@ class SavingHistoryList extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+                        FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(title,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14))),
                         if (isEarning && tripId != 'N/A') ...[
                           const SizedBox(height: 4),
-                          FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text("Trip ID: $tripId", style: const TextStyle(color: Colors.black54, fontSize: 11))),
-                          FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text("Total Fare: LKR ${NumberFormat('#,##0.00').format(totalFare)}", style: const TextStyle(color: Colors.black54, fontSize: 11))),
+                          FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text("Trip ID: $tripId",
+                                  style: const TextStyle(
+                                      color: Colors.black54, fontSize: 11))),
+                          FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                  "Total Fare: LKR ${NumberFormat('#,##0.00').format(totalFare)}",
+                                  style: const TextStyle(
+                                      color: Colors.black54, fontSize: 11))),
                         ],
                         const SizedBox(height: 4),
-                        FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(DateFormat('MMM dd, yyyy • hh:mm a').format(date), style: const TextStyle(color: Colors.grey, fontSize: 10))),
+                        FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                                DateFormat('MMM dd, yyyy • hh:mm a')
+                                    .format(date),
+                                style: const TextStyle(
+                                    color: Colors.grey, fontSize: 10))),
                       ],
                     ),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     "${isEarning ? '+' : '-'} LKR ${NumberFormat('#,##0.00').format(amount)}",
-                    style: TextStyle(fontWeight: FontWeight.bold, color: isEarning ? Colors.teal : Colors.orange, fontSize: 14),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isEarning ? Colors.teal : Colors.orange,
+                        fontSize: 14),
                   ),
                 ],
               ),

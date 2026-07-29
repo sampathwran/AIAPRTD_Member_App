@@ -10,7 +10,7 @@ void main() {
     'utils': 'core/utils',
     'notification_service.dart': 'core/services/notification_service.dart',
     'check_polls.dart': 'core/services/check_polls.dart',
-    
+
     // Features
     'home': 'features/home',
     'ads': 'features/marketplace',
@@ -30,16 +30,20 @@ void main() {
     'login_screen.dart': 'features/auth/login_screen.dart',
     'register_screen.dart': 'features/auth/register_screen.dart',
     'forgot_password_screen.dart': 'features/auth/forgot_password_screen.dart',
-    'first_time_login_screen.dart': 'features/auth/first_time_login_screen.dart',
+    'first_time_login_screen.dart':
+        'features/auth/first_time_login_screen.dart',
     'splash_screen.dart': 'features/auth/splash_screen.dart',
-    'privacy_policy_screen.dart': 'features/settings/privacy_policy_screen.dart',
-    'terms_conditions_screen.dart': 'features/settings/terms_conditions_screen.dart',
+    'privacy_policy_screen.dart':
+        'features/settings/privacy_policy_screen.dart',
+    'terms_conditions_screen.dart':
+        'features/settings/terms_conditions_screen.dart',
   };
 
   String posixPath(String p) => p.replaceAll('\\', '/');
 
   // 1. Convert all relative imports to absolute imports
-  final allDartFiles = baseDir.listSync(recursive: true)
+  final allDartFiles = baseDir
+      .listSync(recursive: true)
       .whereType<File>()
       .where((f) => f.path.endsWith('.dart'))
       .toList();
@@ -48,19 +52,22 @@ void main() {
     try {
       var lines = file.readAsLinesSync();
       var newLines = <String>[];
-      
+
       for (var line in lines) {
-        if (line.trim().startsWith('import ') && !line.contains('package:') && !line.contains('dart:')) {
+        if (line.trim().startsWith('import ') &&
+            !line.contains('package:') &&
+            !line.contains('dart:')) {
           final regex = RegExp(r"import\s+['\u0022](.*?)['\u0022](.*)");
           final match = regex.firstMatch(line);
           if (match != null) {
             var relImport = match.group(1)!;
             var suffix = match.group(2)!;
-            
-            var targetFile = File('${posixPath(file.parent.path)}/$relImport').absolute;
+
+            var targetFile =
+                File('${posixPath(file.parent.path)}/$relImport').absolute;
             var targetPath = posixPath(targetFile.path);
             var basePath = posixPath(baseDir.absolute.path);
-            
+
             if (targetPath.startsWith(basePath)) {
               var absImport = targetPath.replaceFirst('$basePath/', '');
               line = "import 'package:$packageName/$absImport'$suffix";
@@ -81,13 +88,17 @@ void main() {
   for (var entry in moveMap.entries) {
     var oldPath = entry.key;
     var newPath = entry.value;
-    
+
     var oldFull = File('${baseDir.path}/$oldPath');
     var oldDir = Directory('${baseDir.path}/$oldPath');
-    
+
     if (oldDir.existsSync()) {
-      for (var file in oldDir.listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart'))) {
-        var relPath = posixPath(file.path).replaceFirst('${posixPath(oldDir.path)}/', '');
+      for (var file in oldDir
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.dart'))) {
+        var relPath =
+            posixPath(file.path).replaceFirst('${posixPath(oldDir.path)}/', '');
         fileMappings['$oldPath/$relPath'] = '$newPath/$relPath';
       }
     } else if (oldFull.existsSync()) {
@@ -99,35 +110,39 @@ void main() {
   for (var entry in moveMap.entries) {
     var srcPath = '${baseDir.path}/${entry.key}';
     var dstPath = '${baseDir.path}/${entry.value}';
-    
+
     if (Directory(srcPath).existsSync()) {
       var dstDir = Directory(dstPath);
       if (!dstDir.existsSync()) dstDir.createSync(recursive: true);
-      
+
       // Moving directories directly in Dart can be tricky across drives, but fine here
       // Process.runSync('cmd', ['/c', 'move', posixPath(srcPath).replaceAll('/', '\\'), posixPath(dstPath).replaceAll('/', '\\')]);
       var srcDir = Directory(srcPath);
-      for(var item in srcDir.listSync(recursive: true)) {
-        if(item is File) {
-            var relativeItemPath = posixPath(item.path).replaceFirst('${posixPath(srcDir.path)}/', '');
-            var newItemPath = '$dstPath/$relativeItemPath';
-            var newFile = File(newItemPath);
-            if(!newFile.parent.existsSync()) newFile.parent.createSync(recursive: true);
-            item.copySync(newFile.path);
-            item.deleteSync();
+      for (var item in srcDir.listSync(recursive: true)) {
+        if (item is File) {
+          var relativeItemPath = posixPath(item.path)
+              .replaceFirst('${posixPath(srcDir.path)}/', '');
+          var newItemPath = '$dstPath/$relativeItemPath';
+          var newFile = File(newItemPath);
+          if (!newFile.parent.existsSync())
+            newFile.parent.createSync(recursive: true);
+          item.copySync(newFile.path);
+          item.deleteSync();
         }
       }
       srcDir.deleteSync(recursive: true);
     } else if (File(srcPath).existsSync()) {
       var dstFile = File(dstPath);
-      if (!dstFile.parent.existsSync()) dstFile.parent.createSync(recursive: true);
+      if (!dstFile.parent.existsSync())
+        dstFile.parent.createSync(recursive: true);
       File(srcPath).renameSync(dstFile.path);
     }
   }
   print('Moved files.');
 
   // 4. Update absolute imports
-  final movedDartFiles = baseDir.listSync(recursive: true)
+  final movedDartFiles = baseDir
+      .listSync(recursive: true)
       .whereType<File>()
       .where((f) => f.path.endsWith('.dart'))
       .toList();
@@ -136,15 +151,16 @@ void main() {
     try {
       var lines = file.readAsLinesSync();
       var newLines = <String>[];
-      
+
       for (var line in lines) {
         if (line.trim().startsWith('import ')) {
-          final regex = RegExp(r"import\s+['\u0022]package:aiaprtd_member/(.*?)['\u0022](.*)");
+          final regex = RegExp(
+              r"import\s+['\u0022]package:aiaprtd_member/(.*?)['\u0022](.*)");
           final match = regex.firstMatch(line);
           if (match != null) {
             var importPath = match.group(1)!;
             var suffix = match.group(2)!;
-            
+
             if (fileMappings.containsKey(importPath)) {
               var newPath = fileMappings[importPath];
               line = "import 'package:$packageName/$newPath'$suffix";

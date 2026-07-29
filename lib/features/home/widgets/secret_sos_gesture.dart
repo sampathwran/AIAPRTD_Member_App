@@ -29,12 +29,15 @@ class _SecretSosGestureState extends State<SecretSosGesture> {
 
   void _triggerSos(BuildContext context) {
     HapticFeedback.vibrate();
-    Future.delayed(const Duration(milliseconds: 300), () => HapticFeedback.vibrate());
-    Future.delayed(const Duration(milliseconds: 600), () => HapticFeedback.heavyImpact());
+    Future.delayed(
+        const Duration(milliseconds: 300), () => HapticFeedback.vibrate());
+    Future.delayed(
+        const Duration(milliseconds: 600), () => HapticFeedback.heavyImpact());
 
-    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
     final sosProvider = Provider.of<SosProvider>(context, listen: false);
-    
+
     if (!sosProvider.isSosActive) {
       sosProvider.startSos(profileProvider);
     }

@@ -8,9 +8,11 @@ class RequesterStatusOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final assistanceProvider = Provider.of<CommunityAssistanceProvider>(context);
+    final assistanceProvider =
+        Provider.of<CommunityAssistanceProvider>(context);
 
-    if (!assistanceProvider.isMyRequestAccepted || assistanceProvider.myActiveRequestId == null) {
+    if (!assistanceProvider.isMyRequestAccepted ||
+        assistanceProvider.myActiveRequestId == null) {
       return const SizedBox.shrink();
     }
 
@@ -26,7 +28,10 @@ class RequesterStatusOverlay extends StatelessWidget {
             color: Colors.green.shade600,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
-              BoxShadow(color: Colors.green.withValues(alpha: 0.4), blurRadius: 20, spreadRadius: 5)
+              BoxShadow(
+                  color: Colors.green.withValues(alpha: 0.4),
+                  blurRadius: 20,
+                  spreadRadius: 5)
             ],
           ),
           child: Column(
@@ -34,12 +39,16 @@ class RequesterStatusOverlay extends StatelessWidget {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.check_circle_outline, color: Colors.white, size: 28),
+                  Icon(Icons.check_circle_outline,
+                      color: Colors.white, size: 28),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       "Helper is on the way!",
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18),
                     ),
                   ),
                 ],
@@ -65,7 +74,8 @@ class RequesterStatusOverlay extends StatelessWidget {
                     );
                   },
                   icon: const Icon(Icons.map, color: Colors.green),
-                  label: const Text("TRACK HELPER", style: TextStyle(fontWeight: FontWeight.bold)),
+                  label: const Text("TRACK HELPER",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.green.shade700,

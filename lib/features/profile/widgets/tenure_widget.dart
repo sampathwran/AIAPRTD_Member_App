@@ -9,15 +9,21 @@ class TenureWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // 1. Get Join Date
-    final String joinDateStr = memberData['joinDate']?.toString() ?? DateTime.now().toString().split(' ')[0];
+    final String joinDateStr = memberData['joinDate']?.toString() ??
+        DateTime.now().toString().split(' ')[0];
 
     // 2. Calculate Tenure
     String tenure = _calculateTenure(joinDateStr);
 
     return Column(
       children: [
-        Text(tenure, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)), // Reduced font size slightly to prevent overflow
-        const Text("Tenure", style: TextStyle(color: Colors.grey, fontSize: 12)),
+        Text(tenure,
+            style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize:
+                    16)), // Reduced font size slightly to prevent overflow
+        const Text("Tenure",
+            style: TextStyle(color: Colors.grey, fontSize: 12)),
       ],
     );
   }

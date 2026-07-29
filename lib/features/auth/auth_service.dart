@@ -16,7 +16,8 @@ class AuthService {
   // =========================================================================
   static Future<void> logout(BuildContext context) async {
     try {
-      debugPrint("🔄 [AuthService] Logout session triggered. Cleaning memory...");
+      debugPrint(
+          "🔄 [AuthService] Logout session triggered. Cleaning memory...");
 
       // 1. Clear all data and Live Streams (Listeners) in ProfileProvider
       // Must use listen: false because it is called outside a widget
@@ -29,8 +30,9 @@ class AuthService {
       await _auth.signOut();
 
       // 4. Navigate using the navigatorKey from main.dart
-      navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
-      
+      navigatorKey.currentState
+          ?.pushNamedAndRemoveUntil('/login', (route) => false);
+
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

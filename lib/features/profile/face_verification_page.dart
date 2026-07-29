@@ -21,7 +21,8 @@ class FaceVerificationPage extends StatefulWidget {
   State<FaceVerificationPage> createState() => _FaceVerificationPageState();
 }
 
-class _FaceVerificationPageState extends State<FaceVerificationPage> with SingleTickerProviderStateMixin {
+class _FaceVerificationPageState extends State<FaceVerificationPage>
+    with SingleTickerProviderStateMixin {
   CameraController? _cameraController;
   bool _isCameraInitialized = false;
   bool _isScanning = false;
@@ -59,7 +60,7 @@ class _FaceVerificationPageState extends State<FaceVerificationPage> with Single
       if (cameras.isEmpty) return;
 
       final frontCamera = cameras.firstWhere(
-            (camera) => camera.lensDirection == CameraLensDirection.front,
+        (camera) => camera.lensDirection == CameraLensDirection.front,
         orElse: () => cameras.first,
       );
 
@@ -77,7 +78,8 @@ class _FaceVerificationPageState extends State<FaceVerificationPage> with Single
   }
 
   Future<void> _startAIScan() async {
-    if (_cameraController == null || !_cameraController!.value.isInitialized) return;
+    if (_cameraController == null || !_cameraController!.value.isInitialized)
+      return;
 
     setState(() {
       _isScanning = true;
@@ -128,7 +130,9 @@ class _FaceVerificationPageState extends State<FaceVerificationPage> with Single
 
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Face biometrics securely saved! ✅"), backgroundColor: Colors.green),
+          const SnackBar(
+              content: Text("Face biometrics securely saved! ✅"),
+              backgroundColor: Colors.green),
         );
         Navigator.popUntil(context, (route) => route.isFirst);
       } else {
@@ -142,7 +146,9 @@ class _FaceVerificationPageState extends State<FaceVerificationPage> with Single
         _logIndex = 0;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Cloud sync failed. Please try again."), backgroundColor: Colors.red),
+        const SnackBar(
+            content: Text("Cloud sync failed. Please try again."),
+            backgroundColor: Colors.red),
       );
     }
   }
@@ -178,12 +184,23 @@ class _FaceVerificationPageState extends State<FaceVerificationPage> with Single
                             const Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("AI SECURITY", style: TextStyle(color: Colors.cyanAccent, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
-                                Text("BIOMETRIC SCAN", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+                                Text("AI SECURITY",
+                                    style: TextStyle(
+                                        color: Colors.cyanAccent,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.5)),
+                                Text("BIOMETRIC SCAN",
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 1.2)),
                               ],
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
                                 color: Colors.redAccent.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(20),
@@ -191,9 +208,18 @@ class _FaceVerificationPageState extends State<FaceVerificationPage> with Single
                               ),
                               child: Row(
                                 children: [
-                                  Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle)),
+                                  Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: const BoxDecoration(
+                                          color: Colors.redAccent,
+                                          shape: BoxShape.circle)),
                                   const SizedBox(width: 6),
-                                  const Text("LIVE", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                                  const Text("LIVE",
+                                      style: TextStyle(
+                                          color: Colors.redAccent,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 1)),
                                 ],
                               ),
                             ),
@@ -208,63 +234,75 @@ class _FaceVerificationPageState extends State<FaceVerificationPage> with Single
                       // ==========================================
                       Expanded(
                         child: Center(
-                          child: _isCameraInitialized && _cameraController != null
+                          child: _isCameraInitialized &&
+                                  _cameraController != null
                               ? Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              // Camera Circle
-                              Container(
-                                width: 280,
-                                height: 280,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                      color: _isScanning ? Colors.greenAccent : Colors.cyanAccent,
-                                      width: 4
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                        color: (_isScanning ? Colors.greenAccent : Colors.cyanAccent).withValues(alpha: 0.3),
-                                        blurRadius: 30,
-                                        spreadRadius: 10
-                                    )
-                                  ],
-                                ),
-                                child: ClipOval(
-                                  child: AspectRatio(
-                                    aspectRatio: 1,
-                                    child: CameraPreview(_cameraController!),
-                                  ),
-                                ),
-                              ),
-
-                              // Laser scanner line (Visible only during scan)
-                              if (_isScanning)
-                                AnimatedBuilder(
-                                  animation: _scannerController,
-                                  builder: (context, child) {
-                                    return Positioned(
-                                      top: 280 * _scannerController.value,
-                                      child: Container(
-                                        width: 280,
-                                        height: 4,
-                                        decoration: BoxDecoration(
-                                          color: Colors.greenAccent,
-                                          boxShadow: [
-                                            BoxShadow(color: Colors.greenAccent.withValues(alpha: 0.8), blurRadius: 15, spreadRadius: 5)
-                                          ],
+                                  alignment: Alignment.center,
+                                  children: [
+                                    // Camera Circle
+                                    Container(
+                                      width: 280,
+                                      height: 280,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                            color: _isScanning
+                                                ? Colors.greenAccent
+                                                : Colors.cyanAccent,
+                                            width: 4),
+                                        boxShadow: [
+                                          BoxShadow(
+                                              color: (_isScanning
+                                                      ? Colors.greenAccent
+                                                      : Colors.cyanAccent)
+                                                  .withValues(alpha: 0.3),
+                                              blurRadius: 30,
+                                              spreadRadius: 10)
+                                        ],
+                                      ),
+                                      child: ClipOval(
+                                        child: AspectRatio(
+                                          aspectRatio: 1,
+                                          child:
+                                              CameraPreview(_cameraController!),
                                         ),
                                       ),
-                                    );
-                                  },
-                                ),
+                                    ),
 
-                              // 🎯 Target Brackets
-                              if (!_isScanning)
-                                const Icon(Icons.crop_free, size: 100, color: Colors.white54),
-                            ],
-                          )
-                              : const CircularProgressIndicator(color: Colors.cyanAccent),
+                                    // Laser scanner line (Visible only during scan)
+                                    if (_isScanning)
+                                      AnimatedBuilder(
+                                        animation: _scannerController,
+                                        builder: (context, child) {
+                                          return Positioned(
+                                            top: 280 * _scannerController.value,
+                                            child: Container(
+                                              width: 280,
+                                              height: 4,
+                                              decoration: BoxDecoration(
+                                                color: Colors.greenAccent,
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                      color: Colors.greenAccent
+                                                          .withValues(
+                                                              alpha: 0.8),
+                                                      blurRadius: 15,
+                                                      spreadRadius: 5)
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+
+                                    // 🎯 Target Brackets
+                                    if (!_isScanning)
+                                      const Icon(Icons.crop_free,
+                                          size: 100, color: Colors.white54),
+                                  ],
+                                )
+                              : const CircularProgressIndicator(
+                                  color: Colors.cyanAccent),
                         ),
                       ),
 
@@ -280,21 +318,29 @@ class _FaceVerificationPageState extends State<FaceVerificationPage> with Single
                         decoration: BoxDecoration(
                           color: Colors.black,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.3)),
+                          border: Border.all(
+                              color: Colors.cyanAccent.withValues(alpha: 0.3)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.memory, color: _isScanning ? Colors.greenAccent : Colors.cyanAccent, size: 18),
+                                Icon(Icons.memory,
+                                    color: _isScanning
+                                        ? Colors.greenAccent
+                                        : Colors.cyanAccent,
+                                    size: 18),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     _aiLogs[_logIndex],
                                     style: TextStyle(
-                                      color: _isScanning ? Colors.greenAccent : Colors.cyanAccent,
-                                      fontFamily: 'Courier', // Hacker Terminal font
+                                      color: _isScanning
+                                          ? Colors.greenAccent
+                                          : Colors.cyanAccent,
+                                      fontFamily:
+                                          'Courier', // Hacker Terminal font
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13,
                                     ),
@@ -318,23 +364,36 @@ class _FaceVerificationPageState extends State<FaceVerificationPage> with Single
                       // 🟢 SCAN BUTTON
                       // ==========================================
                       Padding(
-                        padding: const EdgeInsets.only(left: 20, right: 20, bottom: 30),
+                        padding: const EdgeInsets.only(
+                            left: 20, right: 20, bottom: 30),
                         child: SizedBox(
                           width: double.infinity,
                           height: 56,
                           child: ElevatedButton.icon(
-                            onPressed: _isScanning || _isSubmitting ? null : _startAIScan,
+                            onPressed: _isScanning || _isSubmitting
+                                ? null
+                                : _startAIScan,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.cyan.shade800,
                               foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16)),
                             ),
                             icon: _isSubmitting
-                                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.white, strokeWidth: 2))
                                 : const Icon(Icons.face),
                             label: Text(
-                              _isScanning || _isSubmitting ? "PROCESSING BIOMETRICS..." : "INITIALIZE SCAN",
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1),
+                              _isScanning || _isSubmitting
+                                  ? "PROCESSING BIOMETRICS..."
+                                  : "INITIALIZE SCAN",
+                              style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1),
                             ),
                           ),
                         ),

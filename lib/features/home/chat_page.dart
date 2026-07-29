@@ -43,7 +43,7 @@ class _ChatPageState extends State<ChatPage> {
         'timestamp': FieldValue.serverTimestamp(),
         'isRead': false,
       });
-      
+
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           0.0,
@@ -55,7 +55,9 @@ class _ChatPageState extends State<ChatPage> {
       debugPrint("Error sending message: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to send message"), backgroundColor: Colors.red),
+          const SnackBar(
+              content: Text("Failed to send message"),
+              backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -70,7 +72,8 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
     final myMembershipNo = profileProvider.memberNo;
 
     return Scaffold(
@@ -79,8 +82,13 @@ class _ChatPageState extends State<ChatPage> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.otherUserName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black87)),
-            Text(widget.otherUserId, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(widget.otherUserName,
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.black87)),
+            Text(widget.otherUserId,
+                style: const TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
         backgroundColor: Colors.white,
@@ -109,10 +117,13 @@ class _ChatPageState extends State<ChatPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.chat_bubble_outline, size: 60, color: Colors.blue.shade100),
+                        Icon(Icons.chat_bubble_outline,
+                            size: 60, color: Colors.blue.shade100),
                         const SizedBox(height: 16),
-                        const Text("No messages yet", style: TextStyle(color: Colors.grey, fontSize: 16)),
-                        const Text("Say hi to start the conversation!", style: TextStyle(color: Colors.grey, fontSize: 13)),
+                        const Text("No messages yet",
+                            style: TextStyle(color: Colors.grey, fontSize: 16)),
+                        const Text("Say hi to start the conversation!",
+                            style: TextStyle(color: Colors.grey, fontSize: 13)),
                       ],
                     ),
                   );
@@ -123,7 +134,8 @@ class _ChatPageState extends State<ChatPage> {
                 return ListView.builder(
                   controller: _scrollController,
                   reverse: true, // Newest messages at the bottom
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                   itemCount: docs.length,
                   itemBuilder: (context, index) {
                     var data = docs[index].data() as Map<String, dynamic>;
@@ -132,11 +144,14 @@ class _ChatPageState extends State<ChatPage> {
                     String time = _formatTime(data['timestamp'] as Timestamp?);
 
                     return Align(
-                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                      alignment:
+                          isMe ? Alignment.centerRight : Alignment.centerLeft,
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        constraints: BoxConstraints(
+                            maxWidth: MediaQuery.of(context).size.width * 0.75),
                         decoration: BoxDecoration(
                           color: isMe ? Colors.blue : Colors.white,
                           borderRadius: BorderRadius.only(
@@ -146,11 +161,16 @@ class _ChatPageState extends State<ChatPage> {
                             bottomRight: Radius.circular(isMe ? 0 : 20),
                           ),
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 5, offset: const Offset(0, 2))
+                            BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 5,
+                                offset: const Offset(0, 2))
                           ],
                         ),
                         child: Column(
-                          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                          crossAxisAlignment: isMe
+                              ? CrossAxisAlignment.end
+                              : CrossAxisAlignment.start,
                           children: [
                             Text(
                               text,
@@ -163,7 +183,9 @@ class _ChatPageState extends State<ChatPage> {
                             Text(
                               time,
                               style: TextStyle(
-                                color: isMe ? Colors.blue.shade100 : Colors.grey.shade500,
+                                color: isMe
+                                    ? Colors.blue.shade100
+                                    : Colors.grey.shade500,
                                 fontSize: 10,
                               ),
                             ),
@@ -176,13 +198,18 @@ class _ChatPageState extends State<ChatPage> {
               },
             ),
           ),
-          
+
           // 💬 Chat Input Field
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(
               color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -5))],
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    offset: Offset(0, -5))
+              ],
             ),
             child: SafeArea(
               child: Row(
@@ -202,7 +229,8 @@ class _ChatPageState extends State<ChatPage> {
                           hintText: "Type a message...",
                           hintStyle: TextStyle(color: Colors.grey),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
                         ),
                       ),
                     ),
@@ -213,9 +241,15 @@ class _ChatPageState extends State<ChatPage> {
                     backgroundColor: Colors.blue,
                     child: IconButton(
                       icon: _isSending
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2))
                           : const Icon(Icons.send, color: Colors.white),
-                      onPressed: _isSending ? null : () => _sendMessage(myMembershipNo),
+                      onPressed: _isSending
+                          ? null
+                          : () => _sendMessage(myMembershipNo),
                     ),
                   ),
                 ],

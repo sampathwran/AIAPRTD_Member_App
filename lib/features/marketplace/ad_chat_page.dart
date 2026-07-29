@@ -7,7 +7,11 @@ class AdChatPage extends StatefulWidget {
   final String ownerId;
   final String adTitle;
 
-  const AdChatPage({super.key, required this.adId, required this.ownerId, required this.adTitle});
+  const AdChatPage(
+      {super.key,
+      required this.adId,
+      required this.ownerId,
+      required this.adTitle});
 
   @override
   State<AdChatPage> createState() => _AdChatPageState();
@@ -19,7 +23,7 @@ class _AdChatPageState extends State<AdChatPage> {
 
   String get _chatRoomId {
     // Unique chat room for this Ad between the owner and the current user
-    // If the current user IS the owner, they shouldn't chat with themselves, 
+    // If the current user IS the owner, they shouldn't chat with themselves,
     // but we handle this logically (hide chat button for owner on AdDetails).
     List<String> ids = [currentUserId, widget.ownerId];
     ids.sort();
@@ -43,7 +47,10 @@ class _AdChatPageState extends State<AdChatPage> {
     });
 
     // Update metadata for the chat room
-    await FirebaseFirestore.instance.collection('marketplace_chats').doc(_chatRoomId).set({
+    await FirebaseFirestore.instance
+        .collection('marketplace_chats')
+        .doc(_chatRoomId)
+        .set({
       'adId': widget.adId,
       'adTitle': widget.adTitle,
       'participants': [currentUserId, widget.ownerId],
@@ -60,7 +67,8 @@ class _AdChatPageState extends State<AdChatPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text("Chat", style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(widget.adTitle, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+            Text(widget.adTitle,
+                style: const TextStyle(fontSize: 12, color: Colors.black54)),
           ],
         ),
         backgroundColor: Colors.white,
@@ -82,7 +90,7 @@ class _AdChatPageState extends State<AdChatPage> {
               ],
             ),
           ),
-          
+
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
@@ -95,9 +103,11 @@ class _AdChatPageState extends State<AdChatPage> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                
+
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text("No messages yet. Send a message to start!", style: TextStyle(color: Colors.grey)));
+                  return const Center(
+                      child: Text("No messages yet. Send a message to start!",
+                          style: TextStyle(color: Colors.grey)));
                 }
 
                 return ListView.builder(
@@ -105,21 +115,25 @@ class _AdChatPageState extends State<AdChatPage> {
                   padding: const EdgeInsets.all(16),
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
-                    final msgData = snapshot.data!.docs[index].data() as Map<String, dynamic>;
+                    final msgData = snapshot.data!.docs[index].data()
+                        as Map<String, dynamic>;
                     final isMe = msgData['senderId'] == currentUserId;
-                    
+
                     return Align(
-                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                      alignment:
+                          isMe ? Alignment.centerRight : Alignment.centerLeft,
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 15, vertical: 10),
                         decoration: BoxDecoration(
                           color: isMe ? Colors.blue : Colors.grey.shade200,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           msgData['text'] ?? '',
-                          style: TextStyle(color: isMe ? Colors.white : Colors.black87),
+                          style: TextStyle(
+                              color: isMe ? Colors.white : Colors.black87),
                         ),
                       ),
                     );
@@ -128,11 +142,13 @@ class _AdChatPageState extends State<AdChatPage> {
               },
             ),
           ),
-          
+
           // Input Box
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)]),
+            decoration: const BoxDecoration(
+                color: Colors.white,
+                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)]),
             child: Row(
               children: [
                 Expanded(

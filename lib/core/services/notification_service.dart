@@ -7,15 +7,18 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  final FlutterLocalNotificationsPlugin _localNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _localNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
   bool _isInitialized = false;
   String? _currentMemberId;
 
   Future<void> init() async {
     if (_isInitialized) return;
 
-    const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/launcher_icon');
-    const InitializationSettings initializationSettings = InitializationSettings(
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/launcher_icon');
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: DarwinInitializationSettings(),
     );
@@ -26,8 +29,9 @@ class NotificationService {
 
     // Request permissions for Android 13+
     if (!kIsWeb) {
-      final androidImplementation = _localNotificationsPlugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final androidImplementation =
+          _localNotificationsPlugin.resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
       if (androidImplementation != null) {
         await androidImplementation.requestNotificationsPermission();
       }
@@ -53,17 +57,20 @@ class NotificationService {
           // Check target
           final targetType = data['targetType'];
           final targetMembers = data['targetMembers'] as List<dynamic>? ?? [];
-          
-          if (targetType == 'all' || (targetType == 'specific' && targetMembers.contains(memberId))) {
-            
+
+          if (targetType == 'all' ||
+              (targetType == 'specific' && targetMembers.contains(memberId))) {
             final scheduledAt = data['scheduledAt'] as Timestamp?;
             final now = DateTime.now();
-            
-            if (scheduledAt == null || scheduledAt.toDate().isBefore(now) || scheduledAt.toDate().isAtSameMomentAs(now)) {
+
+            if (scheduledAt == null ||
+                scheduledAt.toDate().isBefore(now) ||
+                scheduledAt.toDate().isAtSameMomentAs(now)) {
               final createdAt = data['createdAt'] as Timestamp?;
               if (createdAt != null) {
                 final timeToCompare = scheduledAt ?? createdAt;
-                debugPrint("🔔 New Notification Detected: ${data['title']} (Time diff: ${now.difference(timeToCompare.toDate()).inMinutes}m)");
+                debugPrint(
+                    "🔔 New Notification Detected: ${data['title']} (Time diff: ${now.difference(timeToCompare.toDate()).inMinutes}m)");
                 if (now.difference(timeToCompare.toDate()).inMinutes < 5) {
                   debugPrint("🔔 Triggering Local Notification!");
                   _showNotification(
@@ -82,10 +89,13 @@ class NotificationService {
     });
   }
 
-  Future<void> _showNotification({required int id, required String title, required String body}) async {
-    if (kIsWeb) return; // local notifications don't work on web easily without service workers
+  Future<void> _showNotification(
+      {required int id, required String title, required String body}) async {
+    if (kIsWeb)
+      return; // local notifications don't work on web easily without service workers
 
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
       'aiaprtd_notifications', // unique id
       'High Importance Notifications',
       channelDescription: 'Used for important alerts from Admin',

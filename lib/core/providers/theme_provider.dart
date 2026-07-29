@@ -17,7 +17,7 @@ class ThemeProvider with ChangeNotifier {
     _saveToPrefs();
     notifyListeners();
   }
-  
+
   void setTheme(bool isDark) {
     _isDarkMode = isDark;
     _saveToPrefs();

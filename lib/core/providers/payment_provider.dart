@@ -48,11 +48,13 @@ class PaymentProvider with ChangeNotifier {
 
     try {
       final now = DateTime.now();
-      final dateStr = "${now.year}.${now.month.toString().padLeft(2, '0')}.${now.day.toString().padLeft(2, '0')}";
+      final dateStr =
+          "${now.year}.${now.month.toString().padLeft(2, '0')}.${now.day.toString().padLeft(2, '0')}";
       final timestamp = now.millisecondsSinceEpoch.toString();
 
-      final Reference ref =
-      _storage.ref().child('payment_slip/$membershipNo/${dateStr}_$timestamp.jpg');
+      final Reference ref = _storage
+          .ref()
+          .child('payment_slip/$membershipNo/${dateStr}_$timestamp.jpg');
 
       final UploadTask uploadTask = ref.putFile(file);
       final TaskSnapshot snapshot = await uploadTask;
@@ -92,14 +94,16 @@ class PaymentProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final doc =
-      await _firestore.collection('payments').doc('${membershipNo}_bank').get();
+      final doc = await _firestore
+          .collection('payments')
+          .doc('${membershipNo}_bank')
+          .get();
 
       if (doc.exists && doc.data() != null) {
         _bankData = doc.data();
 
         final pendingDoc =
-        await _firestore.collection('verify_bank').doc(membershipNo).get();
+            await _firestore.collection('verify_bank').doc(membershipNo).get();
 
         if (pendingDoc.exists && pendingDoc.data() != null) {
           final pendingData = pendingDoc.data()!;
@@ -116,7 +120,7 @@ class PaymentProvider with ChangeNotifier {
         }
       } else {
         final pendingDoc =
-        await _firestore.collection('verify_bank').doc(membershipNo).get();
+            await _firestore.collection('verify_bank').doc(membershipNo).get();
 
         if (pendingDoc.exists && pendingDoc.data() != null) {
           final pendingData = pendingDoc.data()!;
@@ -208,48 +212,57 @@ class PaymentProvider with ChangeNotifier {
       final WriteBatch batch = _firestore.batch();
 
       final DocumentReference verifyRef =
-      _firestore.collection('verify_bank').doc(membershipNo);
+          _firestore.collection('verify_bank').doc(membershipNo);
 
       final DocumentReference memberRef =
-      _firestore.collection('member').doc(documentId);
+          _firestore.collection('member').doc(documentId);
 
       final DocumentReference bankRef =
-      _firestore.collection('payments').doc('${membershipNo}_bank');
+          _firestore.collection('payments').doc('${membershipNo}_bank');
 
       final DocumentReference adminBankRef =
-      _firestore.collection('bank_details').doc(membershipNo);
+          _firestore.collection('bank_details').doc(membershipNo);
 
       // 1. Remove pending request if any
       batch.delete(verifyRef);
 
       // 2. Update Member App Payments Collection directly
-      batch.set(bankRef, {
-        'membershipNo': membershipNo,
-        'bankName': bankName,
-        'branchName': branchName,
-        'branchCode': branchCode,
-        'accountNumber': accountNumber,
-        'accountHolderName': accountHolderName,
-        'bankUpdateStatus': 'approved',
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      batch.set(
+          bankRef,
+          {
+            'membershipNo': membershipNo,
+            'bankName': bankName,
+            'branchName': branchName,
+            'branchCode': branchCode,
+            'accountNumber': accountNumber,
+            'accountHolderName': accountHolderName,
+            'bankUpdateStatus': 'approved',
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true));
 
       // 3. Update Admin Panel Bank Details Collection directly
-      batch.set(adminBankRef, {
-        'membershipNo': membershipNo,
-        'bankName': bankName,
-        'branchName': branchName,
-        'branchCode': branchCode,
-        'accountNumber': accountNumber,
-        'accountHolderName': accountHolderName,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      batch.set(
+          adminBankRef,
+          {
+            'membershipNo': membershipNo,
+            'bankName': bankName,
+            'branchName': branchName,
+            'branchCode': branchCode,
+            'accountNumber': accountNumber,
+            'accountHolderName': accountHolderName,
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true));
 
       // 4. Update Member Status
-      batch.set(memberRef, {
-        'bankUpdateStatus': 'approved',
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      batch.set(
+          memberRef,
+          {
+            'bankUpdateStatus': 'approved',
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true));
 
       await batch.commit();
 

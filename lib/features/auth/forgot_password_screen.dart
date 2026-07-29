@@ -41,14 +41,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         // 2. If it's a member number, find the corresponding Email from 'member' collection
         final userQuery = await FirebaseFirestore.instance
             .collection('member') // Set collection name to 'member'
-            .where('membership_no', isEqualTo: inputText) // Membership number field in database
+            .where('membership_no',
+                isEqualTo: inputText) // Membership number field in database
             .limit(1)
             .get();
 
         if (userQuery.docs.isNotEmpty) {
-          targetEmail = userQuery.docs.first.get('email') as String?; // Email field in database
+          targetEmail = userQuery.docs.first.get('email')
+              as String?; // Email field in database
         } else {
-          _showErrorSnackbar('Membership number not found. Please check and try again.');
+          _showErrorSnackbar(
+              'Membership number not found. Please check and try again.');
           setState(() {
             _isLoading = false;
           });
@@ -59,10 +62,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       // 3. Actually send the link to the email via Firebase Auth
       if (targetEmail != null && targetEmail.isNotEmpty) {
         await FirebaseAuth.instance.sendPasswordResetEmail(email: targetEmail);
-        _showSuccessSnackbar('Password reset link sent successfully to $targetEmail!');
+        _showSuccessSnackbar(
+            'Password reset link sent successfully to $targetEmail!');
         _inputController.clear();
       }
-
     } on FirebaseAuthException catch (e) {
       String errorMsg = 'An error occurred. Please try again.';
       if (e.code == 'user-not-found') {
@@ -72,7 +75,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       }
       _showErrorSnackbar(errorMsg);
     } catch (e) {
-      _showErrorSnackbar('Something went wrong. Check your internet connection.');
+      _showErrorSnackbar(
+          'Something went wrong. Check your internet connection.');
     }
 
     if (!mounted) return;
@@ -195,7 +199,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   decoration: InputDecoration(
                     labelText: 'Email or Membership Number',
                     hintText: 'example@domain.com or MEM12345',
-                    prefixIcon: Icon(Icons.person_outline_rounded, color: colorScheme.primary, size: 22),
+                    prefixIcon: Icon(Icons.person_outline_rounded,
+                        color: colorScheme.primary, size: 22),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -203,7 +208,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     }
                     final input = value.trim();
                     if (input.contains('@')) {
-                      final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                      final emailRegex =
+                          RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
                       if (!emailRegex.hasMatch(input)) {
                         return 'Please enter a valid email address';
                       }

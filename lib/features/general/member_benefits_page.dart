@@ -22,14 +22,18 @@ class MemberBenefitsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Member Benefits", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("Member Benefits",
+            style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         elevation: 0,
         backgroundColor: theme.appBarTheme.backgroundColor,
         foregroundColor: theme.appBarTheme.foregroundColor,
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('member_benefits').orderBy('createdAt').snapshots(),
+        stream: FirebaseFirestore.instance
+            .collection('member_benefits')
+            .orderBy('createdAt')
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Center(child: Text('Something went wrong'));
@@ -42,7 +46,8 @@ class MemberBenefitsPage extends StatelessWidget {
           final docs = snapshot.data?.docs ?? [];
 
           if (docs.isEmpty) {
-            return const Center(child: Text('No benefits available at the moment.'));
+            return const Center(
+                child: Text('No benefits available at the moment.'));
           }
 
           return ListView.builder(
@@ -51,27 +56,38 @@ class MemberBenefitsPage extends StatelessWidget {
             itemBuilder: (context, index) {
               final doc = docs[index];
               final data = doc.data() as Map<String, dynamic>;
-              
+
               final benefitId = doc.id;
               final title = data['title'] ?? 'Benefit';
               final desc = data['description'] ?? '';
               final iconName = data['icon'] ?? 'star';
               final iconUrl = data['iconUrl'];
               final isGlobal = data['isGlobal'] == true;
-              
-              final bool isUnlocked = isGlobal || grantedBenefits.contains(benefitId);
+
+              final bool isUnlocked =
+                  isGlobal || grantedBenefits.contains(benefitId);
               final IconData iconData = _getIconData(iconName);
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
-                  color: isUnlocked 
-                      ? (isDark ? theme.cardColor : Colors.white) 
-                      : (isDark ? theme.cardColor.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.5)),
+                  color: isUnlocked
+                      ? (isDark ? theme.cardColor : Colors.white)
+                      : (isDark
+                          ? theme.cardColor.withValues(alpha: 0.5)
+                          : Colors.white.withValues(alpha: 0.5)),
                   borderRadius: BorderRadius.circular(12),
                   border: isUnlocked
-                      ? Border.all(color: isDark ? Colors.blue.shade700 : Colors.blue.shade200, width: 1.5)
-                      : Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300, width: 1),
+                      ? Border.all(
+                          color: isDark
+                              ? Colors.blue.shade700
+                              : Colors.blue.shade200,
+                          width: 1.5)
+                      : Border.all(
+                          color: isDark
+                              ? Colors.grey.shade800
+                              : Colors.grey.shade300,
+                          width: 1),
                   boxShadow: isUnlocked
                       ? [
                           BoxShadow(
@@ -89,29 +105,41 @@ class MemberBenefitsPage extends StatelessWidget {
                       dividerColor: Colors.transparent,
                     ),
                     child: ExpansionTile(
-                      tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      tilePadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       iconColor: isUnlocked ? Colors.blue : Colors.grey,
-                      collapsedIconColor: isUnlocked ? Colors.blue.shade300 : Colors.grey,
+                      collapsedIconColor:
+                          isUnlocked ? Colors.blue.shade300 : Colors.grey,
                       leading: Container(
                         padding: const EdgeInsets.all(10),
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: isUnlocked 
-                              ? (isDark && iconUrl != null && iconUrl.toString().isNotEmpty 
-                                  ? Colors.white.withValues(alpha: 0.8) 
-                                  : Colors.blue.withValues(alpha: 0.1)) 
-                              : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+                          color: isUnlocked
+                              ? (isDark &&
+                                      iconUrl != null &&
+                                      iconUrl.toString().isNotEmpty
+                                  ? Colors.white.withValues(alpha: 0.8)
+                                  : Colors.blue.withValues(alpha: 0.1))
+                              : (isDark
+                                  ? Colors.grey.shade800
+                                  : Colors.grey.shade200),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: !isUnlocked
-                            ? const Icon(Icons.lock_outline, color: Colors.grey, size: 24)
+                            ? const Icon(Icons.lock_outline,
+                                color: Colors.grey, size: 24)
                             : iconUrl != null && iconUrl.toString().isNotEmpty
                                 ? CachedNetworkImage(
                                     imageUrl: iconUrl,
                                     fit: BoxFit.contain,
-                                    placeholder: (context, url) => const CircularProgressIndicator(strokeWidth: 2),
-                                    errorWidget: (context, url, error) => Icon(iconData, color: Colors.blue, size: 24),
+                                    placeholder: (context, url) =>
+                                        const CircularProgressIndicator(
+                                            strokeWidth: 2),
+                                    errorWidget: (context, url, error) => Icon(
+                                        iconData,
+                                        color: Colors.blue,
+                                        size: 24),
                                   )
                                 : Icon(iconData, color: Colors.blue, size: 24),
                       ),
@@ -123,26 +151,31 @@ class MemberBenefitsPage extends StatelessWidget {
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
-                                color: isUnlocked 
+                                color: isUnlocked
                                     ? (isDark ? Colors.white : Colors.black87)
                                     : Colors.grey,
                               ),
                             ),
                           ),
-                          if (isUnlocked) 
-                            const Icon(Icons.check_circle, color: Colors.green, size: 20)
-                          else 
-                            const Icon(Icons.lock, color: Colors.grey, size: 16),
+                          if (isUnlocked)
+                            const Icon(Icons.check_circle,
+                                color: Colors.green, size: 20)
+                          else
+                            const Icon(Icons.lock,
+                                color: Colors.grey, size: 16),
                         ],
                       ),
                       children: [
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 0),
+                          padding: const EdgeInsets.only(
+                              left: 16, right: 16, bottom: 16, top: 0),
                           child: Text(
                             desc,
                             style: TextStyle(
-                              color: isUnlocked ? (isDark ? Colors.white70 : Colors.black87) : Colors.grey,
+                              color: isUnlocked
+                                  ? (isDark ? Colors.white70 : Colors.black87)
+                                  : Colors.grey,
                               height: 1.5,
                               fontSize: 14,
                             ),

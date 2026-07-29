@@ -24,7 +24,7 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
   void initState() {
     super.initState();
     _getUserLocation();
-    
+
     // Auto-refresh the screen every 1 minute so time-based logic (moving to Live) triggers
     _refreshTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
       if (mounted) setState(() {});
@@ -47,20 +47,30 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
   }
 
   void _filterBookings(
-      List<QueryDocumentSnapshot> allDocs,
-      List<QueryDocumentSnapshot> live,
-      List<QueryDocumentSnapshot> scheduled,
-      String myCategory,
-      ) {
+    List<QueryDocumentSnapshot> allDocs,
+    List<QueryDocumentSnapshot> live,
+    List<QueryDocumentSnapshot> scheduled,
+    String myCategory,
+  ) {
     DateTime now = DateTime.now();
 
     for (var doc in allDocs) {
       var data = doc.data() as Map<String, dynamic>;
-      
-      String category = (data['vehicleCategory'] ?? data['selectedCategory'] ?? '').toString().toLowerCase();
-      
-      String normCategory = category.replaceAll(' ', '').replaceAll('_', '').replaceAll('van', '');
-      String normMyCat = myCategory.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('van', '');
+
+      String category =
+          (data['vehicleCategory'] ?? data['selectedCategory'] ?? '')
+              .toString()
+              .toLowerCase();
+
+      String normCategory = category
+          .replaceAll(' ', '')
+          .replaceAll('_', '')
+          .replaceAll('van', '');
+      String normMyCat = myCategory
+          .toLowerCase()
+          .replaceAll(' ', '')
+          .replaceAll('_', '')
+          .replaceAll('van', '');
 
       // 1. Category check
       if (normCategory.isEmpty) normCategory = 'unknown';
@@ -75,16 +85,17 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
         }
         return null;
       }
-      
+
       var pickupMap = getMap('pickupLocation');
       double? pLat = (pickupMap?['lat'] ?? data['pickupLat'])?.toDouble();
       double? pLng = (pickupMap?['lng'] ?? data['pickupLng'])?.toDouble();
-      
+
       if (_currentPosition != null && pLat != null && pLng != null) {
         double distanceInMeters = Geolocator.distanceBetween(
-            _currentPosition!.latitude, _currentPosition!.longitude,
-            pLat, pLng
-        );
+            _currentPosition!.latitude,
+            _currentPosition!.longitude,
+            pLat,
+            pLng);
         double distanceKm = distanceInMeters / 1000;
         if (distanceKm > _searchRadiusKm) {
           continue; // Out of radius
@@ -103,7 +114,10 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
         Duration diff = startTime.difference(now);
 
         if (diff.inMinutes < 0) {
-          FirebaseFirestore.instance.collection('all_bookings').doc(doc.id).update({
+          FirebaseFirestore.instance
+              .collection('all_bookings')
+              .doc(doc.id)
+              .update({
             'status': 'expired',
             'reason': 'No driver accepted in time'
           });
@@ -111,12 +125,12 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
         }
 
         if (diff.inMinutes <= 60) {
-          live.add(doc); 
+          live.add(doc);
         } else {
-          scheduled.add(doc); 
+          scheduled.add(doc);
         }
       } else {
-        scheduled.add(doc); 
+        scheduled.add(doc);
       }
     }
   }
@@ -126,15 +140,19 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
     final profileProvider = Provider.of<ProfileProvider>(context);
 
     // Extract my vehicle category from memberData
-    final String myCategory = (profileProvider.memberData?['vehicle_category'] ?? 
-                              profileProvider.memberData?['selectedCategory'] ?? 
-                              '').toString();
+    final String myCategory =
+        (profileProvider.memberData?['vehicle_category'] ??
+                profileProvider.memberData?['selectedCategory'] ??
+                '')
+            .toString();
 
     debugPrint("=== DASHBOARD BUILD ===");
     debugPrint("Is Profile Loading? ${profileProvider.isLoading}");
-    debugPrint("Logged in as MembershipNo: ${profileProvider.memberData?['membershipNo']}");
+    debugPrint(
+        "Logged in as MembershipNo: ${profileProvider.memberData?['membershipNo']}");
     debugPrint("Fetched Document ID: ${profileProvider.memberData?['docId']}");
-    debugPrint("Member Data Keys: ${profileProvider.memberData?.keys.toList()}");
+    debugPrint(
+        "Member Data Keys: ${profileProvider.memberData?.keys.toList()}");
     debugPrint("Derived myCategory: '$myCategory'");
     debugPrint("=======================");
 
@@ -142,19 +160,21 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
       length: 2,
       child: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
-            .collection('all_bookings') // 
-            .where('status', whereIn: ['pending', 'Pending', 'PENDING'])
-            .snapshots(),
+            .collection('all_bookings') //
+            .where('status',
+                whereIn: ['pending', 'Pending', 'PENDING']).snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            return const Scaffold(
+                body: Center(child: CircularProgressIndicator()));
           }
 
           List<QueryDocumentSnapshot> liveBookings = [];
           List<QueryDocumentSnapshot> scheduledBookings = [];
 
           if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
-            _filterBookings(snapshot.data!.docs, liveBookings, scheduledBookings, myCategory);
+            _filterBookings(snapshot.data!.docs, liveBookings,
+                scheduledBookings, myCategory);
           }
 
           final theme = Theme.of(context);
@@ -163,7 +183,10 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
           return Scaffold(
             backgroundColor: theme.scaffoldBackgroundColor,
             appBar: AppBar(
-              title: Text("Hires Dashboard", style: TextStyle(fontWeight: FontWeight.w800, color: isDarkMode ? Colors.white : Colors.black87)),
+              title: Text("Hires Dashboard",
+                  style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: isDarkMode ? Colors.white : Colors.black87)),
               backgroundColor: theme.appBarTheme.backgroundColor,
               elevation: 0,
               centerTitle: true,
@@ -185,14 +208,24 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
                 // ==========================================
                 Container(
                   color: theme.cardColor,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   child: Column(
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("Max Distance (Radius)", style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black87)),
-                          Text("${_searchRadiusKm.toInt()} km", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue, fontSize: 16)),
+                          Text("Max Distance (Radius)",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : Colors.black87)),
+                          Text("${_searchRadiusKm.toInt()} km",
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue,
+                                  fontSize: 16)),
                         ],
                       ),
                       Slider(
@@ -211,13 +244,21 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
                     ],
                   ),
                 ),
-                Divider(height: 1, color: isDarkMode ? Colors.grey[800] : const Color(0xFFE2E8F0)),
+                Divider(
+                    height: 1,
+                    color: isDarkMode
+                        ? Colors.grey[800]
+                        : const Color(0xFFE2E8F0)),
 
                 Expanded(
                   child: TabBarView(
                     children: [
-                      LiveBookingsTab(bookings: liveBookings, currentPosition: _currentPosition),
-                      ScheduledBookingsTab(bookings: scheduledBookings, currentPosition: _currentPosition),
+                      LiveBookingsTab(
+                          bookings: liveBookings,
+                          currentPosition: _currentPosition),
+                      ScheduledBookingsTab(
+                          bookings: scheduledBookings,
+                          currentPosition: _currentPosition),
                     ],
                   ),
                 ),

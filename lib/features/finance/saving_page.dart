@@ -24,7 +24,7 @@ class _SavingPageState extends State<SavingPage> {
       final profile = Provider.of<ProfileProvider>(context, listen: false);
       final finance = Provider.of<FinanceProvider>(context, listen: false);
       final payment = Provider.of<PaymentProvider>(context, listen: false);
-      
+
       if (profile.memberNo.isNotEmpty) {
         finance.listenToMyFinance(profile.memberNo);
         payment.fetchBankDetails(profile.memberNo);
@@ -37,7 +37,8 @@ class _SavingPageState extends State<SavingPage> {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text("My Savings", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        title: const Text("My Savings",
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.teal.shade600,
@@ -45,16 +46,17 @@ class _SavingPageState extends State<SavingPage> {
       ),
       body: Consumer<FinanceProvider>(
         builder: (context, financeProv, child) {
-          final earningsProv = Provider.of<EarningsProvider>(context, listen: false);
+          final earningsProv =
+              Provider.of<EarningsProvider>(context, listen: false);
           double balance = financeProv.mySavingsBalance;
           if (earningsProv.hasFetched && earningsProv.totalTrips == 0) {
             balance = 0.0;
           }
-          
+
           return Column(
             children: [
               TotalSavingCard(balance: balance),
-              
+
               // Action Buttons
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -88,7 +90,10 @@ class _SavingPageState extends State<SavingPage> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     "Savings History",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87),
                   ),
                 ),
               ),
@@ -102,7 +107,11 @@ class _SavingPageState extends State<SavingPage> {
     );
   }
 
-  Widget _buildActionButton({required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
+  Widget _buildActionButton(
+      {required IconData icon,
+      required String label,
+      required Color color,
+      required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(15),
@@ -111,13 +120,20 @@ class _SavingPageState extends State<SavingPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(15),
-          boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 5))],
+          boxShadow: [
+            BoxShadow(
+                color: Colors.grey.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 5))
+          ],
         ),
         child: Column(
           children: [
             Icon(icon, color: color, size: 28),
             const SizedBox(height: 8),
-            Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            Text(label,
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
           ],
         ),
       ),

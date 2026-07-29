@@ -9,16 +9,19 @@ class SosRequesterLiveMapOverlay extends StatefulWidget {
   const SosRequesterLiveMapOverlay({super.key});
 
   @override
-  State<SosRequesterLiveMapOverlay> createState() => _SosRequesterLiveMapOverlayState();
+  State<SosRequesterLiveMapOverlay> createState() =>
+      _SosRequesterLiveMapOverlayState();
 }
 
-class _SosRequesterLiveMapOverlayState extends State<SosRequesterLiveMapOverlay> {
+class _SosRequesterLiveMapOverlayState
+    extends State<SosRequesterLiveMapOverlay> {
   GoogleMapController? _mapController;
 
   @override
   Widget build(BuildContext context) {
     final sosProvider = Provider.of<SosProvider>(context);
-    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
 
     // Only show to the requester when SOS is active and they have an active SOS ID
     if (!sosProvider.isSosActive || sosProvider.currentSosId == null) {
@@ -26,8 +29,10 @@ class _SosRequesterLiveMapOverlayState extends State<SosRequesterLiveMapOverlay>
     }
 
     final String sosId = sosProvider.currentSosId!;
-    final double currentLat = profileProvider.memberData?['latitude']?.toDouble() ?? 0.0;
-    final double currentLng = profileProvider.memberData?['longitude']?.toDouble() ?? 0.0;
+    final double currentLat =
+        profileProvider.memberData?['latitude']?.toDouble() ?? 0.0;
+    final double currentLng =
+        profileProvider.memberData?['longitude']?.toDouble() ?? 0.0;
 
     if (currentLat == 0.0 || currentLng == 0.0) {
       return const SizedBox.shrink();
@@ -45,7 +50,10 @@ class _SosRequesterLiveMapOverlayState extends State<SosRequesterLiveMapOverlay>
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 10, spreadRadius: 2)
+              BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 10,
+                  spreadRadius: 2)
             ],
             border: Border.all(color: Colors.grey.shade400, width: 1),
           ),
@@ -62,7 +70,8 @@ class _SosRequesterLiveMapOverlayState extends State<SosRequesterLiveMapOverlay>
                   Marker(
                     markerId: const MarkerId('my_location'),
                     position: LatLng(currentLat, currentLng),
-                    icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+                    icon: BitmapDescriptor.defaultMarkerWithHue(
+                        BitmapDescriptor.hueRed),
                   )
                 };
 
@@ -76,7 +85,8 @@ class _SosRequesterLiveMapOverlayState extends State<SosRequesterLiveMapOverlay>
                         Marker(
                           markerId: MarkerId(doc.id),
                           position: LatLng(lat, lng),
-                          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+                          icon: BitmapDescriptor.defaultMarkerWithHue(
+                              BitmapDescriptor.hueGreen),
                         ),
                       );
                     }
@@ -87,25 +97,28 @@ class _SosRequesterLiveMapOverlayState extends State<SosRequesterLiveMapOverlay>
                 if (_mapController != null && markers.length > 1) {
                   double minLat = currentLat, maxLat = currentLat;
                   double minLng = currentLng, maxLng = currentLng;
-                  
+
                   for (var m in markers) {
-                    if (m.position.latitude < minLat) minLat = m.position.latitude;
-                    if (m.position.latitude > maxLat) maxLat = m.position.latitude;
-                    if (m.position.longitude < minLng) minLng = m.position.longitude;
-                    if (m.position.longitude > maxLng) maxLng = m.position.longitude;
+                    if (m.position.latitude < minLat)
+                      minLat = m.position.latitude;
+                    if (m.position.latitude > maxLat)
+                      maxLat = m.position.latitude;
+                    if (m.position.longitude < minLng)
+                      minLng = m.position.longitude;
+                    if (m.position.longitude > maxLng)
+                      maxLng = m.position.longitude;
                   }
-                  
+
                   Future.microtask(() {
                     if (mounted) {
-                      _mapController!.animateCamera(
-                        CameraUpdate.newLatLngBounds(
-                          LatLngBounds(
-                            southwest: LatLng(minLat, minLng),
-                            northeast: LatLng(maxLat, maxLng),
-                          ),
-                          20.0, // padding
-                        )
-                      );
+                      _mapController!
+                          .animateCamera(CameraUpdate.newLatLngBounds(
+                        LatLngBounds(
+                          southwest: LatLng(minLat, minLng),
+                          northeast: LatLng(maxLat, maxLng),
+                        ),
+                        20.0, // padding
+                      ));
                     }
                   });
                 }

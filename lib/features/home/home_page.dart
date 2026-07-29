@@ -108,28 +108,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
-        final meterProvider = Provider.of<MeterProvider>(context, listen: false);
+        final meterProvider =
+            Provider.of<MeterProvider>(context, listen: false);
         await meterProvider.loadState();
-        
+
         if (!mounted) return;
-        
+
         if (meterProvider.isRunning) {
           Navigator.pushNamed(context, '/road-pickup');
         } else if (meterProvider.isTripCompleted) {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const TripSummaryPage()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => const TripSummaryPage()));
         }
 
-        final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+        final profileProvider =
+            Provider.of<ProfileProvider>(context, listen: false);
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        
+
         await profileProvider.fetchAndStoreMemberData();
-        
+
         if (!mounted) return;
 
         String myCurrentPhoneToken = await authProvider.getPersistentDeviceId();
         if (!mounted) return;
         profileProvider.listenToDeviceSession(context, myCurrentPhoneToken);
-        
+
         Provider.of<CommunityAssistanceProvider>(context, listen: false)
             .startListeningForRequests(profileProvider);
       }
@@ -162,7 +165,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _mapController!.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(
-            target: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+            target:
+                LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
             zoom: 15.5,
             bearing: _currentHeading,
             tilt: 0.0,
@@ -200,25 +204,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     path.close();
     canvas.drawPath(path, arrowPaint);
 
-    final ui.Image image = await pictureRecorder.endRecording().toImage(size.toInt(), size.toInt());
+    final ui.Image image = await pictureRecorder
+        .endRecording()
+        .toImage(size.toInt(), size.toInt());
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
 
     if (byteData != null && mounted) {
       setState(() {
-        _customLocationIcon = BitmapDescriptor.bytes(byteData.buffer.asUint8List());
+        _customLocationIcon =
+            BitmapDescriptor.bytes(byteData.buffer.asUint8List());
       });
     }
   }
 
   void _syncLocationToFirebase(double lat, double lng, double bearing) {
     if (!mounted) return;
-    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
     if (!profileProvider.isOnline) return;
 
     final now = DateTime.now();
     if (_lastFirebaseUpdateTime == null ||
         now.difference(_lastFirebaseUpdateTime!).inSeconds >= 3) {
-
       _lastFirebaseUpdateTime = now;
 
       profileProvider.updateLiveLocation(lat, lng, bearing);
@@ -234,7 +241,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       permission = await Geolocator.requestPermission();
     }
 
-    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
       if (mounted) setState(() => _isLoading = false);
       return;
     }
@@ -254,7 +262,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           _isFirstLocationFound = true;
         });
       } else {
-        Position initPosition = await Geolocator.getCurrentPosition(locationSettings: locationSettings);
+        Position initPosition = await Geolocator.getCurrentPosition(
+            locationSettings: locationSettings);
         if (mounted) {
           setState(() {
             _currentPosition = initPosition;
@@ -291,10 +300,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _updateCamera();
         _isFirstLocationFound = true;
       }
-      _syncLocationToFirebase(position.latitude, position.longitude, _currentHeading);
+      _syncLocationToFirebase(
+          position.latitude, position.longitude, _currentHeading);
     });
 
-    _compassStreamSubscription = FlutterCompass.events!.listen((CompassEvent event) {
+    _compassStreamSubscription =
+        FlutterCompass.events!.listen((CompassEvent event) {
       if (event.heading != null && mounted) {
         final double heading = event.heading!;
         if ((heading - _currentHeading).abs() > 10) {
@@ -304,7 +315,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               _markers.clear();
               _markers.add(Marker(
                 markerId: const MarkerId('driver_location'),
-                position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+                position: LatLng(
+                    _currentPosition!.latitude, _currentPosition!.longitude),
                 rotation: heading,
                 flat: true,
                 anchor: const Offset(0.5, 0.5),
@@ -313,7 +325,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             }
           });
           if (_currentPosition != null) {
-            _syncLocationToFirebase(_currentPosition!.latitude, _currentPosition!.longitude, heading);
+            _syncLocationToFirebase(_currentPosition!.latitude,
+                _currentPosition!.longitude, heading);
           }
         }
       }
@@ -330,85 +343,93 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Stack(
-        children: [
-          GoogleMap(
-            initialCameraPosition: CameraPosition(
-              target: _currentPosition != null
-                  ? LatLng(_currentPosition!.latitude, _currentPosition!.longitude)
-                  : const LatLng(7.8731, 80.7718),
-              zoom: 15.5,
-              bearing: 0.0,
-              tilt: 0.0,
-            ),
-            onMapCreated: (controller) {
-              _mapController = controller;
-              if (_currentPosition != null) _updateCamera();
-            },
-            style: isDarkMode ? _darkMapStyle : _mapStyle,
-            zoomControlsEnabled: false,
-            myLocationEnabled: false,
-            myLocationButtonEnabled: false,
-            markers: _markers,
-          ),
-          Positioned(top: 50, left: 16, right: 16, child: HomeHeader(user: _user)),
-          const Positioned(top: 130, left: 0, right: 0, child: MiniMeterWidget()),
-            Positioned(
-              bottom: 210,
-              right: 20,
-              child: FloatingActionButton(
-                onPressed: () => Navigator.pushNamed(context, '/sos'),
-                backgroundColor: Colors.orange.shade700,
-                child: const Icon(Icons.handshake, color: Colors.white, size: 30),
-              ),
-            ),
-          Positioned(
-            bottom: 140, // Adjusted My Location button
-            right: 20,
-            child: SizedBox(
-              width: 56,
-              height: 56,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).cardColor,
-                  shape: const CircleBorder(),
-                  padding: EdgeInsets.zero,
-                  shadowColor: Colors.black.withValues(alpha: isDarkMode ? 0.4 : 0.2),
-                  elevation: 4,
+              children: [
+                GoogleMap(
+                  initialCameraPosition: CameraPosition(
+                    target: _currentPosition != null
+                        ? LatLng(_currentPosition!.latitude,
+                            _currentPosition!.longitude)
+                        : const LatLng(7.8731, 80.7718),
+                    zoom: 15.5,
+                    bearing: 0.0,
+                    tilt: 0.0,
+                  ),
+                  onMapCreated: (controller) {
+                    _mapController = controller;
+                    if (_currentPosition != null) _updateCamera();
+                  },
+                  style: isDarkMode ? _darkMapStyle : _mapStyle,
+                  zoomControlsEnabled: false,
+                  myLocationEnabled: false,
+                  myLocationButtonEnabled: false,
+                  markers: _markers,
                 ),
-                onPressed: _updateCamera,
-                child: const Icon(Icons.my_location, color: Colors.blue),
-              ),
+                Positioned(
+                    top: 50,
+                    left: 16,
+                    right: 16,
+                    child: HomeHeader(user: _user)),
+                const Positioned(
+                    top: 130, left: 0, right: 0, child: MiniMeterWidget()),
+                Positioned(
+                  bottom: 210,
+                  right: 20,
+                  child: FloatingActionButton(
+                    onPressed: () => Navigator.pushNamed(context, '/sos'),
+                    backgroundColor: Colors.orange.shade700,
+                    child: const Icon(Icons.handshake,
+                        color: Colors.white, size: 30),
+                  ),
+                ),
+                Positioned(
+                  bottom: 140, // Adjusted My Location button
+                  right: 20,
+                  child: SizedBox(
+                    width: 56,
+                    height: 56,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).cardColor,
+                        shape: const CircleBorder(),
+                        padding: EdgeInsets.zero,
+                        shadowColor: Colors.black
+                            .withValues(alpha: isDarkMode ? 0.4 : 0.2),
+                        elevation: 4,
+                      ),
+                      onPressed: _updateCamera,
+                      child: const Icon(Icons.my_location, color: Colors.blue),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 125, // Adjusted GO Button
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: OnlineButtonWidget(
+                      isSharingLocation: isOnline,
+                      currentHeading: _currentHeading,
+                      currentPosition: _currentPosition,
+                      playSound: _playSound,
+                      footerBadgeKey: _footerBadgeKey,
+                      onStatusChanged: (status) {
+                        // No-op, managed by profile provider now
+                      },
+                    ),
+                  ),
+                ),
+                // Community Assistance Nearby Alert Overlay
+                const HelpAlertOverlay(),
+                const RequesterStatusOverlay(),
+                HomeFooter(
+                  isSharingLocation: isOnline,
+                  badgeKey: _footerBadgeKey,
+                  onToggleLocation: () {
+                    // No-op, managed by profile provider now
+                  },
+                ),
+              ],
             ),
-          ),
-          Positioned(
-            bottom: 125, // Adjusted GO Button
-            left: 0,
-            right: 0,
-            child: Center(
-              child: OnlineButtonWidget(
-                isSharingLocation: isOnline,
-                currentHeading: _currentHeading,
-                currentPosition: _currentPosition,
-                playSound: _playSound,
-                footerBadgeKey: _footerBadgeKey,
-                onStatusChanged: (status) {
-                  // No-op, managed by profile provider now
-                },
-              ),
-            ),
-          ),
-          // Community Assistance Nearby Alert Overlay
-          const HelpAlertOverlay(),
-          const RequesterStatusOverlay(),
-          HomeFooter(
-            isSharingLocation: isOnline,
-            badgeKey: _footerBadgeKey,
-            onToggleLocation: () {
-              // No-op, managed by profile provider now
-            },
-          ),
-        ],
-      ),
     );
   }
 }

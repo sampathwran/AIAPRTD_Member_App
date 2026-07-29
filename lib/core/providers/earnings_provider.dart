@@ -33,8 +33,10 @@ class EarningsProvider with ChangeNotifier {
 
   final List<StreamSubscription> _bookingsSubscriptionList = [];
   final Map<String, List<TripModel>> _bookingTripsMap = {}; // Bookings Map
-  final List<StreamSubscription> _roadPickupSubscriptions = []; // Road pickups Streams
-  final Map<String, List<TripModel>> _roadTripsMap = {}; // Keep separated by date
+  final List<StreamSubscription> _roadPickupSubscriptions =
+      []; // Road pickups Streams
+  final Map<String, List<TripModel>> _roadTripsMap =
+      {}; // Keep separated by date
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -49,10 +51,10 @@ class EarningsProvider with ChangeNotifier {
     _timePeriod = period;
     _isLoading = true;
     notifyListeners();
-    
+
     // Adding a small delay (to simulate data loading)
     await Future.delayed(const Duration(milliseconds: 400));
-    
+
     _isLoading = false;
     notifyListeners();
   }
@@ -62,16 +64,18 @@ class EarningsProvider with ChangeNotifier {
 
   List<TripModel> get trips {
     List<TripModel> allTrips = [..._bookingTrips, ..._roadPickupTrips];
-    
+
     DateTime now = DateTime.now();
     DateTime startDate;
-    
+
     if (_timePeriod == 'Daily') {
       startDate = DateTime(now.year, now.month, now.day);
     } else if (_timePeriod == 'Weekly') {
-      startDate = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 7));
+      startDate = DateTime(now.year, now.month, now.day)
+          .subtract(const Duration(days: 7));
     } else {
-      startDate = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 30));
+      startDate = DateTime(now.year, now.month, now.day)
+          .subtract(const Duration(days: 30));
     }
 
     allTrips = allTrips.where((t) => !t.date.isBefore(startDate)).toList();
@@ -88,7 +92,10 @@ class EarningsProvider with ChangeNotifier {
   double get todayEarnings {
     DateTime now = DateTime.now();
     return allUnfilteredTrips
-        .where((t) => t.date.year == now.year && t.date.month == now.month && t.date.day == now.day)
+        .where((t) =>
+            t.date.year == now.year &&
+            t.date.month == now.month &&
+            t.date.day == now.day)
         .fold(0, (total, trip) => total + trip.fare);
   }
 
@@ -96,7 +103,8 @@ class EarningsProvider with ChangeNotifier {
     DateTime now = DateTime.now();
     // Calculate the start of the current week (Monday)
     int daysSinceMonday = now.weekday - 1;
-    DateTime thisMonday = DateTime(now.year, now.month, now.day).subtract(Duration(days: daysSinceMonday));
+    DateTime thisMonday = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: daysSinceMonday));
     return allUnfilteredTrips
         .where((t) => !t.date.isBefore(thisMonday))
         .fold(0, (total, trip) => total + trip.fare);
@@ -124,7 +132,8 @@ class EarningsProvider with ChangeNotifier {
 
   int get totalTrips => trips.length;
   int get totalBookingsCount => trips.where((t) => t.type == 'booking').length;
-  int get totalRoadPickupCount => trips.where((t) => t.type == 'road_pickup').length;
+  int get totalRoadPickupCount =>
+      trips.where((t) => t.type == 'road_pickup').length;
 
   Future<void> fetchEarnings(String membershipNo) async {
     if (membershipNo.isEmpty) return;
@@ -143,7 +152,8 @@ class EarningsProvider with ChangeNotifier {
       DateTime now = DateTime.now();
       for (int i = 0; i < 30; i++) {
         DateTime d = now.subtract(Duration(days: i));
-        String dateStr = "${d.year}.${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')}";
+        String dateStr =
+            "${d.year}.${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')}";
 
         var sub = _firestore
             .collection('booking_hires')
@@ -151,24 +161,31 @@ class EarningsProvider with ChangeNotifier {
             .collection(membershipNo)
             .snapshots()
             .listen((snap) {
-
           List<TripModel> dailyBookings = [];
           for (var doc in snap.docs) {
             Map<String, dynamic> data = doc.data();
 
             String dbStatus = data['status']?.toString().toLowerCase() ?? '';
-            String tripState = data['tripState']?.toString().toLowerCase() ?? '';
-            String paymentStatus = data['paymentStatus']?.toString().toLowerCase() ?? '';
+            String tripState =
+                data['tripState']?.toString().toLowerCase() ?? '';
+            String paymentStatus =
+                data['paymentStatus']?.toString().toLowerCase() ?? '';
 
-            bool isCancelled = dbStatus.contains('cancel') || tripState.contains('cancel') || dbStatus.contains('reject') || tripState.contains('reject');
+            bool isCancelled = dbStatus.contains('cancel') ||
+                tripState.contains('cancel') ||
+                dbStatus.contains('reject') ||
+                tripState.contains('reject');
 
             String finalStatus = 'completed';
             String? finalCancelBy;
 
             if (isCancelled) {
               finalStatus = 'cancelled';
-              String cancelInfo = "${data['cancelReason']} ${data['cancelledBy']} ${data['cancelBy']}".toLowerCase();
-              if (cancelInfo.contains('passenger') || cancelInfo.contains('customer')) {
+              String cancelInfo =
+                  "${data['cancelReason']} ${data['cancelledBy']} ${data['cancelBy']}"
+                      .toLowerCase();
+              if (cancelInfo.contains('passenger') ||
+                  cancelInfo.contains('customer')) {
                 finalCancelBy = 'passenger';
               } else if (cancelInfo.contains('driver')) {
                 finalCancelBy = 'driver';
@@ -176,7 +193,9 @@ class EarningsProvider with ChangeNotifier {
                 finalCancelBy = 'unknown';
               }
             } else {
-              bool isCompleted = dbStatus == 'completed' || tripState == 'completed' || paymentStatus == 'collected';
+              bool isCompleted = dbStatus == 'completed' ||
+                  tripState == 'completed' ||
+                  paymentStatus == 'collected';
               if (!isCompleted) continue;
             }
 
@@ -198,15 +217,20 @@ class EarningsProvider with ChangeNotifier {
               fare = double.tryParse(data['bidAmount'].toString()) ?? 0;
             }
 
-            String pickupLoc = data['pickupLocation'] is Map ? (data['pickupLocation']['address']?.toString() ?? 'Unknown') : (data['pickupLocation']?.toString() ?? 'Unknown');
-            String dropLoc = data['dropLocation'] is Map ? (data['dropLocation']['address']?.toString() ?? 'Unknown') : (data['dropLocation']?.toString() ?? 'Unknown');
+            String pickupLoc = data['pickupLocation'] is Map
+                ? (data['pickupLocation']['address']?.toString() ?? 'Unknown')
+                : (data['pickupLocation']?.toString() ?? 'Unknown');
+            String dropLoc = data['dropLocation'] is Map
+                ? (data['dropLocation']['address']?.toString() ?? 'Unknown')
+                : (data['dropLocation']?.toString() ?? 'Unknown');
 
             dailyBookings.add(TripModel(
               id: doc.id,
               type: 'booking',
               date: tripDate,
               fare: fare,
-              distanceKm: double.tryParse(data['distance']?.toString() ?? '0') ?? 0,
+              distanceKm:
+                  double.tryParse(data['distance']?.toString() ?? '0') ?? 0,
               startAddress: pickupLoc,
               endAddress: dropLoc,
               status: finalStatus,
@@ -217,7 +241,6 @@ class EarningsProvider with ChangeNotifier {
           _bookingTripsMap[dateStr] = dailyBookings;
           _bookingTrips = _bookingTripsMap.values.expand((x) => x).toList();
           notifyListeners();
-
         }, onError: (e) {
           debugPrint("EarningsProvider: Booking Stream failed for $dateStr");
         });
@@ -234,7 +257,8 @@ class EarningsProvider with ChangeNotifier {
 
       for (int i = 0; i < 30; i++) {
         DateTime d = now.subtract(Duration(days: i));
-        String dateStr = "${d.year}.${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')}";
+        String dateStr =
+            "${d.year}.${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')}";
 
         var sub = _firestore
             .collection('roadpickups_hires')
@@ -242,13 +266,13 @@ class EarningsProvider with ChangeNotifier {
             .collection(membershipNo)
             .snapshots() // Added snapshots() instead of one-time get()!
             .listen((snap) {
-
           List<TripModel> dailyTrips = [];
           for (var doc in snap.docs) {
             Map<String, dynamic> data = doc.data();
 
             if (data.containsKey('tripId') && data.containsKey('totalFare')) {
-              DateTime tripDate = _parseDate(data['timestamp'] ?? data['startTime'] ?? data['pickupTime']);
+              DateTime tripDate = _parseDate(
+                  data['timestamp'] ?? data['startTime'] ?? data['pickupTime']);
 
               dailyTrips.add(TripModel(
                 id: data['tripId'] ?? doc.id,
@@ -267,17 +291,15 @@ class EarningsProvider with ChangeNotifier {
           _roadTripsMap[dateStr] = dailyTrips;
           _roadPickupTrips = _roadTripsMap.values.expand((x) => x).toList();
           notifyListeners(); // Updates UI as soon as it's deleted from the database
-
         }, onError: (e) {
           debugPrint("EarningsProvider: Stream failed for $dateStr");
         });
 
         _roadPickupSubscriptions.add(sub);
       }
-
     } catch (e) {
       debugPrint("Error fetching earnings: $e");
-    } 
+    }
 
     // Add a small delay (give time for Streams to load)
     await Future.delayed(const Duration(milliseconds: 800));
@@ -289,8 +311,9 @@ class EarningsProvider with ChangeNotifier {
 
   Future<bool> deleteTrip(TripModel trip, String membershipNo) async {
     try {
-      final dateStr = "${trip.date.year}.${trip.date.month.toString().padLeft(2, '0')}.${trip.date.day.toString().padLeft(2, '0')}";
-      
+      final dateStr =
+          "${trip.date.year}.${trip.date.month.toString().padLeft(2, '0')}.${trip.date.day.toString().padLeft(2, '0')}";
+
       if (trip.type == 'booking') {
         await _firestore
             .collection('booking_hires')
@@ -306,7 +329,7 @@ class EarningsProvider with ChangeNotifier {
             .doc(trip.id)
             .delete();
       }
-      
+
       // Also update local list immediately
       if (trip.type == 'booking') {
         _bookingTrips.removeWhere((t) => t.id == trip.id);

@@ -77,7 +77,9 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => VehicleProvider()),
         ChangeNotifierProvider(create: (_) => PaymentProvider()),
-        ChangeNotifierProvider(create: (_) => BookingProvider()), // Added BookingProvider to MultiProvider
+        ChangeNotifierProvider(
+            create: (_) =>
+                BookingProvider()), // Added BookingProvider to MultiProvider
         ChangeNotifierProvider(create: (_) => MeterProvider()),
         ChangeNotifierProvider(create: (_) => AdsProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
@@ -105,37 +107,38 @@ class MyApp extends StatelessWidget {
           navigatorKey: navigatorKey,
           debugShowCheckedModeBanner: false,
           title: 'AIAPRTD Member',
-          themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          themeMode:
+              themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           builder: (context, child) {
-        return Directionality(
-          textDirection: TextDirection.ltr,
-          child: Stack(
-            children: [
-              if (child != null) child,
-              const GlobalChatButton(),
-            ],
-          ),
+            return Directionality(
+              textDirection: TextDirection.ltr,
+              child: Stack(
+                children: [
+                  if (child != null) child,
+                  const GlobalChatButton(),
+                ],
+              ),
+            );
+          },
+          initialRoute: '/',
+          routes: {
+            '/': (context) => const SplashScreen(),
+            '/login': (context) => const LoginScreen(),
+            '/home': (context) => const HomePage(),
+
+            // Fixed the error here (Replaced ScheduledPage with BookingDashboardPage)
+            '/scheduled': (context) => const BookingDashboardPage(),
+
+            '/create-job': (context) => const CreateJobPage(),
+            '/road-pickup': (context) => const RoadPickupPage(),
+            '/sos': (context) => const SosPage(),
+            '/profile': (context) => const ProfilePage(),
+            '/parking': (context) => const ParkingPage(),
+            '/income': (context) => const IncomePage(),
+          },
         );
-      },
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const SplashScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/home': (context) => const HomePage(),
-
-        // Fixed the error here (Replaced ScheduledPage with BookingDashboardPage)
-        '/scheduled': (context) => const BookingDashboardPage(),
-
-        '/create-job': (context) => const CreateJobPage(),
-        '/road-pickup': (context) => const RoadPickupPage(),
-        '/sos': (context) => const SosPage(),
-        '/profile': (context) => const ProfilePage(),
-        '/parking': (context) => const ParkingPage(),
-        '/income': (context) => const IncomePage(),
-      },
-    );
       },
     );
   }

@@ -14,20 +14,17 @@ class VehicleOverviewSection extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final String imageUrl =
-        data['frontImage']?.toString() ?? '';
+    final String imageUrl = data['frontImage']?.toString() ?? '';
 
-    final String make =
-        data['make']?.toString() ?? 'N/A';
+    final String make = data['make']?.toString() ?? 'N/A';
 
-    final String model =
-        data['model']?.toString() ?? 'N/A';
+    final String model = data['model']?.toString() ?? 'N/A';
 
-    final String plateNumber =
-        data['vehicleNumber']?.toString() ?? 'N/A';
+    final String plateNumber = data['vehicleNumber']?.toString() ?? 'N/A';
 
     final String category =
-        (data['vehicle_category'] ?? data['selectedCategory'])?.toString() ?? 'N/A';
+        (data['vehicle_category'] ?? data['selectedCategory'])?.toString() ??
+            'N/A';
 
     // 💡 🎯 Create the full vehicle name by combining Make and Model from Firebase
     final String vehicleName = (make == 'N/A' && model == 'N/A')
@@ -55,12 +52,12 @@ class VehicleOverviewSection extends StatelessWidget {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             child: imageUrl.isNotEmpty
                 ? Image.network(
-              imageUrl,
-              height: 220,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _imagePlaceholder(isDark),
-            )
+                    imageUrl,
+                    height: 220,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _imagePlaceholder(isDark),
+                  )
                 : _imagePlaceholder(isDark),
           ),
 
@@ -138,17 +135,19 @@ class VehicleOverviewSection extends StatelessWidget {
   }
 
   Widget _infoCard(
-      BuildContext context,
-      IconData icon,
-      String title,
-      String value,
-      bool isDark,
-      ) {
+    BuildContext context,
+    IconData icon,
+    String title,
+    String value,
+    bool isDark,
+  ) {
     return Container(
       width: double.infinity, // Take full width
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.grey.shade50,
+        color: isDark
+            ? Theme.of(context).scaffoldBackgroundColor
+            : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark ? Colors.blueGrey.shade800 : Colors.grey.shade200,

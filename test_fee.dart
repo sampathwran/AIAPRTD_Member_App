@@ -61,24 +61,34 @@ Map<String, dynamic> checkMembershipFeeStatus(Map<String, dynamic> data) {
   final DateTime now = DateTime.now(); // 2026-07-27
   final int currentDay = now.day;
   final List<String> monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
   ];
   final String currentMonthName = monthNames[now.month - 1];
   final String currentYearStr = now.year.toString();
-  
+
   String targetMonthName = currentMonthName;
   String targetYearStr = currentYearStr;
-  
+
   if (currentDay < 5) {
-     int prevMonthIndex = now.month - 2;
-     int prevYear = now.year;
-     if (prevMonthIndex < 0) {
-        prevMonthIndex = 11;
-        prevYear -= 1;
-     }
-     targetMonthName = monthNames[prevMonthIndex];
-     targetYearStr = prevYear.toString();
+    int prevMonthIndex = now.month - 2;
+    int prevYear = now.year;
+    if (prevMonthIndex < 0) {
+      prevMonthIndex = 11;
+      prevYear -= 1;
+    }
+    targetMonthName = monthNames[prevMonthIndex];
+    targetYearStr = prevYear.toString();
   }
 
   final List<dynamic> paymentHistory = data['payment_history'] ?? [];
@@ -95,12 +105,15 @@ Map<String, dynamic> checkMembershipFeeStatus(Map<String, dynamic> data) {
 
   for (var payment in paymentHistory) {
     if (payment is Map) {
-      final String pStatus = (payment['status'] ?? '').toString().trim().toLowerCase();
+      final String pStatus =
+          (payment['status'] ?? '').toString().trim().toLowerCase();
       if (pStatus == 'pending' || pStatus == 'rejected') continue;
 
       List<String> monthsToCheck = [];
       if (payment.containsKey('months') && payment['months'] is List) {
-        monthsToCheck = (payment['months'] as List).map((m) => m.toString().trim().toLowerCase()).toList();
+        monthsToCheck = (payment['months'] as List)
+            .map((m) => m.toString().trim().toLowerCase())
+            .toList();
       } else {
         String mStr = (payment['month'] ?? '').toString().trim().toLowerCase();
         monthsToCheck = [mStr];
@@ -114,7 +127,10 @@ Map<String, dynamic> checkMembershipFeeStatus(Map<String, dynamic> data) {
       }
 
       final String pYear = (payment['year'] ?? '').toString().trim();
-      final String pReason = (payment['reason'] ?? payment['type'] ?? '').toString().trim().toLowerCase();
+      final String pReason = (payment['reason'] ?? payment['type'] ?? '')
+          .toString()
+          .trim()
+          .toLowerCase();
 
       bool isMembershipPayment = (pReason.isEmpty ||
           pReason.contains('membership') ||
@@ -122,10 +138,12 @@ Map<String, dynamic> checkMembershipFeeStatus(Map<String, dynamic> data) {
           (pReason.contains('fee') && !pReason.contains('registration')));
 
       if (isMembershipPayment) {
-        if (monthsToCheck.contains(currentMonthName.toLowerCase()) && (pYear == currentYearStr || pYear.isEmpty)) {
+        if (monthsToCheck.contains(currentMonthName.toLowerCase()) &&
+            (pYear == currentYearStr || pYear.isEmpty)) {
           hasPaidForCurrentMonth = true;
         }
-        if (monthsToCheck.contains(targetMonthName.toLowerCase()) && (pYear == targetYearStr || pYear.isEmpty)) {
+        if (monthsToCheck.contains(targetMonthName.toLowerCase()) &&
+            (pYear == targetYearStr || pYear.isEmpty)) {
           hasPaidForTargetMonth = true;
         }
       }
@@ -145,7 +163,7 @@ Map<String, dynamic> checkMembershipFeeStatus(Map<String, dynamic> data) {
       'reason': 'Pending Membership Fee',
     };
   }
-  
+
   return {
     'isFeePaidValid': true,
     'reason': '',

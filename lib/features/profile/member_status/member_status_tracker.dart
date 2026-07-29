@@ -15,65 +15,114 @@ class MemberStatusTracker {
     }
 
     try {
-      final String currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
-      final docRef = FirebaseFirestore.instance.collection('member_inactive_reasons').doc(membershipNo);
-      
+      final String currentUid =
+          FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
+      final docRef = FirebaseFirestore.instance
+          .collection('member_inactive_reasons')
+          .doc(membershipNo);
+
       // Helpers
       String getDocStatus(String systemName) {
-        final dynamic rawDocs = activeData['documents'] ?? activeData['complianceDocuments'] ?? (activeData['currentVehicle'] is Map ? activeData['currentVehicle']['documents'] : null);
+        final dynamic rawDocs = activeData['documents'] ??
+            activeData['complianceDocuments'] ??
+            (activeData['currentVehicle'] is Map
+                ? activeData['currentVehicle']['documents']
+                : null);
         String status = 'missing';
         if (rawDocs is List) {
-          final List<String> requiredDocs = ['Revenue License', 'Insurance Policy', 'Registration Document', 'Driving License (Front)', 'Driving License (Back)'];
+          final List<String> requiredDocs = [
+            'Revenue License',
+            'Insurance Policy',
+            'Registration Document',
+            'Driving License (Front)',
+            'Driving License (Back)'
+          ];
           int index = requiredDocs.indexOf(systemName);
           if (index != -1 && index < rawDocs.length) {
             final doc = rawDocs[index];
-            if (doc is Map) status = doc['status']?.toString().toLowerCase() ?? 'missing';
+            if (doc is Map)
+              status = doc['status']?.toString().toLowerCase() ?? 'missing';
           }
         } else if (rawDocs is Map) {
           final doc = rawDocs[systemName];
-          if (doc is Map) status = doc['status']?.toString().toLowerCase() ?? 'missing';
+          if (doc is Map)
+            status = doc['status']?.toString().toLowerCase() ?? 'missing';
         }
-        if (status == 'empty' || status == 'null' || status.isEmpty) return 'missing';
+        if (status == 'empty' || status == 'null' || status.isEmpty)
+          return 'missing';
         if (status == 'pending') return 'pending_approval';
         return status;
       }
 
       String getVehicleImgStatus(String systemName) {
-        final dynamic rawDocs = activeData['vehiclePhotos'] ?? activeData['documents'] ?? (activeData['currentVehicle'] is Map ? activeData['currentVehicle']['vehiclePhotos'] : null); 
+        final dynamic rawDocs = activeData['vehiclePhotos'] ??
+            activeData['documents'] ??
+            (activeData['currentVehicle'] is Map
+                ? activeData['currentVehicle']['vehiclePhotos']
+                : null);
         String status = 'missing';
         if (rawDocs is Map) {
           final doc = rawDocs[systemName];
-          if (doc is Map) status = doc['status']?.toString().toLowerCase() ?? 'missing';
-          else if (doc != null && doc.toString().isNotEmpty) status = 'approved'; 
+          if (doc is Map)
+            status = doc['status']?.toString().toLowerCase() ?? 'missing';
+          else if (doc != null && doc.toString().isNotEmpty)
+            status = 'approved';
         }
-        if (status == 'missing' && activeData[systemName] != null && activeData[systemName].toString().isNotEmpty) {
-           status = 'approved';
+        if (status == 'missing' &&
+            activeData[systemName] != null &&
+            activeData[systemName].toString().isNotEmpty) {
+          status = 'approved';
         }
-        if (status == 'empty' || status == 'null' || status.isEmpty) return 'missing';
+        if (status == 'empty' || status == 'null' || status.isEmpty)
+          return 'missing';
         if (status == 'pending') return 'pending_approval';
         return status;
       }
 
       // Evaluations
-      final profileImageUrl = activeData['profileImageUrl']?.toString() ?? activeData['imageUrl']?.toString() ?? '';
-      String profileImageStatus = profileImageUrl.trim().isNotEmpty ? 'approved' : 'missing';
+      final profileImageUrl = activeData['profileImageUrl']?.toString() ??
+          activeData['imageUrl']?.toString() ??
+          '';
+      String profileImageStatus =
+          profileImageUrl.trim().isNotEmpty ? 'approved' : 'missing';
 
-      final kycStatusStr = activeData['kycApprovalStatus']?.toString().toLowerCase() ?? 'none';
-      String kycStatus = (kycStatusStr == 'approved') ? 'approved' : (kycStatusStr == 'pending' ? 'pending_approval' : (kycStatusStr == 'rejected' ? 'rejected' : 'missing'));
-      String nicStatus = kycStatus; 
+      final kycStatusStr =
+          activeData['kycApprovalStatus']?.toString().toLowerCase() ?? 'none';
+      String kycStatus = (kycStatusStr == 'approved')
+          ? 'approved'
+          : (kycStatusStr == 'pending'
+              ? 'pending_approval'
+              : (kycStatusStr == 'rejected' ? 'rejected' : 'missing'));
+      String nicStatus = kycStatus;
 
-      final faceStatusStr = activeData['faceKycStatus']?.toString().toLowerCase() ?? 'none';
-      String faceStatus = (faceStatusStr == 'approved') ? 'approved' : (faceStatusStr == 'pending' ? 'pending_approval' : (faceStatusStr == 'rejected' ? 'rejected' : 'missing'));
+      final faceStatusStr =
+          activeData['faceKycStatus']?.toString().toLowerCase() ?? 'none';
+      String faceStatus = (faceStatusStr == 'approved')
+          ? 'approved'
+          : (faceStatusStr == 'pending'
+              ? 'pending_approval'
+              : (faceStatusStr == 'rejected' ? 'rejected' : 'missing'));
 
-      final String blockStatus = activeData['adminBlockStatus']?.toString().toLowerCase() ?? 'none';
-      final String legacyApproval = activeData['adminApproval']?.toString().toLowerCase() ?? '';
-      final String legacyMainStatus = activeData['profile_status']?.toString().toLowerCase() ?? activeData['status']?.toString().toLowerCase() ?? '';
-      
-      bool adminBlockTemp = blockStatus == 'temporary' || legacyMainStatus == 'blocked';
-      bool adminBlockPerm = blockStatus == 'permanent' || legacyApproval == 'rejected' || legacyMainStatus == 'rejected';
+      final String blockStatus =
+          activeData['adminBlockStatus']?.toString().toLowerCase() ?? 'none';
+      final String legacyApproval =
+          activeData['adminApproval']?.toString().toLowerCase() ?? '';
+      final String legacyMainStatus =
+          activeData['profile_status']?.toString().toLowerCase() ??
+              activeData['status']?.toString().toLowerCase() ??
+              '';
 
-      final Map<String, dynamic> feeCheck = checkMembershipFeeStatus(activeData);
-      String feeStatus = (feeCheck['isFeePaidValid'] == true) ? 'approved' : 'pending_approval';
+      bool adminBlockTemp =
+          blockStatus == 'temporary' || legacyMainStatus == 'blocked';
+      bool adminBlockPerm = blockStatus == 'permanent' ||
+          legacyApproval == 'rejected' ||
+          legacyMainStatus == 'rejected';
+
+      final Map<String, dynamic> feeCheck =
+          checkMembershipFeeStatus(activeData);
+      String feeStatus = (feeCheck['isFeePaidValid'] == true)
+          ? 'approved'
+          : 'pending_approval';
 
       final docRev = getDocStatus('Revenue License');
       final docIns = getDocStatus('Insurance Policy');
@@ -85,8 +134,7 @@ class MemberStatusTracker {
       final imgLeft = getVehicleImgStatus('Left Side');
       final imgInt = getVehicleImgStatus('Interior');
 
-      bool isAllApproved = 
-          profileImageStatus == 'approved' &&
+      bool isAllApproved = profileImageStatus == 'approved' &&
           kycStatus == 'approved' &&
           nicStatus == 'approved' &&
           faceStatus == 'approved' &&
@@ -120,7 +168,7 @@ class MemberStatusTracker {
         'vehicle_image_right_side': imgRight,
         'vehicle_image_left_side': imgLeft,
         'vehicle_image_interior': imgInt,
-        
+
         // Remove old incorrect keys that might have been added directly by vehicle_provider
         'Front': FieldValue.delete(),
         'Back': FieldValue.delete(),
@@ -138,7 +186,6 @@ class MemberStatusTracker {
       }, SetOptions(merge: true));
 
       print("✅ [TRACKER] Successfully synced all fields for $membershipNo");
-
     } catch (e, stacktrace) {
       print("❌ [TRACKER] CRITICAL ERROR: $e");
       print("❌ [TRACKER] STACKTRACE: $stacktrace");

@@ -16,9 +16,8 @@ class PersonalKYCChecker {
       };
     }
 
-    final bool isDetailsSubmitted =
-        memberData['isDetailsSubmitted'] == true ||
-            memberData['kycApprovalStatus']?.toString().toLowerCase() == 'pending';
+    final bool isDetailsSubmitted = memberData['isDetailsSubmitted'] == true ||
+        memberData['kycApprovalStatus']?.toString().toLowerCase() == 'pending';
 
     final String kycApproval =
         memberData['kycApprovalStatus']?.toString().toLowerCase() ?? 'none';
@@ -29,8 +28,9 @@ class PersonalKYCChecker {
     final String faceStatus =
         memberData['faceKycStatus']?.toString().toLowerCase() ?? 'none';
 
-    final bool isAdminApproved =
-        kycApproval == 'approved' || mainStatus == 'active' || mainStatus == 'active member';
+    final bool isAdminApproved = kycApproval == 'approved' ||
+        mainStatus == 'active' ||
+        mainStatus == 'active member';
 
     // Face verification doesn't need admin approval.
     // App/backend approval based on profile image match is enough.
@@ -46,12 +46,11 @@ class PersonalKYCChecker {
     // 2. Face auto approved
     final bool isFullyVerified = isAdminApproved && isFaceApproved;
 
-    final bool showPendingScreen =
-        isDetailsSubmitted ||
-            kycApproval == 'pending' ||
-            faceStatus == 'pending' ||
-            isRejected ||
-            isFullyVerified;
+    final bool showPendingScreen = isDetailsSubmitted ||
+        kycApproval == 'pending' ||
+        faceStatus == 'pending' ||
+        isRejected ||
+        isFullyVerified;
 
     String reason;
 
@@ -68,9 +67,11 @@ class PersonalKYCChecker {
     } else if (isFullyVerified) {
       reason = "Profile fully verified ✅";
     } else if (!isDetailsSubmitted && kycApproval == 'none') {
-      reason = "Please complete your one-time registration and face verification 📋";
+      reason =
+          "Please complete your one-time registration and face verification 📋";
     } else if (!isAdminApproved && !isFaceApproved) {
-      reason = "Personal details pending admin approval and face scan pending ⏳";
+      reason =
+          "Personal details pending admin approval and face scan pending ⏳";
     } else if (!isAdminApproved) {
       reason = "Personal details pending admin approval ⏳";
     } else if (!isFaceApproved) {

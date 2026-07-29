@@ -778,7 +778,8 @@ class AppIconsLibrary {
     'shuffle': Icons.shuffle,
     'shutter_speed': Icons.shutter_speed,
     'signal_cellular_4_bar': Icons.signal_cellular_4_bar,
-    'signal_cellular_connected_no_internet_4_bar': Icons.signal_cellular_connected_no_internet_4_bar,
+    'signal_cellular_connected_no_internet_4_bar':
+        Icons.signal_cellular_connected_no_internet_4_bar,
     'signal_cellular_no_sim': Icons.signal_cellular_no_sim,
     'signal_cellular_null': Icons.signal_cellular_null,
     'signal_cellular_off': Icons.signal_cellular_off,
@@ -963,7 +964,7 @@ class AppIconsLibrary {
     if (allIcons.containsKey(name)) {
       return allIcons[name]!;
     }
-    
+
     // Check if the user entered a hex code like e5f9 or 0xe5f9
     String hexString = name.replaceAll('0x', '').trim();
     if (hexString.isNotEmpty && RegExp(r'^[0-9a-fA-F]+$').hasMatch(hexString)) {
@@ -972,7 +973,7 @@ class AppIconsLibrary {
         return IconData(codePoint, fontFamily: 'MaterialIcons');
       }
     }
-    
+
     return Icons.star_rounded;
   }
 }

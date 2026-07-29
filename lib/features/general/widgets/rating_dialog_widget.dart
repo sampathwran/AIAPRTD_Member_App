@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 class RatingDialogWidget extends StatefulWidget {
   final String title;
   final bool isRatingDriver; // Determines which default reason chips to show
-  final Function(int rating, List<String> selectedChips, String customReason) onSubmit;
+  final Function(int rating, List<String> selectedChips, String customReason)
+      onSubmit;
   final bool isSubmitting;
 
   const RatingDialogWidget({
@@ -48,7 +49,8 @@ class _RatingDialogWidgetState extends State<RatingDialogWidget> {
   void _onStarTapped(int index) {
     setState(() {
       _currentRating = index + 1;
-      _selectedChips.clear(); // Clear chips when rating changes because chips change
+      _selectedChips
+          .clear(); // Clear chips when rating changes because chips change
     });
   }
 
@@ -72,14 +74,16 @@ class _RatingDialogWidgetState extends State<RatingDialogWidget> {
   Widget build(BuildContext context) {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Text(widget.title, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold)),
+      title: Text(widget.title,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontWeight: FontWeight.bold)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text("How was your experience?"),
             const SizedBox(height: 20),
-            
+
             // Stars
             FittedBox(
               fit: BoxFit.scaleDown,
@@ -98,7 +102,7 @@ class _RatingDialogWidgetState extends State<RatingDialogWidget> {
               ),
             ),
             const SizedBox(height: 20),
-            
+
             // Chips
             Wrap(
               spacing: 8,
@@ -107,7 +111,10 @@ class _RatingDialogWidgetState extends State<RatingDialogWidget> {
               children: _currentChips.map((chipText) {
                 final isSelected = _selectedChips.contains(chipText);
                 return ChoiceChip(
-                  label: Text(chipText, style: TextStyle(color: isSelected ? Colors.white : Colors.black87, fontSize: 12)),
+                  label: Text(chipText,
+                      style: TextStyle(
+                          color: isSelected ? Colors.white : Colors.black87,
+                          fontSize: 12)),
                   selected: isSelected,
                   selectedColor: Colors.blue,
                   backgroundColor: Colors.grey.shade200,
@@ -115,9 +122,9 @@ class _RatingDialogWidgetState extends State<RatingDialogWidget> {
                 );
               }).toList(),
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // Custom Reason TextField
             TextField(
               controller: _reasonController,
@@ -128,7 +135,8 @@ class _RatingDialogWidgetState extends State<RatingDialogWidget> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
               maxLines: 3,
             ),
@@ -137,21 +145,25 @@ class _RatingDialogWidgetState extends State<RatingDialogWidget> {
       ),
       actions: [
         if (widget.isSubmitting)
-          const Center(child: Padding(
+          const Center(
+              child: Padding(
             padding: EdgeInsets.all(8.0),
             child: CircularProgressIndicator(),
           ))
         else
           ElevatedButton(
             onPressed: () {
-              widget.onSubmit(_currentRating, _selectedChips.toList(), _reasonController.text.trim());
+              widget.onSubmit(_currentRating, _selectedChips.toList(),
+                  _reasonController.text.trim());
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black, 
-              minimumSize: const Size(double.infinity, 50), 
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
-            ),
-            child: const Text("SUBMIT RATING", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                backgroundColor: Colors.black,
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12))),
+            child: const Text("SUBMIT RATING",
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
           )
       ],
     );

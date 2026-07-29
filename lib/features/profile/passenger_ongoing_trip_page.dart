@@ -15,10 +15,12 @@ class PassengerOngoingTripPage extends StatefulWidget {
   final String bookingId;
   final Map<String, dynamic> bookingData;
 
-  const PassengerOngoingTripPage({super.key, required this.bookingId, required this.bookingData});
+  const PassengerOngoingTripPage(
+      {super.key, required this.bookingId, required this.bookingData});
 
   @override
-  State<PassengerOngoingTripPage> createState() => _PassengerOngoingTripPageState();
+  State<PassengerOngoingTripPage> createState() =>
+      _PassengerOngoingTripPageState();
 }
 
 class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
@@ -36,17 +38,21 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
   @override
   void initState() {
     super.initState();
-    String category = widget.bookingData['vehicleCategory']?.toString().toLowerCase() ?? 
-                      widget.bookingData['selectedCategory']?.toString().toLowerCase() ?? 
-                      'mini';
+    String category =
+        widget.bookingData['vehicleCategory']?.toString().toLowerCase() ??
+            widget.bookingData['selectedCategory']?.toString().toLowerCase() ??
+            'mini';
     _loadCarIcon(category);
   }
 
   Future<Uint8List> getBytesFromAsset(String path, int width) async {
     ByteData data = await rootBundle.load(path);
-    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(), targetWidth: width);
+    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
+        targetWidth: width);
     ui.FrameInfo fi = await codec.getNextFrame();
-    return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!.buffer.asUint8List();
+    return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
+        .buffer
+        .asUint8List();
   }
 
   Future<void> _loadCarIcon(String category) async {
@@ -60,14 +66,16 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
       assetPath = 'assets/images/map_6_seater.png';
     } else if (category.contains('9 seater') || category.contains('9_seater')) {
       assetPath = 'assets/images/map_9_seater.png';
-    } else if (category.contains('14 seater') || category.contains('14_seater')) {
+    } else if (category.contains('14 seater') ||
+        category.contains('14_seater')) {
       assetPath = 'assets/images/map_14_seater.png';
     } else if (category.contains('mini')) {
       assetPath = 'assets/images/map_mini.png';
     }
 
     try {
-      final Uint8List markerIcon = await getBytesFromAsset(assetPath, 80); // Reduced car icon size
+      final Uint8List markerIcon =
+          await getBytesFromAsset(assetPath, 80); // Reduced car icon size
       _carIcon = BitmapDescriptor.bytes(markerIcon);
     } catch (e) {
       try {
@@ -76,10 +84,11 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
           'assets/images/default_car.png',
         );
       } catch (e) {
-        _carIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange);
+        _carIcon =
+            BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange);
       }
     }
-    
+
     if (mounted) setState(() {});
   }
 
@@ -123,8 +132,12 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
       var lng = result2;
 
       lList.add(LatLng(
-          (lat != 0.0) ? (lList.isEmpty ? lat : lList.last.latitude + lat) : (lList.isEmpty ? 0.0 : lList.last.latitude),
-          (lng != 0.0) ? (lList.isEmpty ? lng : lList.last.longitude + lng) : (lList.isEmpty ? 0.0 : lList.last.longitude)));
+          (lat != 0.0)
+              ? (lList.isEmpty ? lat : lList.last.latitude + lat)
+              : (lList.isEmpty ? 0.0 : lList.last.latitude),
+          (lng != 0.0)
+              ? (lList.isEmpty ? lng : lList.last.longitude + lng)
+              : (lList.isEmpty ? 0.0 : lList.last.longitude)));
     } while (index < len);
     return lList;
   }
@@ -142,13 +155,15 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
         if (latLng.longitude < y0) y0 = latLng.longitude;
       }
     }
-    return LatLngBounds(northeast: LatLng(x1!, y1!), southwest: LatLng(x0!, y0!));
+    return LatLngBounds(
+        northeast: LatLng(x1!, y1!), southwest: LatLng(x0!, y0!));
   }
 
-  Future<void> _fetchRoute(LatLng origin, LatLng destination, String phase) async {
+  Future<void> _fetchRoute(
+      LatLng origin, LatLng destination, String phase) async {
     if (_isFetchingRoute) return;
     _isFetchingRoute = true;
-    
+
     const String apiKey = "AIzaSyD2ZaITIFYTcb1fThVzChQYJ-cHm0aZ2iE";
     final String url = 'https://maps.googleapis.com/maps/api/directions/json'
         '?origin=${origin.latitude},${origin.longitude}'
@@ -160,7 +175,8 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['routes'] != null && data['routes'].isNotEmpty) {
-          String polylineEncoded = data['routes'][0]['overview_polyline']['points'];
+          String polylineEncoded =
+              data['routes'][0]['overview_polyline']['points'];
           List<LatLng> polylineCoordinates = _decodePoly(polylineEncoded);
 
           if (mounted) {
@@ -221,7 +237,8 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
       markers.add(Marker(
         markerId: const MarkerId('driver'),
         position: driverLatLng,
-        icon: _carIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+        icon: _carIcon ??
+            BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
         infoWindow: const InfoWindow(title: 'Driver Location'),
         rotation: driverHeading ?? 0.0,
         flat: true,
@@ -251,13 +268,16 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
       }
 
       // Auto pan camera to driver if map exists and location changed
-      if (_mapController != null && (driverLat != _lastDriverLat || driverLng != _lastDriverLng)) {
+      if (_mapController != null &&
+          (driverLat != _lastDriverLat || driverLng != _lastDriverLng)) {
         _lastDriverLat = driverLat;
         _lastDriverLng = driverLng;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (activeDestination != null) {
-            LatLngBounds bounds = _boundsFromLatLngList([driverLatLng, activeDestination]);
-            _mapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 80)); // 80px padding
+            LatLngBounds bounds =
+                _boundsFromLatLngList([driverLatLng, activeDestination]);
+            _mapController?.animateCamera(
+                CameraUpdate.newLatLngBounds(bounds, 80)); // 80px padding
           } else {
             _mapController?.animateCamera(CameraUpdate.newLatLng(driverLatLng));
           }
@@ -277,7 +297,9 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
     if (await canLaunchUrl(launchUri)) {
       await launchUrl(launchUri);
     } else {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Could not launch phone dialer")));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Could not launch phone dialer")));
     }
   }
 
@@ -297,36 +319,50 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
               onSubmit: (rating, selectedChips, customReason) async {
                 setStateDialog(() => isSubmitting = true);
                 try {
-                  await FirebaseFirestore.instance.collection('all_bookings').doc(widget.bookingId).set({
+                  await FirebaseFirestore.instance
+                      .collection('all_bookings')
+                      .doc(widget.bookingId)
+                      .set({
                     'driverRating': rating,
                     'driverRatingReasons': selectedChips,
                     'driverRatingCustomReason': customReason,
                     'ratingSubmittedAt': FieldValue.serverTimestamp(),
                   }, SetOptions(merge: true));
 
-                  String passengerId = widget.bookingData['memberId']?.toString() ?? '';
+                  String passengerId =
+                      widget.bookingData['memberId']?.toString() ?? '';
                   if (passengerId.isNotEmpty) {
-                    await FirebaseFirestore.instance.collection('members').doc(passengerId).collection('my_bookings').doc(widget.bookingId).set({
+                    await FirebaseFirestore.instance
+                        .collection('members')
+                        .doc(passengerId)
+                        .collection('my_bookings')
+                        .doc(widget.bookingId)
+                        .set({
                       'driverRating': rating,
                       'driverRatingReasons': selectedChips,
                       'driverRatingCustomReason': customReason,
                     }, SetOptions(merge: true));
                   }
 
-                  String driverId = widget.bookingData['driverId']?.toString() ?? '';
+                  String driverId =
+                      widget.bookingData['driverId']?.toString() ?? '';
                   if (driverId.isNotEmpty) {
-                    final driverRef = FirebaseFirestore.instance.collection('members').doc(driverId);
-                    await FirebaseFirestore.instance.runTransaction((transaction) async {
+                    final driverRef = FirebaseFirestore.instance
+                        .collection('members')
+                        .doc(driverId);
+                    await FirebaseFirestore.instance
+                        .runTransaction((transaction) async {
                       final snapshot = await transaction.get(driverRef);
                       if (snapshot.exists) {
                         final data = snapshot.data()!;
-                        double currentSum = (data['ratingSum'] ?? 0.0).toDouble();
+                        double currentSum =
+                            (data['ratingSum'] ?? 0.0).toDouble();
                         int currentCount = (data['ratingCount'] ?? 0).toInt();
-                        
+
                         currentSum += rating;
                         currentCount += 1;
                         double newRating = currentSum / currentCount;
-                        
+
                         transaction.update(driverRef, {
                           'ratingSum': currentSum,
                           'ratingCount': currentCount,
@@ -336,7 +372,9 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
                     });
                   }
 
-                  scaffoldMessenger.showSnackBar(const SnackBar(content: Text("Thanks for your feedback!"), backgroundColor: Colors.green));
+                  scaffoldMessenger.showSnackBar(const SnackBar(
+                      content: Text("Thanks for your feedback!"),
+                      backgroundColor: Colors.green));
                   navigator.pop(); // Close dialog
                   navigator.pop(); // Go back to Home
                 } catch (e) {
@@ -354,7 +392,9 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
   void _showNotification(String message, Color color) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+      content: Text(message,
+          style: const TextStyle(
+              fontWeight: FontWeight.bold, color: Colors.white)),
       backgroundColor: color,
       duration: const Duration(seconds: 4),
       behavior: SnackBarBehavior.floating,
@@ -372,16 +412,21 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text("Cancel Trip", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              title: const Text("Cancel Trip",
+                  style: TextStyle(
+                      color: Colors.red, fontWeight: FontWeight.bold)),
               content: const Text("Are you sure you want to cancel this trip?"),
               actions: [
                 if (!isSubmitting)
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text("Go Back", style: TextStyle(color: Colors.grey)),
+                    child: const Text("Go Back",
+                        style: TextStyle(color: Colors.grey)),
                   ),
                 isSubmitting
-                    ? const Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: CircularProgressIndicator())
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: CircularProgressIndicator())
                     : ElevatedButton(
                         onPressed: () async {
                           setState(() => isSubmitting = true);
@@ -392,22 +437,36 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
                             'cancelledAt': FieldValue.serverTimestamp(),
                           };
                           try {
-                            await FirebaseFirestore.instance.collection('all_bookings').doc(widget.bookingId).set(updates, SetOptions(merge: true));
-                            final myMembershipNo = Provider.of<ProfileProvider>(context, listen: false).memberNo;
+                            await FirebaseFirestore.instance
+                                .collection('all_bookings')
+                                .doc(widget.bookingId)
+                                .set(updates, SetOptions(merge: true));
+                            final myMembershipNo = Provider.of<ProfileProvider>(
+                                    context,
+                                    listen: false)
+                                .memberNo;
                             if (myMembershipNo.isNotEmpty) {
-                              await FirebaseFirestore.instance.collection('members').doc(myMembershipNo).collection('my_bookings').doc(widget.bookingId).set(updates, SetOptions(merge: true));
+                              await FirebaseFirestore.instance
+                                  .collection('members')
+                                  .doc(myMembershipNo)
+                                  .collection('my_bookings')
+                                  .doc(widget.bookingId)
+                                  .set(updates, SetOptions(merge: true));
                             }
                             if (context.mounted) {
                               Navigator.pop(context); // close dialog
-                              Navigator.pop(context); // go back to previous screen
+                              Navigator.pop(
+                                  context); // go back to previous screen
                             }
                           } catch (e) {
                             setState(() => isSubmitting = false);
                             debugPrint("Cancel error: $e");
                           }
                         },
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                        child: const Text("Confirm Cancel", style: TextStyle(color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red),
+                        child: const Text("Confirm Cancel",
+                            style: TextStyle(color: Colors.white)),
                       ),
               ],
             );
@@ -420,11 +479,18 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance.collection('all_bookings').doc(widget.bookingId).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('all_bookings')
+          .doc(widget.bookingId)
+          .snapshots(),
       builder: (context, snapshot) {
-        if (snapshot.hasError) return const Scaffold(body: Center(child: Text("Something went wrong")));
-        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        if (snapshot.hasError)
+          return const Scaffold(
+              body: Center(child: Text("Something went wrong")));
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
         }
 
         if (!snapshot.hasData || !snapshot.data!.exists) {
@@ -434,14 +500,17 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
         var data = snapshot.data!.data() as Map<String, dynamic>;
         String tripState = data['tripState'] ?? 'accepted';
         String status = data['status']?.toString().toLowerCase() ?? '';
-        
+
         if (_previousTripState != tripState) {
           if (_previousTripState.isNotEmpty) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (tripState == 'arrived') {
-                _showNotification("Your driver has arrived at the pickup location!", Colors.orange.shade700);
+                _showNotification(
+                    "Your driver has arrived at the pickup location!",
+                    Colors.orange.shade700);
               } else if (tripState == 'started') {
-                _showNotification("Your trip has started!", Colors.green.shade700);
+                _showNotification(
+                    "Your trip has started!", Colors.green.shade700);
               }
             });
           }
@@ -468,7 +537,9 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
         return Scaffold(
           backgroundColor: const Color(0xFFF8FAFC),
           appBar: AppBar(
-            title: const Text("Live Trip Tracking", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+            title: const Text("Live Trip Tracking",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.black87)),
             backgroundColor: Colors.white,
             elevation: 0,
             iconTheme: const IconThemeData(color: Colors.black87),
@@ -481,217 +552,323 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
                 ),
             ],
           ),
-          body: (status == 'completed' || tripState == 'completed') ? _buildCompletedUI(data) : Stack(
-            children: [
-              Positioned.fill(
-                child: GoogleMap(
-                  padding: const EdgeInsets.only(bottom: 140), // Move Google logo up
-                  initialCameraPosition: const CameraPosition(target: LatLng(7.8731, 80.7718), zoom: 7), // Sri Lanka center
-                  markers: _buildMarkers(data),
-                  polylines: _polylines,
-                  onMapCreated: (controller) => _mapController = controller,
-                  myLocationEnabled: true,
-                  myLocationButtonEnabled: false,
-                  zoomControlsEnabled: false,
-                ),
-              ),
+          body: (status == 'completed' || tripState == 'completed')
+              ? _buildCompletedUI(data)
+              : Stack(
+                  children: [
+                    Positioned.fill(
+                      child: GoogleMap(
+                        padding: const EdgeInsets.only(
+                            bottom: 140), // Move Google logo up
+                        initialCameraPosition: const CameraPosition(
+                            target: LatLng(7.8731, 80.7718),
+                            zoom: 7), // Sri Lanka center
+                        markers: _buildMarkers(data),
+                        polylines: _polylines,
+                        onMapCreated: (controller) =>
+                            _mapController = controller,
+                        myLocationEnabled: true,
+                        myLocationButtonEnabled: false,
+                        zoomControlsEnabled: false,
+                      ),
+                    ),
 
-              // Status Banner
-              Positioned(
-                top: 20, left: 20, right: 20,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: bannerColor,
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4))],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.info_outline, color: Colors.white, size: 20),
-                      const SizedBox(width: 8),
-                      Text(bannerText, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                    ],
-                  ),
-                ),
-              ),
+                    // Status Banner
+                    Positioned(
+                      top: 20,
+                      left: 20,
+                      right: 20,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: bannerColor,
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: const [
+                            BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 10,
+                                offset: Offset(0, 4))
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.info_outline,
+                                color: Colors.white, size: 20),
+                            const SizedBox(width: 8),
+                            Text(bannerText,
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14)),
+                          ],
+                        ),
+                      ),
+                    ),
 
-              // Bottom Sheet for Driver Details
-              Positioned(
-                bottom: 30, // move up a bit
-                left: 20,
-                right: 20,
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 5))],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 30,
-                            backgroundColor: Colors.blue.shade50,
-                            backgroundImage: driverImage.isNotEmpty ? NetworkImage(driverImage) : null,
-                            child: driverImage.isEmpty ? const Icon(Icons.person, color: Colors.blue, size: 30) : null,
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                    // Bottom Sheet for Driver Details
+                    Positioned(
+                      bottom: 30, // move up a bit
+                      left: 20,
+                      right: 20,
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: const [
+                            BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 20,
+                                offset: Offset(0, 5))
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
                               children: [
-                                Text(driverName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18), maxLines: 1, overflow: TextOverflow.ellipsis),
-                                Text(driverVehicle, style: const TextStyle(color: Colors.grey, fontSize: 14)),
-                              ],
-                            ),
-                          ),
-                          if (driverPhone.isNotEmpty)
-                            Container(
-                              decoration: BoxDecoration(color: Colors.green.shade50, shape: BoxShape.circle),
-                              child: IconButton(
-                                onPressed: () => _makePhoneCall(driverPhone),
-                                icon: const Icon(Icons.phone, color: Colors.green),
-                              ),
-                            ),
-                          const SizedBox(width: 8),
-                          Container(
-                            decoration: BoxDecoration(color: Colors.blue.shade50, shape: BoxShape.circle),
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                StreamBuilder<QuerySnapshot>(
-                                  stream: FirebaseFirestore.instance
-                                      .collection('chats')
-                                      .doc(widget.bookingId)
-                                      .collection('messages')
-                                      .where('isRead', isEqualTo: false)
-                                      .snapshots(),
-                                  builder: (context, chatSnapshot) {
-                                    final myMembershipNo = Provider.of<ProfileProvider>(context, listen: false).memberNo;
-                                    int unreadCount = 0;
-                                    String latestMsg = "";
-                                    
-                                    if (chatSnapshot.hasData && chatSnapshot.data!.docs.isNotEmpty) {
-                                      var unreadDocs = chatSnapshot.data!.docs.where((doc) {
-                                        var d = doc.data() as Map<String, dynamic>;
-                                        return d['senderId'] != myMembershipNo;
-                                      }).toList();
-                                      
-                                      unreadCount = unreadDocs.length;
-                                      
-                                      if (unreadCount > 0) {
-                                        unreadDocs.sort((a, b) {
-                                          var d1 = a.data() as Map<String, dynamic>;
-                                          var d2 = b.data() as Map<String, dynamic>;
-                                          var t1 = d1['timestamp'] as Timestamp?;
-                                          var t2 = d2['timestamp'] as Timestamp?;
-                                          if (t1 == null || t2 == null) return 0;
-                                          return t2.compareTo(t1);
-                                        });
-                                        
-                                        latestMsg = (unreadDocs.first.data() as Map<String, dynamic>)['text'] ?? '';
-                                        if (latestMsg.length > 20) {
-                                          latestMsg = "${latestMsg.substring(0, 20)}...";
-                                        }
-                                      }
-                                    }
-                                    
-                                    return Stack(
-                                      clipBehavior: Clip.none,
-                                      children: [
-                                        IconButton(
-                                          onPressed: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => ChatPage(
-                                                  tripId: widget.bookingId,
-                                                  otherUserName: driverName,
-                                                  otherUserId: driverId,
-                                                ),
-                                              ),
-                                            ).then((_) {
-                                              FirebaseFirestore.instance
-                                                  .collection('chats')
-                                                  .doc(widget.bookingId)
-                                                  .collection('messages')
-                                                  .where('isRead', isEqualTo: false)
-                                                  .get()
-                                                  .then((snapshot) {
-                                                for (var doc in snapshot.docs) {
-                                                  var d = doc.data();
-                                                  if (d['senderId'] != myMembershipNo) {
-                                                    doc.reference.update({'isRead': true});
-                                                  }
-                                                }
+                                CircleAvatar(
+                                  radius: 30,
+                                  backgroundColor: Colors.blue.shade50,
+                                  backgroundImage: driverImage.isNotEmpty
+                                      ? NetworkImage(driverImage)
+                                      : null,
+                                  child: driverImage.isEmpty
+                                      ? const Icon(Icons.person,
+                                          color: Colors.blue, size: 30)
+                                      : null,
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(driverName,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis),
+                                      Text(driverVehicle,
+                                          style: const TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 14)),
+                                    ],
+                                  ),
+                                ),
+                                if (driverPhone.isNotEmpty)
+                                  Container(
+                                    decoration: BoxDecoration(
+                                        color: Colors.green.shade50,
+                                        shape: BoxShape.circle),
+                                    child: IconButton(
+                                      onPressed: () =>
+                                          _makePhoneCall(driverPhone),
+                                      icon: const Icon(Icons.phone,
+                                          color: Colors.green),
+                                    ),
+                                  ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  decoration: BoxDecoration(
+                                      color: Colors.blue.shade50,
+                                      shape: BoxShape.circle),
+                                  child: Stack(
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      StreamBuilder<QuerySnapshot>(
+                                        stream: FirebaseFirestore.instance
+                                            .collection('chats')
+                                            .doc(widget.bookingId)
+                                            .collection('messages')
+                                            .where('isRead', isEqualTo: false)
+                                            .snapshots(),
+                                        builder: (context, chatSnapshot) {
+                                          final myMembershipNo =
+                                              Provider.of<ProfileProvider>(
+                                                      context,
+                                                      listen: false)
+                                                  .memberNo;
+                                          int unreadCount = 0;
+                                          String latestMsg = "";
+
+                                          if (chatSnapshot.hasData &&
+                                              chatSnapshot
+                                                  .data!.docs.isNotEmpty) {
+                                            var unreadDocs = chatSnapshot
+                                                .data!.docs
+                                                .where((doc) {
+                                              var d = doc.data()
+                                                  as Map<String, dynamic>;
+                                              return d['senderId'] !=
+                                                  myMembershipNo;
+                                            }).toList();
+
+                                            unreadCount = unreadDocs.length;
+
+                                            if (unreadCount > 0) {
+                                              unreadDocs.sort((a, b) {
+                                                var d1 = a.data()
+                                                    as Map<String, dynamic>;
+                                                var d2 = b.data()
+                                                    as Map<String, dynamic>;
+                                                var t1 = d1['timestamp']
+                                                    as Timestamp?;
+                                                var t2 = d2['timestamp']
+                                                    as Timestamp?;
+                                                if (t1 == null || t2 == null)
+                                                  return 0;
+                                                return t2.compareTo(t1);
                                               });
-                                            });
-                                          },
-                                          icon: const Icon(Icons.chat_bubble_outline, color: Colors.blue),
-                                        ),
-                                        if (unreadCount > 0)
-                                          Positioned(
-                                            bottom: 45,
-                                            right: -10,
-                                            child: IgnorePointer(
-                                              child: Material(
-                                                color: Colors.transparent,
-                                                elevation: 4,
-                                                borderRadius: BorderRadius.circular(10),
-                                                child: Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.blue.shade800,
-                                                    borderRadius: const BorderRadius.only(
-                                                      topLeft: Radius.circular(10),
-                                                      topRight: Radius.circular(10),
-                                                      bottomLeft: Radius.circular(10),
-                                                      bottomRight: Radius.circular(2),
+
+                                              latestMsg = (unreadDocs.first
+                                                          .data()
+                                                      as Map<String,
+                                                          dynamic>)['text'] ??
+                                                  '';
+                                              if (latestMsg.length > 20) {
+                                                latestMsg =
+                                                    "${latestMsg.substring(0, 20)}...";
+                                              }
+                                            }
+                                          }
+
+                                          return Stack(
+                                            clipBehavior: Clip.none,
+                                            children: [
+                                              IconButton(
+                                                onPressed: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          ChatPage(
+                                                        tripId:
+                                                            widget.bookingId,
+                                                        otherUserName:
+                                                            driverName,
+                                                        otherUserId: driverId,
+                                                      ),
+                                                    ),
+                                                  ).then((_) {
+                                                    FirebaseFirestore.instance
+                                                        .collection('chats')
+                                                        .doc(widget.bookingId)
+                                                        .collection('messages')
+                                                        .where('isRead',
+                                                            isEqualTo: false)
+                                                        .get()
+                                                        .then((snapshot) {
+                                                      for (var doc
+                                                          in snapshot.docs) {
+                                                        var d = doc.data();
+                                                        if (d['senderId'] !=
+                                                            myMembershipNo) {
+                                                          doc.reference.update(
+                                                              {'isRead': true});
+                                                        }
+                                                      }
+                                                    });
+                                                  });
+                                                },
+                                                icon: const Icon(
+                                                    Icons.chat_bubble_outline,
+                                                    color: Colors.blue),
+                                              ),
+                                              if (unreadCount > 0)
+                                                Positioned(
+                                                  bottom: 45,
+                                                  right: -10,
+                                                  child: IgnorePointer(
+                                                    child: Material(
+                                                      color: Colors.transparent,
+                                                      elevation: 4,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal: 10,
+                                                                vertical: 6),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: Colors
+                                                              .blue.shade800,
+                                                          borderRadius:
+                                                              const BorderRadius
+                                                                  .only(
+                                                            topLeft:
+                                                                Radius.circular(
+                                                                    10),
+                                                            topRight:
+                                                                Radius.circular(
+                                                                    10),
+                                                            bottomLeft:
+                                                                Radius.circular(
+                                                                    10),
+                                                            bottomRight:
+                                                                Radius.circular(
+                                                                    2),
+                                                          ),
+                                                        ),
+                                                        child: Text(
+                                                          latestMsg,
+                                                          style:
+                                                              const TextStyle(
+                                                                  color: Colors
+                                                                      .white,
+                                                                  fontSize: 12),
+                                                        ),
+                                                      ),
                                                     ),
                                                   ),
-                                                  child: Text(
-                                                    latestMsg,
-                                                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                                                ),
+                                              if (unreadCount > 0)
+                                                Positioned(
+                                                  right: -2,
+                                                  top: -2,
+                                                  child: IgnorePointer(
+                                                    child: Container(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              5),
+                                                      decoration:
+                                                          const BoxDecoration(
+                                                              color: Colors.red,
+                                                              shape: BoxShape
+                                                                  .circle),
+                                                      child: Text(
+                                                        unreadCount.toString(),
+                                                        style: const TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 10,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      ),
+                                                    ),
                                                   ),
                                                 ),
-                                              ),
-                                            ),
-                                          ),
-                                        if (unreadCount > 0)
-                                          Positioned(
-                                            right: -2,
-                                            top: -2,
-                                            child: IgnorePointer(
-                                              child: Container(
-                                                padding: const EdgeInsets.all(5),
-                                                decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                                                child: Text(
-                                                  unreadCount.toString(),
-                                                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    );
-                                  },
+                                            ],
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
         );
       },
     );
@@ -699,7 +876,7 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
 
   Widget _buildCompletedUI(Map<String, dynamic> data) {
     String fare = (data['totalFare'] ?? data['estimateFare'] ?? 0.0).toString();
-    
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -708,9 +885,12 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
           children: [
             const Icon(Icons.check_circle, color: Colors.green, size: 80),
             const SizedBox(height: 24),
-            const Text("Trip Completed!", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const Text("Trip Completed!",
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text("Your trip has ended. Thank you for riding with us.", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600, fontSize: 16)),
+            Text("Your trip has ended. Thank you for riding with us.",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 16)),
             const SizedBox(height: 40),
             Container(
               width: double.infinity,
@@ -718,13 +898,26 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 5))],
+                boxShadow: const [
+                  BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 15,
+                      offset: Offset(0, 5))
+                ],
               ),
               child: Column(
                 children: [
-                  const Text("Total Fare", style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Text("Total Fare",
+                      style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  Text("Rs. $fare", style: const TextStyle(color: Colors.green, fontSize: 32, fontWeight: FontWeight.w900)),
+                  Text("Rs. $fare",
+                      style: const TextStyle(
+                          color: Colors.green,
+                          fontSize: 32,
+                          fontWeight: FontWeight.w900)),
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 20),
                     child: Divider(),
@@ -735,9 +928,12 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text("RATE DRIVER", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    child: const Text("RATE DRIVER",
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),

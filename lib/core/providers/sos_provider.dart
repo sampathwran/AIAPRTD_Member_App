@@ -19,7 +19,7 @@ class SosProvider extends ChangeNotifier {
   final AudioRecorder _audioRecorder = AudioRecorder();
   Timer? _recordingTimer;
   StreamSubscription<Position>? _locationSubscription;
-  
+
   bool _isRecording = false;
 
   /// Starts the SOS Process
@@ -35,15 +35,17 @@ class SosProvider extends ChangeNotifier {
     try {
       // 1. Get exact current location
       Position position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high)
-      );
+          locationSettings:
+              const LocationSettings(accuracy: LocationAccuracy.high));
 
       // 2. Create SOS Document ID
       final String memberId = memberData['membershipNo'] ?? 'Unknown';
       _currentSosId = "${memberId}_${DateTime.now().millisecondsSinceEpoch}";
 
       // 3. Save to Firestore
-      final sosDoc = FirebaseFirestore.instance.collection('sos_alerts').doc(_currentSosId);
+      final sosDoc = FirebaseFirestore.instance
+          .collection('sos_alerts')
+          .doc(_currentSosId);
       await sosDoc.set({
         'sosId': _currentSosId,
         'memberId': memberId,
@@ -61,7 +63,6 @@ class SosProvider extends ChangeNotifier {
 
       // 5. Start high-frequency location streaming
       _startLocationStreaming(sosDoc);
-
     } catch (e) {
       debugPrint("Failed to start SOS: $e");
       _isSosActive = false;
@@ -93,13 +94,15 @@ class SosProvider extends ChangeNotifier {
       _locationSubscription = null;
 
       // 3. Mark Firestore doc as resolved
-      await FirebaseFirestore.instance.collection('sos_alerts').doc(_currentSosId).update({
+      await FirebaseFirestore.instance
+          .collection('sos_alerts')
+          .doc(_currentSosId)
+          .update({
         'status': 'resolved',
         'resolvedAt': FieldValue.serverTimestamp(),
       });
 
       _currentSosId = null;
-
     } catch (e) {
       debugPrint("Error cancelling SOS: $e");
     }
@@ -108,11 +111,14 @@ class SosProvider extends ChangeNotifier {
   /// Validates PIN from member profile
   Future<bool> validatePin(String pin, String memberId) async {
     try {
-      final doc = await FirebaseFirestore.instance.collection('member').doc(memberId).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('member')
+          .doc(memberId)
+          .get();
       if (doc.exists) {
         final data = doc.data();
         // Fallback: If no sosPin is set, use mobile number or '1234' as default for testing
-        String expectedPin = data?['sosPin']?.toString() ?? '1234'; 
+        String expectedPin = data?['sosPin']?.toString() ?? '1234';
         return pin == expectedPin;
       }
     } catch (e) {
@@ -126,9 +132,10 @@ class SosProvider extends ChangeNotifier {
   void _startContinuousRecording() async {
     if (await _audioRecorder.hasPermission()) {
       _recordNextChunk();
-      
+
       // Every 30 seconds, stop the current recording and start a new one
-      _recordingTimer = Timer.periodic(const Duration(seconds: 30), (timer) async {
+      _recordingTimer =
+          Timer.periodic(const Duration(seconds: 30), (timer) async {
         if (!_isSosActive) {
           timer.cancel();
           return;
@@ -141,7 +148,7 @@ class SosProvider extends ChangeNotifier {
             _uploadAudioChunk(path);
           }
         }
-        
+
         // Start next chunk immediately
         if (_isSosActive) {
           _recordNextChunk();
@@ -155,7 +162,8 @@ class SosProvider extends ChangeNotifier {
   Future<void> _recordNextChunk() async {
     try {
       final directory = await getApplicationDocumentsDirectory();
-      final String fileName = 'sos_chunk_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      final String fileName =
+          'sos_chunk_${DateTime.now().millisecondsSinceEpoch}.m4a';
       final String filePath = '${directory.path}/$fileName';
 
       await _audioRecorder.start(
@@ -170,22 +178,27 @@ class SosProvider extends ChangeNotifier {
 
   Future<void> _uploadAudioChunk(String filePath) async {
     if (_currentSosId == null) return;
-    
+
     final File file = File(filePath);
     if (!await file.exists()) return;
 
     try {
       final String fileName = filePath.split('/').last;
-      final ref = FirebaseStorage.instance.ref().child('sos_audio/$_currentSosId/$fileName');
-      
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('sos_audio/$_currentSosId/$fileName');
+
       final uploadTask = await ref.putFile(file);
       final String downloadUrl = await uploadTask.ref.getDownloadURL();
 
       // Update Firestore array
-      await FirebaseFirestore.instance.collection('sos_alerts').doc(_currentSosId).update({
+      await FirebaseFirestore.instance
+          .collection('sos_alerts')
+          .doc(_currentSosId)
+          .update({
         'voiceRecordingUrls': FieldValue.arrayUnion([downloadUrl])
       });
-      
+
       // Clean up local file
       await file.delete();
     } catch (e) {
@@ -195,11 +208,10 @@ class SosProvider extends ChangeNotifier {
 
   void _startLocationStreaming(DocumentReference sosDoc) {
     _locationSubscription = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10, // Update every 10 meters
-      )
-    ).listen((Position position) {
+        locationSettings: const LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 10, // Update every 10 meters
+    )).listen((Position position) {
       if (_isSosActive) {
         sosDoc.update({
           'currentLocation': GeoPoint(position.latitude, position.longitude),

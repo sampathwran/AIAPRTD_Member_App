@@ -17,7 +17,8 @@ Future<void> initializeBackgroundService() async {
   const AndroidNotificationChannel channel = AndroidNotificationChannel(
     'my_foreground', // id
     'Location Tracking', // title
-    description: 'This channel is used for background location tracking.', // description
+    description:
+        'This channel is used for background location tracking.', // description
     importance: Importance.low, // low importance so it doesn't make sound
   );
 
@@ -32,7 +33,8 @@ Future<void> initializeBackgroundService() async {
   await service.configure(
     androidConfiguration: AndroidConfiguration(
       onStart: onStart,
-      autoStart: false, // Must be false to prevent crash on Android 14 without permissions
+      autoStart:
+          false, // Must be false to prevent crash on Android 14 without permissions
       isForegroundMode: true,
       notificationChannelId: 'my_foreground',
       initialNotificationTitle: 'AIAPRTD Driver',

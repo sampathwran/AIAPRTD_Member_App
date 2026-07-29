@@ -7,7 +7,7 @@ void main() {
     print('File not found');
     return;
   }
-  
+
   final imageBytes = file.readAsBytesSync();
   final image = decodeImage(imageBytes);
   if (image == null) return;
@@ -21,6 +21,7 @@ void main() {
     }
   }
 
-  File('C:/src/aiaprtd_member/assets/images/logo.png').writeAsBytesSync(encodePng(image));
+  File('C:/src/aiaprtd_member/assets/images/logo.png')
+      .writeAsBytesSync(encodePng(image));
   print('Done');
 }

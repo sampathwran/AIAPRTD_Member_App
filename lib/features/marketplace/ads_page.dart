@@ -22,7 +22,7 @@ class _AdsPageState extends State<AdsPage> {
   String _locationQuery = "";
   double _minPrice = 0;
   double _maxPrice = 10000000;
-  
+
   String? _selectedCategory;
   String? _selectedSubCategory;
   List<dynamic> _currentSubcategories = [];
@@ -71,107 +71,131 @@ class _AdsPageState extends State<AdsPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: theme.scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return Padding(
-              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, top: 20, left: 20, right: 20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Filter Ads", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 20),
-                  
-                  // Sort By Dropdown
-                  DropdownButtonFormField<String>(
-                    initialValue: tempSortBy,
-                    decoration: InputDecoration(
-                      labelText: "Sort By",
-                      prefixIcon: const Icon(Icons.sort, color: Colors.blueAccent),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-                    ),
-                    items: ["Newest First", "Lowest Price", "Nearest First"]
-                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                        .toList(),
-                    onChanged: (v) {
-                      if (v != null) {
-                        setSheetState(() => tempSortBy = v);
+        return StatefulBuilder(builder: (context, setSheetState) {
+          return Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                top: 20,
+                left: 20,
+                right: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("Filter Ads",
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
+
+                // Sort By Dropdown
+                DropdownButtonFormField<String>(
+                  initialValue: tempSortBy,
+                  decoration: InputDecoration(
+                    labelText: "Sort By",
+                    prefixIcon:
+                        const Icon(Icons.sort, color: Colors.blueAccent),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15)),
+                  ),
+                  items: ["Newest First", "Lowest Price", "Nearest First"]
+                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) {
+                      setSheetState(() => tempSortBy = v);
+                    }
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // Location Filter
+                TextField(
+                  decoration: InputDecoration(
+                    labelText: "Location (City/Town)",
+                    prefixIcon:
+                        const Icon(Icons.location_on, color: Colors.blueAccent),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15)),
+                  ),
+                  controller: TextEditingController(text: tempLocation)
+                    ..selection =
+                        TextSelection.collapsed(offset: tempLocation.length),
+                  onChanged: (v) => tempLocation = v,
+                ),
+                const SizedBox(height: 20),
+
+                // Price Filter
+                Text(
+                    "Price Range (LKR): ${tempMin.toInt()} - ${tempMax.toInt()}",
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                RangeSlider(
+                  values: RangeValues(tempMin, tempMax),
+                  min: 0,
+                  max: 10000000,
+                  divisions: 100,
+                  activeColor: Colors.purpleAccent,
+                  labels: RangeLabels(
+                      tempMin.toInt().toString(), tempMax.toInt().toString()),
+                  onChanged: (RangeValues values) {
+                    setSheetState(() {
+                      tempMin = values.start;
+                      tempMax = values.end;
+                    });
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15))),
+                    onPressed: () async {
+                      if (tempSortBy == "Nearest First" && _userLat == null) {
+                        final provider =
+                            Provider.of<AdsProvider>(context, listen: false);
+                        final res = await provider.getCurrentLocation();
+                        if (res['success'] == true && mounted) {
+                          setState(() {
+                            _userLat = res['lat'];
+                            _userLng = res['lng'];
+                          });
+                        } else if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(
+                                  "Could not get location. ${res['error']}")));
+                          tempSortBy = "Newest First";
+                        }
+                      }
+
+                      if (mounted) {
+                        setState(() {
+                          _locationQuery = tempLocation.toLowerCase();
+                          _minPrice = tempMin;
+                          _maxPrice = tempMax;
+                          _sortBy = tempSortBy;
+                        });
+                        Navigator.pop(context);
                       }
                     },
+                    child: const Text("Apply Filters",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16)),
                   ),
-                  const SizedBox(height: 20),
-
-                  // Location Filter
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: "Location (City/Town)",
-                      prefixIcon: const Icon(Icons.location_on, color: Colors.blueAccent),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-                    ),
-                    controller: TextEditingController(text: tempLocation)..selection = TextSelection.collapsed(offset: tempLocation.length),
-                    onChanged: (v) => tempLocation = v,
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  // Price Filter
-                  Text("Price Range (LKR): ${tempMin.toInt()} - ${tempMax.toInt()}", style: const TextStyle(fontWeight: FontWeight.bold)),
-                  RangeSlider(
-                    values: RangeValues(tempMin, tempMax),
-                    min: 0,
-                    max: 10000000,
-                    divisions: 100,
-                    activeColor: Colors.purpleAccent,
-                    labels: RangeLabels(tempMin.toInt().toString(), tempMax.toInt().toString()),
-                    onChanged: (RangeValues values) {
-                      setSheetState(() {
-                        tempMin = values.start;
-                        tempMax = values.end;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
-                      onPressed: () async {
-                        if (tempSortBy == "Nearest First" && _userLat == null) {
-                          final provider = Provider.of<AdsProvider>(context, listen: false);
-                          final res = await provider.getCurrentLocation();
-                          if (res['success'] == true && mounted) {
-                            setState(() {
-                              _userLat = res['lat'];
-                              _userLng = res['lng'];
-                            });
-                          } else if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Could not get location. ${res['error']}")));
-                            tempSortBy = "Newest First";
-                          }
-                        }
-
-                        if (mounted) {
-                          setState(() {
-                            _locationQuery = tempLocation.toLowerCase();
-                            _minPrice = tempMin;
-                            _maxPrice = tempMax;
-                            _sortBy = tempSortBy;
-                          });
-                          Navigator.pop(context);
-                        }
-                      },
-                      child: const Text("Apply Filters", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
-              ),
-            );
-          }
-        );
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          );
+        });
       },
     );
   }
@@ -184,7 +208,8 @@ class _AdsPageState extends State<AdsPage> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Marketplace", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("Marketplace",
+            style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         elevation: 0,
         flexibleSpace: Container(
@@ -201,7 +226,8 @@ class _AdsPageState extends State<AdsPage> {
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const MyAdsPage()));
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const MyAdsPage()));
             },
             tooltip: "My Ads",
           )
@@ -214,8 +240,14 @@ class _AdsPageState extends State<AdsPage> {
             padding: const EdgeInsets.all(16.0),
             decoration: BoxDecoration(
               color: theme.cardColor,
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
-              boxShadow: [BoxShadow(color: isDarkMode ? Colors.black38 : Colors.black12, blurRadius: 5, offset: const Offset(0, 3))],
+              borderRadius:
+                  const BorderRadius.vertical(bottom: Radius.circular(20)),
+              boxShadow: [
+                BoxShadow(
+                    color: isDarkMode ? Colors.black38 : Colors.black12,
+                    blurRadius: 5,
+                    offset: const Offset(0, 3))
+              ],
             ),
             child: Row(
               children: [
@@ -223,16 +255,19 @@ class _AdsPageState extends State<AdsPage> {
                   child: TextField(
                     decoration: InputDecoration(
                       hintText: "Search ads...",
-                      prefixIcon: const Icon(Icons.search, color: Colors.blueAccent),
+                      prefixIcon:
+                          const Icon(Icons.search, color: Colors.blueAccent),
                       filled: true,
-                      fillColor: isDarkMode ? Colors.grey[800] : Colors.grey.shade100,
+                      fillColor:
+                          isDarkMode ? Colors.grey[800] : Colors.grey.shade100,
                       contentPadding: const EdgeInsets.symmetric(vertical: 0),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(25),
                         borderSide: BorderSide.none,
                       ),
                     ),
-                    onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
+                    onChanged: (value) =>
+                        setState(() => _searchQuery = value.toLowerCase()),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -242,7 +277,8 @@ class _AdsPageState extends State<AdsPage> {
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.filter_list, color: Colors.purpleAccent),
+                    icon: const Icon(Icons.filter_list,
+                        color: Colors.purpleAccent),
                     onPressed: _showFilterSheet,
                   ),
                 ),
@@ -261,15 +297,20 @@ class _AdsPageState extends State<AdsPage> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                
+
                 List<Map<String, dynamic>> catList = [];
                 if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
-                  catList = snapshot.data!.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
-                  catList.sort((a, b) => (a['order'] ?? 999).compareTo(b['order'] ?? 999));
+                  catList = snapshot.data!.docs
+                      .map((doc) => doc.data() as Map<String, dynamic>)
+                      .toList();
+                  catList.sort((a, b) =>
+                      (a['order'] ?? 999).compareTo(b['order'] ?? 999));
                 }
 
                 if (catList.isEmpty) {
-                  return const Center(child: Text("No categories found", style: TextStyle(color: Colors.grey)));
+                  return const Center(
+                      child: Text("No categories found",
+                          style: TextStyle(color: Colors.grey)));
                 }
 
                 return ListView.builder(
@@ -279,8 +320,10 @@ class _AdsPageState extends State<AdsPage> {
                   itemBuilder: (context, index) {
                     final catData = catList[index];
                     final catName = catData['name'] ?? 'Unknown';
-                    final catImage = catData['imageUrl'] ?? 'https://via.placeholder.com/100';
-                    final subCats = catData['subcategories'] as List<dynamic>? ?? [];
+                    final catImage = catData['imageUrl'] ??
+                        'https://via.placeholder.com/100';
+                    final subCats =
+                        catData['subcategories'] as List<dynamic>? ?? [];
                     final isSelected = _selectedCategory == catName;
 
                     return GestureDetector(
@@ -304,19 +347,26 @@ class _AdsPageState extends State<AdsPage> {
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: isSelected ? Colors.purpleAccent : Colors.transparent,
-                                  width: 3,
-                                ),
-                                boxShadow: [
-                                  if (!isSelected) BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 5)
-                                ]
-                              ),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? Colors.purpleAccent
+                                        : Colors.transparent,
+                                    width: 3,
+                                  ),
+                                  boxShadow: [
+                                    if (!isSelected)
+                                      BoxShadow(
+                                          color: Colors.black
+                                              .withValues(alpha: 0.1),
+                                          blurRadius: 5)
+                                  ]),
                               child: CircleAvatar(
                                 radius: 30,
                                 backgroundImage: NetworkImage(catImage),
-                                backgroundColor: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
+                                backgroundColor: isDarkMode
+                                    ? Colors.grey.shade800
+                                    : Colors.grey.shade200,
                               ),
                             ),
                             const SizedBox(height: 5),
@@ -329,8 +379,12 @@ class _AdsPageState extends State<AdsPage> {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                  color: isSelected ? Colors.purpleAccent : theme.textTheme.bodyMedium?.color,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: isSelected
+                                      ? Colors.purpleAccent
+                                      : theme.textTheme.bodyMedium?.color,
                                 ),
                               ),
                             )
@@ -343,7 +397,7 @@ class _AdsPageState extends State<AdsPage> {
               },
             ),
           ),
-          
+
           // 3. Subcategories (Horizontal Scroll)
           if (_currentSubcategories.isNotEmpty)
             Container(
@@ -356,7 +410,7 @@ class _AdsPageState extends State<AdsPage> {
                   final sub = _currentSubcategories[index];
                   String name = '';
                   String iconUrl = '';
-                  
+
                   if (sub is String) {
                     name = sub;
                   } else if (sub is Map) {
@@ -368,14 +422,19 @@ class _AdsPageState extends State<AdsPage> {
                   return Padding(
                     padding: const EdgeInsets.only(right: 10),
                     child: ChoiceChip(
-                      avatar: iconUrl.isNotEmpty ? Image.network(iconUrl, width: 24, height: 24) : null,
+                      avatar: iconUrl.isNotEmpty
+                          ? Image.network(iconUrl, width: 24, height: 24)
+                          : null,
                       label: Text(name),
                       selected: isSelected,
                       selectedColor: Colors.purpleAccent.withValues(alpha: 0.2),
                       checkmarkColor: Colors.purple,
                       labelStyle: TextStyle(
-                        color: isSelected ? Colors.purpleAccent : (isDarkMode ? Colors.white70 : Colors.black87),
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected
+                            ? Colors.purpleAccent
+                            : (isDarkMode ? Colors.white70 : Colors.black87),
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                       onSelected: (selected) {
                         setState(() {
@@ -393,19 +452,20 @@ class _AdsPageState extends State<AdsPage> {
           // 4. Ads Grid
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: context.read<AdsProvider>().getAdsStream(_selectedCategory),
+              stream:
+                  context.read<AdsProvider>().getAdsStream(_selectedCategory),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                
+
                 List<Map<String, dynamic>> adList = [];
-                
+
                 if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
                   for (var doc in snapshot.data!.docs) {
                     var data = doc.data() as Map<String, dynamic>;
                     data['id'] = doc.id;
-                    
+
                     // Filter out ads that were sold > 12 hours ago
                     if (data['status'] == 'sold' && data['soldAt'] != null) {
                       final soldAt = (data['soldAt'] as Timestamp).toDate();
@@ -413,7 +473,7 @@ class _AdsPageState extends State<AdsPage> {
                         continue; // Skip this ad
                       }
                     }
-                    
+
                     adList.add(data);
                   }
 
@@ -431,25 +491,30 @@ class _AdsPageState extends State<AdsPage> {
                 // Apply Local Filters
                 adList = adList.where((data) {
                   final title = (data['title'] ?? '').toString().toLowerCase();
-                  final address = (data['address'] ?? '').toString().toLowerCase();
+                  final address =
+                      (data['address'] ?? '').toString().toLowerCase();
                   final priceStr = data['price']?.toString() ?? '0';
                   String formattedPrice = priceStr;
                   try {
-                    formattedPrice = NumberFormat.decimalPattern().format(double.parse(priceStr));
+                    formattedPrice = NumberFormat.decimalPattern()
+                        .format(double.parse(priceStr));
                   } catch (_) {}
                   final price = double.tryParse(priceStr) ?? 0;
                   final category = data['category'] ?? '';
                   final subcategory = data['subcategory'] ?? '';
 
                   // Subcategory Match
-                  if (_selectedSubCategory != null && subcategory != _selectedSubCategory) return false;
+                  if (_selectedSubCategory != null &&
+                      subcategory != _selectedSubCategory) return false;
                   // Search Query
-                  if (_searchQuery.isNotEmpty && !title.contains(_searchQuery)) return false;
+                  if (_searchQuery.isNotEmpty && !title.contains(_searchQuery))
+                    return false;
                   // Location Query
-                  if (_locationQuery.isNotEmpty && !address.contains(_locationQuery)) return false;
+                  if (_locationQuery.isNotEmpty &&
+                      !address.contains(_locationQuery)) return false;
                   // Price Range
                   if (price < _minPrice || price > _maxPrice) return false;
-                    
+
                   data['formattedPrice'] = formattedPrice;
 
                   return true;
@@ -461,15 +526,19 @@ class _AdsPageState extends State<AdsPage> {
                     final priceA = double.tryParse(a['price'].toString()) ?? 0;
                     final priceB = double.tryParse(b['price'].toString()) ?? 0;
                     return priceA.compareTo(priceB);
-                  } else if (_sortBy == "Nearest First" && _userLat != null && _userLng != null) {
+                  } else if (_sortBy == "Nearest First" &&
+                      _userLat != null &&
+                      _userLng != null) {
                     final latA = (a['lat'] as num?)?.toDouble() ?? 0.0;
                     final lngA = (a['lng'] as num?)?.toDouble() ?? 0.0;
                     final latB = (b['lat'] as num?)?.toDouble() ?? 0.0;
                     final lngB = (b['lng'] as num?)?.toDouble() ?? 0.0;
-                    
+
                     if (latA != 0.0 && latB != 0.0) {
-                      final distA = Geolocator.distanceBetween(_userLat!, _userLng!, latA, lngA);
-                      final distB = Geolocator.distanceBetween(_userLat!, _userLng!, latB, lngB);
+                      final distA = Geolocator.distanceBetween(
+                          _userLat!, _userLng!, latA, lngA);
+                      final distB = Geolocator.distanceBetween(
+                          _userLat!, _userLng!, latB, lngB);
                       return distA.compareTo(distB);
                     }
                     return 0; // fallback if lat/lng missing
@@ -484,7 +553,8 @@ class _AdsPageState extends State<AdsPage> {
 
                 if (adList.isEmpty) {
                   return const Center(
-                    child: Text("No ads matching your criteria.", style: TextStyle(color: Colors.grey)),
+                    child: Text("No ads matching your criteria.",
+                        style: TextStyle(color: Colors.grey)),
                   );
                 }
 
@@ -494,45 +564,57 @@ class _AdsPageState extends State<AdsPage> {
                     crossAxisCount: 2,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
-                    childAspectRatio: 0.75, 
+                    childAspectRatio: 0.75,
                   ),
-                  itemCount: adList.length + (adList.length ~/ 4), // Add space for Sponsor Ads (1 every 4)
+                  itemCount: adList.length +
+                      (adList.length ~/
+                          4), // Add space for Sponsor Ads (1 every 4)
                   itemBuilder: (context, index) {
                     // Determine if this index should be a sponsor ad
                     if ((index + 1) % 5 == 0 && _sponsorAds.isNotEmpty) {
                       // It's a sponsor ad! We cycle through the available sponsor ads.
-                      int sponsorIndex = ((index + 1) ~/ 5 - 1) % _sponsorAds.length;
-                      return SponsorAdWidget(sponsorAd: _sponsorAds[sponsorIndex]);
+                      int sponsorIndex =
+                          ((index + 1) ~/ 5 - 1) % _sponsorAds.length;
+                      return SponsorAdWidget(
+                          sponsorAd: _sponsorAds[sponsorIndex]);
                     }
 
                     // Otherwise, calculate the actual ad index
                     int adIndex = index - (index ~/ 5);
-                    if (adIndex >= adList.length) return const SizedBox.shrink();
+                    if (adIndex >= adList.length)
+                      return const SizedBox.shrink();
 
                     final ad = adList[adIndex];
                     final docId = ad['id'] as String;
                     final isSold = ad['status'] == 'sold';
-                    
+
                     // Handle image fallback
                     String thumbUrl = 'https://via.placeholder.com/150';
-                    if (ad['imageUrls'] != null && (ad['imageUrls'] as List).isNotEmpty) {
+                    if (ad['imageUrls'] != null &&
+                        (ad['imageUrls'] as List).isNotEmpty) {
                       thumbUrl = ad['imageUrls'][0];
                     } else if (ad['imageUrl'] != null) {
                       thumbUrl = ad['imageUrl'];
                     }
-                    
+
                     return GestureDetector(
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(
-                          builder: (_) => AdDetailsPage(adData: ad, adId: docId)
-                        ));
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    AdDetailsPage(adData: ad, adId: docId)));
                       },
                       child: Container(
                         decoration: BoxDecoration(
                           color: theme.cardColor,
                           borderRadius: BorderRadius.circular(15),
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.05), blurRadius: 10, offset: const Offset(0, 5))
+                            BoxShadow(
+                                color: Colors.black
+                                    .withValues(alpha: isDarkMode ? 0.3 : 0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5))
                           ],
                         ),
                         child: Stack(
@@ -543,11 +625,16 @@ class _AdsPageState extends State<AdsPage> {
                                 Expanded(
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                                      borderRadius: const BorderRadius.vertical(
+                                          top: Radius.circular(15)),
                                       image: DecorationImage(
                                         image: NetworkImage(thumbUrl),
                                         fit: BoxFit.cover,
-                                        colorFilter: isSold ? const ColorFilter.mode(Colors.grey, BlendMode.saturation) : null,
+                                        colorFilter: isSold
+                                            ? const ColorFilter.mode(
+                                                Colors.grey,
+                                                BlendMode.saturation)
+                                            : null,
                                       ),
                                     ),
                                   ),
@@ -555,41 +642,59 @@ class _AdsPageState extends State<AdsPage> {
                                 Padding(
                                   padding: const EdgeInsets.all(10),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         ad['title'] ?? '',
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(fontWeight: FontWeight.bold, decoration: isSold ? TextDecoration.lineThrough : null),
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            decoration: isSold
+                                                ? TextDecoration.lineThrough
+                                                : null),
                                       ),
                                       const SizedBox(height: 5),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 2),
                                         decoration: BoxDecoration(
-                                          color: Colors.green.withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(4),
+                                          color: Colors.green
+                                              .withValues(alpha: 0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(4),
                                         ),
                                         child: Text(
                                           "Rs. ${ad['formattedPrice'] ?? ad['price']}",
-                                          style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 14),
+                                          style: const TextStyle(
+                                              color: Colors.green,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14),
                                         ),
                                       ),
                                       const SizedBox(height: 5),
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           Expanded(
                                             child: Row(
                                               children: [
-                                                const Icon(Icons.location_on, size: 12, color: Colors.grey),
+                                                const Icon(Icons.location_on,
+                                                    size: 12,
+                                                    color: Colors.grey),
                                                 const SizedBox(width: 4),
                                                 Expanded(
                                                   child: Text(
-                                                    ad['address'] ?? 'No Location',
+                                                    ad['address'] ??
+                                                        'No Location',
                                                     maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: const TextStyle(
+                                                        fontSize: 10,
+                                                        color: Colors.grey),
                                                   ),
                                                 ),
                                               ],
@@ -597,11 +702,17 @@ class _AdsPageState extends State<AdsPage> {
                                           ),
                                           Row(
                                             children: [
-                                              const Icon(Icons.visibility, size: 12, color: Colors.blueAccent),
+                                              const Icon(Icons.visibility,
+                                                  size: 12,
+                                                  color: Colors.blueAccent),
                                               const SizedBox(width: 4),
                                               Text(
                                                 "${ad['views'] ?? 0}",
-                                                style: const TextStyle(fontSize: 10, color: Colors.blueAccent, fontWeight: FontWeight.bold),
+                                                style: const TextStyle(
+                                                    fontSize: 10,
+                                                    color: Colors.blueAccent,
+                                                    fontWeight:
+                                                        FontWeight.bold),
                                               ),
                                             ],
                                           ),
@@ -614,9 +725,16 @@ class _AdsPageState extends State<AdsPage> {
                             ),
                             if (isSold)
                               Container(
-                                decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(15)),
+                                decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(15)),
                                 child: const Center(
-                                  child: Text("SOLD", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                                  child: Text("SOLD",
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 2)),
                                 ),
                               ),
                           ],
@@ -632,7 +750,8 @@ class _AdsPageState extends State<AdsPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const PostAdPage()));
+          Navigator.push(
+              context, MaterialPageRoute(builder: (_) => const PostAdPage()));
         },
         backgroundColor: Colors.purpleAccent,
         child: const Icon(Icons.add, color: Colors.white),

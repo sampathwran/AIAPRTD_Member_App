@@ -10,7 +10,8 @@ class MiniMeterWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<MeterProvider>(
       builder: (context, meter, child) {
-        if (!meter.isRunning && meter.totalFare == 0) return const SizedBox.shrink();
+        if (!meter.isRunning && meter.totalFare == 0)
+          return const SizedBox.shrink();
 
         return GestureDetector(
           onTap: () {
@@ -23,30 +24,39 @@ class MiniMeterWidget extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.black87,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(color: Colors.blue.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))
-              ]
-            ),
+                color: Colors.black87,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.blue.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4))
+                ]),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
-                    Icon(meter.isRunning ? Icons.directions_car : Icons.receipt, color: Colors.blueAccent),
+                    Icon(meter.isRunning ? Icons.directions_car : Icons.receipt,
+                        color: Colors.blueAccent),
                     const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          meter.isRunning ? (meter.isWaiting ? "Waiting..." : "Meter Running") : "Trip Finished",
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          meter.isRunning
+                              ? (meter.isWaiting
+                                  ? "Waiting..."
+                                  : "Meter Running")
+                              : "Trip Finished",
+                          style: const TextStyle(
+                              color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                         Text(
                           "${meter.totalDistanceKm.toStringAsFixed(2)} km | ${(meter.waitingTimeSeconds / 60).floor()}m wait",
-                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 12),
                         ),
                       ],
                     ),
@@ -54,7 +64,10 @@ class MiniMeterWidget extends StatelessWidget {
                 ),
                 Text(
                   "LKR ${meter.totalFare.toStringAsFixed(0)}",
-                  style: const TextStyle(color: Colors.greenAccent, fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      color: Colors.greenAccent,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold),
                 )
               ],
             ),

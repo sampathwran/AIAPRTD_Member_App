@@ -19,7 +19,7 @@ class _CreateJobPageState extends State<CreateJobPage> {
   Widget _buildConfirmLocationPanel(BookingProvider provider) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surfaceColor = Theme.of(context).colorScheme.surface;
-    
+
     return Material(
       elevation: 8,
       borderRadius: BorderRadius.circular(16),
@@ -30,8 +30,14 @@ class _CreateJobPageState extends State<CreateJobPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(provider.isChoosingPickup ? "Set Pickup Location" : "Set Drop Location", 
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey)),
+            Text(
+                provider.isChoosingPickup
+                    ? "Set Pickup Location"
+                    : "Set Drop Location",
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Colors.grey)),
             const SizedBox(height: 8),
             Text(
               provider.hoveredAddress,
@@ -44,35 +50,41 @@ class _CreateJobPageState extends State<CreateJobPage> {
               onPressed: () async {
                 LatLng? finalPosition = _lastMapPosition;
                 if (finalPosition == null && _mapController != null) {
-                  LatLngBounds bounds = await _mapController!.getVisibleRegion();
+                  LatLngBounds bounds =
+                      await _mapController!.getVisibleRegion();
                   finalPosition = LatLng(
                     (bounds.northeast.latitude + bounds.southwest.latitude) / 2,
-                    (bounds.northeast.longitude + bounds.southwest.longitude) / 2,
+                    (bounds.northeast.longitude + bounds.southwest.longitude) /
+                        2,
                   );
                 }
                 if (finalPosition != null) {
                   if (provider.isChoosingPickup) {
-                    provider.setPickupLocation(finalPosition, provider.hoveredAddress);
+                    provider.setPickupLocation(
+                        finalPosition, provider.hoveredAddress);
                   } else {
-                    provider.setDropLocation(provider.currentDropIndex, finalPosition, provider.hoveredAddress);
+                    provider.setDropLocation(provider.currentDropIndex,
+                        finalPosition, provider.hoveredAddress);
                   }
-                  provider.addRecentLocation(provider.hoveredAddress, finalPosition, provider.hoveredAddress.split(',').first);
+                  provider.addRecentLocation(provider.hoveredAddress,
+                      finalPosition, provider.hoveredAddress.split(',').first);
                   provider.disableChooseOnMap();
                 }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text("Confirm Location", style: TextStyle(fontSize: 16, color: Colors.white)),
+              child: const Text("Confirm Location",
+                  style: TextStyle(fontSize: 16, color: Colors.white)),
             ),
           ],
         ),
       ),
     );
   }
-
 
   static const CameraPosition _initialCameraPosition = CameraPosition(
     target: LatLng(6.9271, 79.8612), // Colombo
@@ -91,7 +103,8 @@ class _CreateJobPageState extends State<CreateJobPage> {
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
-    Provider.of<BookingProvider>(context, listen: false).setMapController(controller);
+    Provider.of<BookingProvider>(context, listen: false)
+        .setMapController(controller);
   }
 
   Future<void> _goToCurrentLocation() async {
@@ -103,7 +116,8 @@ class _CreateJobPageState extends State<CreateJobPage> {
 
     if (!serviceEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enable Location (GPS) on your phone.")),
+        const SnackBar(
+            content: Text("Please enable Location (GPS) on your phone.")),
       );
       await Geolocator.openLocationSettings();
       return;
@@ -126,7 +140,9 @@ class _CreateJobPageState extends State<CreateJobPage> {
 
     if (permission == LocationPermission.deniedForever) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Location permission is permanently denied. Please enable it in Settings.")),
+        const SnackBar(
+            content: Text(
+                "Location permission is permanently denied. Please enable it in Settings.")),
       );
       return;
     }
@@ -176,14 +192,13 @@ class _CreateJobPageState extends State<CreateJobPage> {
             zoomControlsEnabled: false,
             markers: provider.markers,
             polylines: provider.polylines,
-
-
-
             onTap: (LatLng location) async {
-              if (provider.isChoosingOnMap) return; // Disable tap-to-set when choosing on map
+              if (provider.isChoosingOnMap)
+                return; // Disable tap-to-set when choosing on map
               provider.isProgrammaticMove = true;
               _mapController?.animateCamera(CameraUpdate.newLatLng(location));
-              await provider.getAddressFromLatLng(location, isPickup: true, animateCamera: false);
+              await provider.getAddressFromLatLng(location,
+                  isPickup: true, animateCamera: false);
             },
             onCameraMove: (CameraPosition position) {
               if (provider.isChoosingOnMap) {
@@ -194,10 +209,12 @@ class _CreateJobPageState extends State<CreateJobPage> {
               if (provider.isChoosingOnMap) {
                 LatLng? finalPosition = _lastMapPosition;
                 if (finalPosition == null && _mapController != null) {
-                  LatLngBounds bounds = await _mapController!.getVisibleRegion();
+                  LatLngBounds bounds =
+                      await _mapController!.getVisibleRegion();
                   finalPosition = LatLng(
                     (bounds.northeast.latitude + bounds.southwest.latitude) / 2,
-                    (bounds.northeast.longitude + bounds.southwest.longitude) / 2,
+                    (bounds.northeast.longitude + bounds.southwest.longitude) /
+                        2,
                   );
                 }
                 if (finalPosition != null) {
@@ -206,7 +223,6 @@ class _CreateJobPageState extends State<CreateJobPage> {
               }
             },
           ),
-
           Positioned(
             top: 50,
             left: 16,
@@ -218,13 +234,14 @@ class _CreateJobPageState extends State<CreateJobPage> {
                 width: 44,
                 height: 44,
                 child: IconButton(
-                  icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).iconTheme.color ?? Colors.black, size: 20),
+                  icon: Icon(Icons.arrow_back_ios_new_rounded,
+                      color: Theme.of(context).iconTheme.color ?? Colors.black,
+                      size: 20),
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
             ),
           ),
-
           Positioned(
             bottom: 340,
             right: 16,
@@ -239,14 +256,15 @@ class _CreateJobPageState extends State<CreateJobPage> {
                   width: 44,
                   height: 44,
                   child: IconButton(
-                    icon: Icon(Icons.my_location_rounded, color: Theme.of(context).primaryColor, size: 22),
-                    onPressed: provider.isChoosingOnMap ? null : _goToCurrentLocation,
+                    icon: Icon(Icons.my_location_rounded,
+                        color: Theme.of(context).primaryColor, size: 22),
+                    onPressed:
+                        provider.isChoosingOnMap ? null : _goToCurrentLocation,
                   ),
                 ),
               ),
             ),
           ),
-
           if (!provider.isChoosingOnMap)
             Positioned(
               bottom: 20,
@@ -257,7 +275,6 @@ class _CreateJobPageState extends State<CreateJobPage> {
                 child: const BookingFormWidget(),
               ),
             ),
-
           if (provider.isChoosingOnMap)
             Positioned(
               bottom: 20,
@@ -265,12 +282,14 @@ class _CreateJobPageState extends State<CreateJobPage> {
               right: 16,
               child: _buildConfirmLocationPanel(provider),
             ),
-
           if (provider.isChoosingOnMap)
             Center(
               child: Padding(
-                padding: const EdgeInsets.only(bottom: 40), // Offset so pin tip points to center
-                child: Icon(Icons.location_on, size: 50, color: Theme.of(context).iconTheme.color ?? Colors.black87),
+                padding: const EdgeInsets.only(
+                    bottom: 40), // Offset so pin tip points to center
+                child: Icon(Icons.location_on,
+                    size: 50,
+                    color: Theme.of(context).iconTheme.color ?? Colors.black87),
               ),
             ),
         ],

@@ -66,20 +66,21 @@ class OnlineButtonWidget extends StatelessWidget {
                   currentPosition: currentPosition,
                   currentHeading: currentHeading,
                 );
-                
+
                 debugPrint("🏁 === GO BUTTON TAP FINISHED ===\n");
               },
               child: Center(
                 child: provider.isLocalLoading
-                    ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
+                    ? const CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 3)
                     : const Text(
-                  "GO",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                        "GO",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ),
           ),
@@ -87,4 +88,4 @@ class OnlineButtonWidget extends StatelessWidget {
       },
     );
   }
-}
+}

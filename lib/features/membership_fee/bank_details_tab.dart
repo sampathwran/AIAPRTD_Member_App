@@ -24,7 +24,8 @@ class BankDetailsTab extends StatelessWidget {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Bank details copied to clipboard!', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text('Bank details copied to clipboard!',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.green.shade600,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -36,7 +37,8 @@ class BankDetailsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white;
+    final bgColor =
+        isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white;
     final borderColor = isDark ? Colors.white12 : Colors.grey.shade200;
     final textColor = isDark ? Colors.white : Colors.black87;
     final labelColor = isDark ? Colors.blue.shade300 : Colors.blue.shade700;
@@ -71,10 +73,13 @@ class BankDetailsTab extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.blue.withValues(alpha: 0.2) : Colors.blue.shade50,
+                        color: isDark
+                            ? Colors.blue.withValues(alpha: 0.2)
+                            : Colors.blue.shade50,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.account_balance, color: isDark ? Colors.blue.shade300 : Colors.blue),
+                      child: Icon(Icons.account_balance,
+                          color: isDark ? Colors.blue.shade300 : Colors.blue),
                     ),
                     const SizedBox(width: 16),
                     Text(
@@ -88,10 +93,19 @@ class BankDetailsTab extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 24),
-                _buildDetailRow("Account Name", "National Union of Seafarers Sri Lanka", labelColor, textColor, dividerColor),
-                _buildDetailRow("Account Number", "1117010822", labelColor, textColor, dividerColor, isImportant: true),
-                _buildDetailRow("Bank", "Commercial Bank", labelColor, textColor, dividerColor),
-                _buildDetailRow("Branch", "Narahenpita", labelColor, textColor, Colors.transparent), // No divider for last
+                _buildDetailRow(
+                    "Account Name",
+                    "National Union of Seafarers Sri Lanka",
+                    labelColor,
+                    textColor,
+                    dividerColor),
+                _buildDetailRow("Account Number", "1117010822", labelColor,
+                    textColor, dividerColor,
+                    isImportant: true),
+                _buildDetailRow("Bank", "Commercial Bank", labelColor,
+                    textColor, dividerColor),
+                _buildDetailRow("Branch", "Narahenpita", labelColor, textColor,
+                    Colors.transparent), // No divider for last
               ],
             ),
           ),
@@ -101,10 +115,12 @@ class BankDetailsTab extends StatelessWidget {
             height: 54,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: isDark ? Colors.blue.shade700 : Colors.blue.shade600,
+                backgroundColor:
+                    isDark ? Colors.blue.shade700 : Colors.blue.shade600,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
               ),
               icon: const Icon(Icons.copy_all_rounded),
               label: const Text(
@@ -128,7 +144,9 @@ class BankDetailsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(String label, String value, Color labelColor, Color textColor, Color dividerColor, {bool isImportant = false}) {
+  Widget _buildDetailRow(String label, String value, Color labelColor,
+      Color textColor, Color dividerColor,
+      {bool isImportant = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

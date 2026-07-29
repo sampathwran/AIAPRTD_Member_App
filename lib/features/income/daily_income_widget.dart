@@ -34,19 +34,26 @@ class _DailyIncomeWidgetState extends State<DailyIncomeWidget> {
     super.dispose();
   }
 
-  Widget _buildEarningSlide(String title, double amount, IconData icon, Color color, bool isDark) {
+  Widget _buildEarningSlide(
+      String title, double amount, IconData icon, Color color, bool isDark) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: isDark ? color.withValues(alpha: 0.1) : color.withValues(alpha: 0.05),
+        color: isDark
+            ? color.withValues(alpha: 0.1)
+            : color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? color.withValues(alpha: 0.2) : color.withValues(alpha: 0.2)),
+        border: Border.all(
+            color: isDark
+                ? color.withValues(alpha: 0.2)
+                : color.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 20, color: isDark ? color.withValues(alpha: 0.8) : color),
+          Icon(icon,
+              size: 20, color: isDark ? color.withValues(alpha: 0.8) : color),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -71,7 +78,9 @@ class _DailyIncomeWidgetState extends State<DailyIncomeWidget> {
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 14,
-                      color: isDark ? color.withValues(alpha: 0.9) : color.withValues(alpha: 1.0),
+                      color: isDark
+                          ? color.withValues(alpha: 0.9)
+                          : color.withValues(alpha: 1.0),
                     ),
                   ),
                 ),
@@ -86,7 +95,7 @@ class _DailyIncomeWidgetState extends State<DailyIncomeWidget> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Consumer<EarningsProvider>(
       builder: (context, earnings, child) {
         return GestureDetector(
@@ -100,9 +109,12 @@ class _DailyIncomeWidgetState extends State<DailyIncomeWidget> {
                 controller: _pageController,
                 physics: const BouncingScrollPhysics(),
                 children: [
-                  _buildEarningSlide("Today", earnings.todayEarnings, Icons.today_rounded, Colors.blue, isDark),
-                  _buildEarningSlide("This Week", earnings.thisWeekEarnings, Icons.date_range_rounded, Colors.orange, isDark),
-                  _buildEarningSlide("This Month", earnings.thisMonthEarnings, Icons.calendar_month_rounded, Colors.teal, isDark),
+                  _buildEarningSlide("Today", earnings.todayEarnings,
+                      Icons.today_rounded, Colors.blue, isDark),
+                  _buildEarningSlide("This Week", earnings.thisWeekEarnings,
+                      Icons.date_range_rounded, Colors.orange, isDark),
+                  _buildEarningSlide("This Month", earnings.thisMonthEarnings,
+                      Icons.calendar_month_rounded, Colors.teal, isDark),
                 ],
               ),
               // We can add page dots here if needed, but it might clutter the small height.

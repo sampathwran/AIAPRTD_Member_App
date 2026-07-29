@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:aiaprtd_member/features/flight_tracking/flight_tracking_dummy_data.dart';
+import 'flight_data.dart';
+import 'flight_service.dart';
 
 class FlightTrackingPage extends StatefulWidget {
   const FlightTrackingPage({super.key});
@@ -22,6 +23,9 @@ class _FlightTrackingPageState extends State<FlightTrackingPage>
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  final FlightService _flightService = FlightService();
+  Future<List<FlightData>>? _arrivalsFuture;
+  Future<List<FlightData>>? _departuresFuture;
 
   @override
   void initState() {
@@ -32,6 +36,20 @@ class _FlightTrackingPageState extends State<FlightTrackingPage>
         _searchQuery = _searchController.text.trim().toLowerCase();
       });
     });
+    _fetchFlights();
+  }
+
+  Future<void> _fetchFlights() async {
+    setState(() {
+      _arrivalsFuture = _flightService.fetchArrivals(_selectedAirport);
+      _departuresFuture = _flightService.fetchDepartures(_selectedAirport);
+    });
+    // Await both just for the RefreshIndicator to know when it's done
+    try {
+      await Future.wait([_arrivalsFuture!, _departuresFuture!]);
+    } catch (e) {
+      // Errors handled by FutureBuilder
+    }
   }
 
   @override
@@ -82,9 +100,12 @@ class _FlightTrackingPageState extends State<FlightTrackingPage>
                     padding: const EdgeInsets.only(right: 12),
                     child: GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _selectedAirport = airport['code']!;
-                        });
+                        if (_selectedAirport != airport['code']) {
+                          setState(() {
+                            _selectedAirport = airport['code']!;
+                          });
+                          _fetchFlights();
+                        }
                       },
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
@@ -242,60 +263,79 @@ class _FlightTrackingPageState extends State<FlightTrackingPage>
   }
 
   Widget _buildFlightList({required String type}) {
-    // Filter dummy data based on tab type and search query
-    final flights = dummyFlights.where((f) {
-      final matchesType = f.type == type;
-      final matchesSearch = _searchQuery.isEmpty ||
-          f.flightNumber.toLowerCase().contains(_searchQuery) ||
-          f.airline.toLowerCase().contains(_searchQuery);
-      return matchesType && matchesSearch;
-    }).toList();
+    final future = type == 'Arrival' ? _arrivalsFuture : _departuresFuture;
 
-    if (_selectedAirport != 'CMB') {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.airplanemode_inactive_rounded,
-                size: 64, color: Colors.grey.withValues(alpha: 0.5)),
-            const SizedBox(height: 16),
-            Text(
-              "No flights available for $_selectedAirport currently.",
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-            const Text(
-              "(Dummy data only available for CMB)",
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-          ],
-        ),
-      );
-    }
+    return RefreshIndicator(
+      onRefresh: _fetchFlights,
+      child: FutureBuilder<List<FlightData>>(
+        future: future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-    if (flights.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.search_off_rounded,
-                size: 64, color: Colors.grey.withValues(alpha: 0.5)),
-            const SizedBox(height: 16),
-            const Text(
-              "No flights found matching your search.",
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-          ],
-        ),
-      );
-    }
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline,
+                      size: 48, color: Colors.redAccent),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Error: ${snapshot.error}",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.redAccent),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _fetchFlights,
+                    child: const Text('Try Again'),
+                  )
+                ],
+              ),
+            );
+          }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: flights.length,
-      itemBuilder: (context, index) {
-        final flight = flights[index];
-        return _buildFlightCard(flight);
-      },
+          final allFlights = snapshot.data ?? [];
+
+          // Filter based on search query
+          final flights = allFlights.where((f) {
+            final matchesSearch = _searchQuery.isEmpty ||
+                f.flightNumber.toLowerCase().contains(_searchQuery) ||
+                f.airline.toLowerCase().contains(_searchQuery);
+            return matchesSearch;
+          }).toList();
+
+          if (flights.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.search_off_rounded,
+                      size: 64, color: Colors.grey.withValues(alpha: 0.5)),
+                  const SizedBox(height: 16),
+                  Text(
+                    _searchQuery.isNotEmpty
+                        ? "No flights found matching your search."
+                        : "No flights available right now.",
+                    style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(12),
+            itemCount: flights.length,
+            itemBuilder: (context, index) {
+              final flight = flights[index];
+              return _buildFlightCard(flight);
+            },
+          );
+        },
+      ),
     );
   }
 

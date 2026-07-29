@@ -26,16 +26,17 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
   String _lastSyncHash = '';
 
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
-  _memberStreamSubscription;
+      _memberStreamSubscription;
 
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
-  _profileImageRequestSubscription;
+      _profileImageRequestSubscription;
 
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
-  _sessionSubscription;
+      _sessionSubscription;
 
   // 💡 NEW: Subscriptions for Rating Sync across multiple collections
-  List<StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>> _ratingSyncSubscriptions = [];
+  List<StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>>
+      _ratingSyncSubscriptions = [];
 
   // 💡 NEW: Start App Lifecycle Observer in Constructor
   ProfileProvider() {
@@ -69,7 +70,9 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool get isOnline => _memberData?['onlineStatus'] == 'online';
 
   String get memberStatus =>
-      _memberData?['profile_status']?.toString() ?? _memberData?['status']?.toString() ?? 'inactive member';
+      _memberData?['profile_status']?.toString() ??
+      _memberData?['status']?.toString() ??
+      'inactive member';
 
   String get collectionSource =>
       _memberData?['collectionSource']?.toString() ?? 'member';
@@ -87,19 +90,16 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
         "Your account is currently inactive. Please contact the Union Administrator for more details.";
   }
 
-  String get memberFullName =>
-      _memberData?['fullName']?.toString() ?? 'Member';
+  String get memberFullName => _memberData?['fullName']?.toString() ?? 'Member';
 
-  String get memberNo =>
-      _memberData?['membershipNo']?.toString() ?? 'N/A';
+  String get memberNo => _memberData?['membershipNo']?.toString() ?? 'N/A';
 
-  String get documentId =>
-      _memberData?['docId']?.toString() ?? memberNo;
+  String get documentId => _memberData?['docId']?.toString() ?? memberNo;
 
   String get profileImageUrl =>
       _memberData?['profileImageUrl']?.toString() ??
-          _memberData?['imageUrl']?.toString() ??
-          '';
+      _memberData?['imageUrl']?.toString() ??
+      '';
 
   List<String> get grantedBenefits {
     if (_memberData?['grantedBenefits'] is List) {
@@ -126,31 +126,32 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
       final Completer<bool> completer = Completer<bool>();
 
       Query<Map<String, dynamic>> memberQuery = _firestore.collection('member');
-      
+
       if (currentUser.email != null && currentUser.email!.isNotEmpty) {
-        memberQuery = memberQuery.where('user_email', isEqualTo: currentUser.email);
+        memberQuery =
+            memberQuery.where('user_email', isEqualTo: currentUser.email);
       } else {
         memberQuery = memberQuery.where('auth_uid', isEqualTo: currentUser.uid);
       }
 
-      _memberStreamSubscription = memberQuery
-          .limit(1)
-          .snapshots()
-          .listen(
-            (querySnapshot) async {
+      _memberStreamSubscription = memberQuery.limit(1).snapshots().listen(
+        (querySnapshot) async {
           QueryDocumentSnapshot<Map<String, dynamic>>? memberDocument;
           String collectionSource = 'member';
 
           if (querySnapshot.docs.isEmpty) {
             // Fallback to web_sync_member
-            Query<Map<String, dynamic>> webSyncQuery = _firestore.collection('web_sync_member');
+            Query<Map<String, dynamic>> webSyncQuery =
+                _firestore.collection('web_sync_member');
             if (currentUser.email != null && currentUser.email!.isNotEmpty) {
-              webSyncQuery = webSyncQuery.where('user_email', isEqualTo: currentUser.email);
+              webSyncQuery = webSyncQuery.where('user_email',
+                  isEqualTo: currentUser.email);
             } else {
-              webSyncQuery = webSyncQuery.where('auth_uid', isEqualTo: currentUser.uid);
+              webSyncQuery =
+                  webSyncQuery.where('auth_uid', isEqualTo: currentUser.uid);
             }
             var webSyncSnapshot = await webSyncQuery.limit(1).get();
-            
+
             if (webSyncSnapshot.docs.isEmpty) {
               _memberData = null;
               _isLoading = false;
@@ -167,18 +168,21 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
             memberDocument = querySnapshot.docs.first;
           }
 
-          debugPrint("🟢 ProfileProvider: Successfully found in '$collectionSource' collection!");
+          debugPrint(
+              "🟢 ProfileProvider: Successfully found in '$collectionSource' collection!");
 
           if (_memberData == null) {
             _memberData = Map<String, dynamic>.from(memberDocument.data());
             _memberData!['docId'] = memberDocument.id;
-            _memberData!['collectionSource'] = collectionSource; 
+            _memberData!['collectionSource'] = collectionSource;
 
-            if (_memberData!['membershipNo'] == null || _memberData!['membershipNo'].toString().isEmpty) {
+            if (_memberData!['membershipNo'] == null ||
+                _memberData!['membershipNo'].toString().isEmpty) {
               _memberData!['membershipNo'] = memberDocument.id;
             }
 
-            final String membershipNo = _memberData!['membershipNo']?.toString() ?? '';
+            final String membershipNo =
+                _memberData!['membershipNo']?.toString() ?? '';
 
             if (membershipNo.isNotEmpty) {
               await _loadPaymentData(membershipNo);
@@ -191,8 +195,11 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
             final newData = memberDocument.data();
             newData.forEach((key, value) {
               // Skip fields we manage locally to avoid overwrite loops
-              if (key != 'payment_history' && key != 'vehicle_category' && key != 'selectedCategory'
-                  && key != 'profile_status' && key != 'inactive_reasons') {
+              if (key != 'payment_history' &&
+                  key != 'vehicle_category' &&
+                  key != 'selectedCategory' &&
+                  key != 'profile_status' &&
+                  key != 'inactive_reasons') {
                 _memberData![key] = value;
               }
             });
@@ -234,12 +241,13 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
   // 🛡️ GUARDED: Prevents re-entrancy and duplicate writes
   Future<void> _evaluateAndSyncProfileStatus() async {
     if (_memberData == null || _isSyncing) return;
-    
+
     final statusResult = calculateMemberStatus(_memberData!);
     final bool isActive = statusResult['isActive'] == true;
-    final List<String> reasons = List<String>.from(statusResult['reasons'] ?? []);
+    final List<String> reasons =
+        List<String>.from(statusResult['reasons'] ?? []);
     final String newStatus = isActive ? 'active member' : 'inactive member';
-    
+
     // Build a hash to check if anything actually changed
     final String syncHash = '$newStatus|${reasons.join(',')}';
     if (syncHash == _lastSyncHash) {
@@ -248,26 +256,28 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
 
     // Auto offline if they become inactive
-    final isOnline = _memberData!['onlineStatus'] == true || _memberData!['driver_status'] == 'online';
+    final isOnline = _memberData!['onlineStatus'] == true ||
+        _memberData!['driver_status'] == 'online';
     if (!isActive && isOnline) {
-      debugPrint('🔴 User became inactive while online! Auto-switching to OFFLINE.');
+      debugPrint(
+          '🔴 User became inactive while online! Auto-switching to OFFLINE.');
       await toggleDriverStatus(false);
     }
-    
+
     _isSyncing = true;
     _lastSyncHash = syncHash;
-    
+
     try {
       await _firestore.collection(collectionSource).doc(documentId).set({
         'profile_status': newStatus,
         'status': newStatus,
         'inactive_reasons': reasons,
       }, SetOptions(merge: true));
-      
+
       _memberData!['profile_status'] = newStatus;
       _memberData!['status'] = newStatus;
       _memberData!['inactive_reasons'] = reasons;
-      
+
       debugPrint('✅ [PROFILE] Status synced: $newStatus, Reasons: $reasons');
     } catch (e) {
       debugPrint("Error syncing profile_status: $e");
@@ -282,21 +292,26 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _appFeeSubscription;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
+      _appFeeSubscription;
 
   Future<void> _loadPaymentData(String membershipNo) async {
     try {
       if (_memberData == null) return;
-      
+
       List<dynamic> initialHistory = [];
 
       // The user wants to only rely on app_membership_fee directly.
       // We will not load from web_sync_membership_fee or payments collections.
       _memberData!['payment_history'] = initialHistory;
-      
+
       // 1. Listen to app_membership_fee
       _appFeeSubscription?.cancel();
-      _appFeeSubscription = _firestore.collection('app_membership_fee').doc(membershipNo).snapshots().listen((appDoc) async {
+      _appFeeSubscription = _firestore
+          .collection('app_membership_fee')
+          .doc(membershipNo)
+          .snapshots()
+          .listen((appDoc) async {
         if (!appDoc.exists || appDoc.data() == null || _memberData == null) {
           // Even if the document doesn't exist, we must re-evaluate status based on initialHistory
           if (_memberData != null) {
@@ -305,35 +320,37 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
           }
           return;
         }
-        
+
         final data = appDoc.data()!;
         List<dynamic> newHistory = List.from(initialHistory);
-        
+
         debugPrint('🔍 [ProfileProvider] Snapshot fired! Data: $data');
-        
+
         if (data['payment_history'] != null) {
-          debugPrint('🔍 [ProfileProvider] payment_history type: ${data['payment_history'].runtimeType}');
+          debugPrint(
+              '🔍 [ProfileProvider] payment_history type: ${data['payment_history'].runtimeType}');
           if (data['payment_history'] is List) {
             newHistory.addAll(data['payment_history']);
           }
         }
-        
+
         // Also read from pending_payments since Admin panel might update status to 'approved' without moving it
         if (data['pending_payments'] != null) {
-          debugPrint('🔍 [ProfileProvider] pending_payments type: ${data['pending_payments'].runtimeType}');
+          debugPrint(
+              '🔍 [ProfileProvider] pending_payments type: ${data['pending_payments'].runtimeType}');
           if (data['pending_payments'] is List) {
             newHistory.addAll(data['pending_payments']);
           }
         }
-        
-        debugPrint('🔍 [ProfileProvider] newHistory length: ${newHistory.length}');
+
+        debugPrint(
+            '🔍 [ProfileProvider] newHistory length: ${newHistory.length}');
         _memberData!['payment_history'] = newHistory;
-        
+
         // Re-evaluate profile status when fee updates
         await _evaluateAndSyncProfileStatus();
         notifyListeners();
       });
-      
     } catch (error) {
       debugPrint('Error fetching payment data: $error');
     }
@@ -344,16 +361,22 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
       final DocumentSnapshot<Map<String, dynamic>> vehicleDocument =
           await _firestore.collection('vehicles').doc(membershipNo).get();
 
-      if (!vehicleDocument.exists || vehicleDocument.data() == null || _memberData == null) {
+      if (!vehicleDocument.exists ||
+          vehicleDocument.data() == null ||
+          _memberData == null) {
         return;
       }
 
       final Map<String, dynamic> vehicleData = vehicleDocument.data()!;
       _memberData!.addAll(vehicleData);
       // Ensure specific fields are mapped properly just in case
-      _memberData!['vehicle_category'] = vehicleData['vehicle_category'] ?? vehicleData['selectedCategory'] ?? '';
-      _memberData!['selectedCategory'] = vehicleData['selectedCategory'] ?? vehicleData['vehicle_category'] ?? '';
-      
+      _memberData!['vehicle_category'] = vehicleData['vehicle_category'] ??
+          vehicleData['selectedCategory'] ??
+          '';
+      _memberData!['selectedCategory'] = vehicleData['selectedCategory'] ??
+          vehicleData['vehicle_category'] ??
+          '';
+
       // Re-evaluate profile status when vehicle data is loaded
       await _evaluateAndSyncProfileStatus();
       notifyListeners();
@@ -363,8 +386,8 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void _listenToProfileImageRequest(
-      String membershipNo,
-      ) {
+    String membershipNo,
+  ) {
     _profileImageRequestSubscription?.cancel();
 
     _profileImageRequestSubscription = _firestore
@@ -372,7 +395,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
         .doc(membershipNo)
         .snapshots()
         .listen(
-          (document) {
+      (document) {
         if (!document.exists ||
             document.data() == null ||
             _memberData == null) {
@@ -381,11 +404,9 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
 
         final Map<String, dynamic> requestData = document.data()!;
 
-        _memberData!['imageRequestStatus'] =
-        requestData['status'];
+        _memberData!['imageRequestStatus'] = requestData['status'];
 
-        _memberData!['imageRejectReason'] =
-        requestData['rejectReason'];
+        _memberData!['imageRejectReason'] = requestData['rejectReason'];
 
         notifyListeners();
       },
@@ -406,13 +427,12 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
     final List<String> collections = ['members', 'member', 'web_sync_member'];
 
     for (String col in collections) {
-      final sub = _firestore
-          .collection(col)
-          .doc(membershipNo)
-          .snapshots()
-          .listen(
+      final sub =
+          _firestore.collection(col).doc(membershipNo).snapshots().listen(
         (document) {
-          if (!document.exists || document.data() == null || _memberData == null) {
+          if (!document.exists ||
+              document.data() == null ||
+              _memberData == null) {
             return;
           }
 
@@ -429,16 +449,20 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
 
           // Only accept the new rating if it has more rating counts
           // Or if our current rating is missing but incoming has it
-          if (incomingCount > currentCount || (currentCount == 0 && data.containsKey('rating'))) {
-            if (data.containsKey('rating') && _memberData!['rating'] != data['rating']) {
+          if (incomingCount > currentCount ||
+              (currentCount == 0 && data.containsKey('rating'))) {
+            if (data.containsKey('rating') &&
+                _memberData!['rating'] != data['rating']) {
               _memberData!['rating'] = data['rating'];
               shouldUpdate = true;
             }
-            if (data.containsKey('ratingSum') && _memberData!['ratingSum'] != data['ratingSum']) {
+            if (data.containsKey('ratingSum') &&
+                _memberData!['ratingSum'] != data['ratingSum']) {
               _memberData!['ratingSum'] = data['ratingSum'];
               shouldUpdate = true;
             }
-            if (data.containsKey('ratingCount') && _memberData!['ratingCount'] != data['ratingCount']) {
+            if (data.containsKey('ratingCount') &&
+                _memberData!['ratingCount'] != data['ratingCount']) {
               _memberData!['ratingCount'] = data['ratingCount'];
               shouldUpdate = true;
             }
@@ -458,8 +482,8 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   // 💡 🎯 UPDATED: Added Timeout and Error Handling
   Future<bool> toggleDriverStatus(
-      bool isGoingOnline,
-      ) async {
+    bool isGoingOnline,
+  ) async {
     final User? currentUser = _auth.currentUser;
 
     if (currentUser == null || _memberData == null) {
@@ -471,14 +495,10 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     try {
       // 💡 Added Timeout to strictly complete within 10 seconds
-      await _firestore
-          .collection('member')
-          .doc(documentId)
-          .set(
+      await _firestore.collection('member').doc(documentId).set(
         {
           'isOnline': isGoingOnline,
-          'onlineStatus':
-          isGoingOnline ? 'online' : 'offline',
+          'onlineStatus': isGoingOnline ? 'online' : 'offline',
           'lastSeen': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),
@@ -487,8 +507,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
       });
 
       _memberData!['isOnline'] = isGoingOnline;
-      _memberData!['onlineStatus'] =
-      isGoingOnline ? 'online' : 'offline';
+      _memberData!['onlineStatus'] = isGoingOnline ? 'online' : 'offline';
 
       // Save to SharedPreferences for background isolate
       final prefs = await SharedPreferences.getInstance();
@@ -511,7 +530,6 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
       _isLocalLoading = false;
       notifyListeners();
       return true;
-
     } on TimeoutException catch (e) {
       debugPrint('Firebase status sync TIMEOUT: $e');
       _isLocalLoading = false; // 💡 Strictly release button
@@ -526,10 +544,10 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> updateLiveLocation(
-      double latitude,
-      double longitude,
-      double bearing,
-      ) async {
+    double latitude,
+    double longitude,
+    double bearing,
+  ) async {
     if (_auth.currentUser == null || _memberData == null) {
       return;
     }
@@ -539,17 +557,18 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
         'latitude': latitude,
         'longitude': longitude,
         'bearing': bearing,
-        'lastLocationUpdate':
-        FieldValue.serverTimestamp(),
+        'lastLocationUpdate': FieldValue.serverTimestamp(),
       };
 
       await _firestore
           .collection('member')
           .doc(documentId)
           .set(
-        locationData,
-        SetOptions(merge: true),
-      ).timeout(const Duration(seconds: 10)); // 💡 Added timeout to Location update as well
+            locationData,
+            SetOptions(merge: true),
+          )
+          .timeout(const Duration(
+              seconds: 10)); // 💡 Added timeout to Location update as well
 
       _memberData!['latitude'] = latitude;
       _memberData!['longitude'] = longitude;
@@ -562,16 +581,14 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<String> uploadFaceSelfie(
-      File selfieFile,
-      String membershipNo,
-      ) async {
+    File selfieFile,
+    String membershipNo,
+  ) async {
     try {
-      final Reference storageReference = _storage
-          .ref()
-          .child('member_selfies/$membershipNo.jpg');
+      final Reference storageReference =
+          _storage.ref().child('member_selfies/$membershipNo.jpg');
 
-      final TaskSnapshot snapshot =
-      await storageReference.putFile(selfieFile);
+      final TaskSnapshot snapshot = await storageReference.putFile(selfieFile);
 
       return await snapshot.ref.getDownloadURL();
     } catch (error) {
@@ -595,10 +612,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
     required String faceImageUrl,
   }) async {
     try {
-      await _firestore
-          .collection('kyc_requests')
-          .doc(membershipNo)
-          .set({
+      await _firestore.collection('kyc_requests').doc(membershipNo).set({
         'membershipNo': membershipNo,
         'fullName': fullName,
         'email': email,
@@ -611,8 +625,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
         'idFrontUrl': '',
         'idBackUrl': '',
         'status': 'pending',
-        'submittedAt':
-        FieldValue.serverTimestamp(),
+        'submittedAt': FieldValue.serverTimestamp(),
       });
 
       return true;
@@ -623,9 +636,9 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void listenToDeviceSession(
-      BuildContext context,
-      String currentDeviceToken,
-      ) {
+    BuildContext context,
+    String currentDeviceToken,
+  ) {
     if (_memberData == null) {
       return;
     }
@@ -640,20 +653,20 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
     _sessionSubscription?.cancel();
 
     _sessionSubscription = _firestore
-        .collection(collectionSource) // 👈 Use the actual collection the document is in!
+        .collection(
+            collectionSource) // 👈 Use the actual collection the document is in!
         .doc(documentId)
         .snapshots()
         .listen(
-          (snapshot) async {
+      (snapshot) async {
         if (!snapshot.exists || snapshot.data() == null) {
           return;
         }
 
-        final Map<String, dynamic> databaseData =
-        snapshot.data()!;
+        final Map<String, dynamic> databaseData = snapshot.data()!;
 
         final String? savedDeviceToken =
-        databaseData['currentDeviceToken']?.toString();
+            databaseData['currentDeviceToken']?.toString();
 
         if (savedDeviceToken == null ||
             savedDeviceToken == currentDeviceToken) {
@@ -711,7 +724,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
                     Navigator.pushNamedAndRemoveUntil(
                       context,
                       '/login',
-                          (route) => false,
+                      (route) => false,
                     );
                   },
                   child: const Text(
@@ -795,7 +808,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     await _profileImageRequestSubscription?.cancel();
     _profileImageRequestSubscription = null;
-    
+
     await _appFeeSubscription?.cancel();
     _appFeeSubscription = null;
 

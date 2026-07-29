@@ -37,20 +37,23 @@ class _NotificationBellWidgetState extends State<NotificationBellWidget> {
     }
 
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('notifications').snapshots(),
+      stream:
+          FirebaseFirestore.instance.collection('notifications').snapshots(),
       builder: (context, snapshot) {
         int unreadCount = 0;
         if (snapshot.hasData && memberId.isNotEmpty) {
           final now = DateTime.now();
           for (var doc in snapshot.data!.docs) {
             final data = doc.data() as Map<String, dynamic>;
-            
+
             final targetType = data['targetType'];
             final targetMembers = data['targetMembers'] as List<dynamic>? ?? [];
-            if (targetType != 'all' && !targetMembers.contains(memberId)) continue;
+            if (targetType != 'all' && !targetMembers.contains(memberId))
+              continue;
 
             final scheduledAt = data['scheduledAt'] as Timestamp?;
-            if (scheduledAt != null && scheduledAt.toDate().isAfter(now)) continue;
+            if (scheduledAt != null && scheduledAt.toDate().isAfter(now))
+              continue;
 
             final readBy = List<String>.from(data['readBy'] ?? []);
             if (!readBy.contains(memberId)) {
@@ -65,7 +68,8 @@ class _NotificationBellWidgetState extends State<NotificationBellWidget> {
 
         return GestureDetector(
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationPage()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const NotificationPage()));
           },
           child: Container(
             width: 54,
@@ -76,7 +80,9 @@ class _NotificationBellWidgetState extends State<NotificationBellWidget> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: widget.isDark ? Colors.red.withValues(alpha: 0.2) : Colors.red.withValues(alpha: 0.1),
+                  color: widget.isDark
+                      ? Colors.red.withValues(alpha: 0.2)
+                      : Colors.red.withValues(alpha: 0.1),
                   blurRadius: 12,
                   offset: const Offset(0, 5),
                 ),
@@ -86,8 +92,14 @@ class _NotificationBellWidgetState extends State<NotificationBellWidget> {
               alignment: Alignment.center,
               children: [
                 Icon(
-                  unreadCount > 0 ? Icons.notifications_active : Icons.notifications_none,
-                  color: unreadCount > 0 ? Colors.red : (widget.isDark ? Colors.grey.shade400 : Colors.blueGrey),
+                  unreadCount > 0
+                      ? Icons.notifications_active
+                      : Icons.notifications_none,
+                  color: unreadCount > 0
+                      ? Colors.red
+                      : (widget.isDark
+                          ? Colors.grey.shade400
+                          : Colors.blueGrey),
                   size: 26,
                 ),
                 if (unreadCount > 0)

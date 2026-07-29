@@ -15,11 +15,11 @@ class MeterProvider with ChangeNotifier {
   bool _isWaitingPaused = false;
   bool _isTripCompleted = false; // New state for showing summary
   String _tripType = 'Road Pickup';
-  
+
   double _totalDistanceKm = 0.0;
   int _waitingTimeSeconds = 0;
   double _currentSpeedKmh = 0.0;
-  
+
   double _totalFare = 0.0;
   String? _vehicleCategory; // For reloading rates after restart
 
@@ -42,9 +42,9 @@ class MeterProvider with ChangeNotifier {
   String _tripId = "";
   DateTime? _startTime;
   DateTime? _endTime;
-  
+
   DateTime _lastTimerTick = DateTime.now();
-  
+
   // Getters
   bool get isRunning => _isRunning;
   bool get isWaiting => _isWaiting;
@@ -78,9 +78,12 @@ class MeterProvider with ChangeNotifier {
       if (_vehicleCategory != null) {
         await prefs.setString('meter_vehicleCategory', _vehicleCategory!);
       }
-      await prefs.setString('meter_lastSaveTime', DateTime.now().toIso8601String());
-      if (_startTime != null) await prefs.setString('meter_startTime', _startTime!.toIso8601String());
-      if (_endTime != null) await prefs.setString('meter_endTime', _endTime!.toIso8601String());
+      await prefs.setString(
+          'meter_lastSaveTime', DateTime.now().toIso8601String());
+      if (_startTime != null)
+        await prefs.setString('meter_startTime', _startTime!.toIso8601String());
+      if (_endTime != null)
+        await prefs.setString('meter_endTime', _endTime!.toIso8601String());
     } catch (e) {
       debugPrint("Error saving meter state: $e");
     }
@@ -89,7 +92,8 @@ class MeterProvider with ChangeNotifier {
   Future<void> _clearState() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final keys = prefs.getKeys().where((k) => k.startsWith('meter_')).toList();
+      final keys =
+          prefs.getKeys().where((k) => k.startsWith('meter_')).toList();
       for (String k in keys) {
         await prefs.remove(k);
       }
@@ -116,10 +120,10 @@ class MeterProvider with ChangeNotifier {
       _startAddress = prefs.getString('meter_startAddress') ?? "Fetching...";
       _endAddress = prefs.getString('meter_endAddress') ?? "Fetching...";
       _vehicleCategory = prefs.getString('meter_vehicleCategory');
-      
+
       String? st = prefs.getString('meter_startTime');
       if (st != null) _startTime = DateTime.parse(st);
-      
+
       String? et = prefs.getString('meter_endTime');
       if (et != null) _endTime = DateTime.parse(et);
 
@@ -142,7 +146,7 @@ class MeterProvider with ChangeNotifier {
         _isWaiting = true; // Assume waiting until we get a GPS speed update
         _resumeTracking();
       }
-      
+
       notifyListeners();
     } catch (e) {
       debugPrint("Error loading meter state: $e");
@@ -170,8 +174,9 @@ class MeterProvider with ChangeNotifier {
       );
     }
 
-    _positionStream = Geolocator.getPositionStream(locationSettings: locationSettings)
-      .listen((Position position) {
+    _positionStream =
+        Geolocator.getPositionStream(locationSettings: locationSettings)
+            .listen((Position position) {
       _handlePositionUpdate(position);
     });
 
@@ -179,12 +184,13 @@ class MeterProvider with ChangeNotifier {
     _waitingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       DateTime now = DateTime.now();
       int elapsedSecs = now.difference(_lastTimerTick).inSeconds;
-      
+
       if (elapsedSecs > 0) {
         if (_isRunning && _isWaiting && !_isWaitingPaused) {
           _waitingTimeSeconds += elapsedSecs;
           _calculateFare();
-          if (_waitingTimeSeconds % 5 == 0) _saveState(); // Save every 5 seconds to reduce load
+          if (_waitingTimeSeconds % 5 == 0)
+            _saveState(); // Save every 5 seconds to reduce load
           notifyListeners();
         }
         _lastTimerTick = now;
@@ -194,14 +200,22 @@ class MeterProvider with ChangeNotifier {
 
   Future<void> fetchRates(String categoryId) async {
     try {
-      String norm = categoryId.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('van', '');
+      String norm = categoryId
+          .toLowerCase()
+          .replaceAll(' ', '')
+          .replaceAll('_', '')
+          .replaceAll('van', '');
       String docId = categoryId.toLowerCase();
       if (norm.contains('budget')) {
         docId = 'budget';
-      } else if (norm.contains('mini')) docId = 'mini';
-      else if (norm.contains('sedan')) docId = 'sedan';
-      else if (norm.contains('6seater')) docId = '6_seater';
-      else if (norm.contains('9seater')) docId = '9_seater';
+      } else if (norm.contains('mini'))
+        docId = 'mini';
+      else if (norm.contains('sedan'))
+        docId = 'sedan';
+      else if (norm.contains('6seater'))
+        docId = '6_seater';
+      else if (norm.contains('9seater'))
+        docId = '9_seater';
       else if (norm.contains('14seater')) docId = '14_seater';
 
       final doc = await _firestore.collection('rates').doc(docId).get();
@@ -231,7 +245,7 @@ class MeterProvider with ChangeNotifier {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) return false;
     }
-    
+
     if (permission == LocationPermission.deniedForever) return false;
 
     return true;
@@ -239,11 +253,11 @@ class MeterProvider with ChangeNotifier {
 
   Future<void> startMeter(String vehicleCategory) async {
     if (_isRunning) return;
-    
+
     bool hasPermission = await requestPermissions();
     if (!hasPermission) {
       debugPrint("Location permissions denied.");
-      return; 
+      return;
     }
 
     if (!_ratesLoaded) {
@@ -264,7 +278,7 @@ class MeterProvider with ChangeNotifier {
     _startTime = DateTime.now();
     _endTime = null;
     _vehicleCategory = vehicleCategory;
-    
+
     _calculateFare();
     _saveState();
     notifyListeners();
@@ -289,14 +303,16 @@ class MeterProvider with ChangeNotifier {
     }
 
     try {
-      Position currentPos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      Position currentPos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
       _handlePositionUpdate(currentPos);
     } catch (e) {
       debugPrint("Error getting initial position: $e");
     }
 
-    _positionStream = Geolocator.getPositionStream(locationSettings: locationSettings)
-      .listen((Position position) {
+    _positionStream =
+        Geolocator.getPositionStream(locationSettings: locationSettings)
+            .listen((Position position) {
       _handlePositionUpdate(position);
     });
 
@@ -304,12 +320,13 @@ class MeterProvider with ChangeNotifier {
     _waitingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       DateTime now = DateTime.now();
       int elapsedSecs = now.difference(_lastTimerTick).inSeconds;
-      
+
       if (elapsedSecs > 0) {
         if (_isRunning && _isWaiting && !_isWaitingPaused) {
           _waitingTimeSeconds += elapsedSecs;
           _calculateFare();
-          if (_waitingTimeSeconds % 5 == 0) _saveState(); // Save every 5 seconds to reduce load
+          if (_waitingTimeSeconds % 5 == 0)
+            _saveState(); // Save every 5 seconds to reduce load
           notifyListeners();
         }
         _lastTimerTick = now;
@@ -342,13 +359,13 @@ class MeterProvider with ChangeNotifier {
         position.latitude,
         position.longitude,
       );
-      
+
       if (distanceMeters > 2) {
         _totalDistanceKm += (distanceMeters / 1000.0);
         _calculateFare();
       }
     }
-    
+
     _lastPosition = position;
     _saveState();
     notifyListeners();
@@ -369,10 +386,11 @@ class MeterProvider with ChangeNotifier {
 
   String _incrementPrefix(String prefix) {
     if (prefix.isEmpty) return 'A';
-    
+
     List<int> chars = prefix.codeUnits.toList();
     for (int i = chars.length - 1; i >= 0; i--) {
-      if (chars[i] < 90) { // 'Z' is 90
+      if (chars[i] < 90) {
+        // 'Z' is 90
         chars[i]++;
         return String.fromCharCodes(chars);
       } else {
@@ -422,7 +440,8 @@ class MeterProvider with ChangeNotifier {
     });
   }
 
-  Future<void> stopMeter(String membershipNo, String vehicleCategory, {String tripType = 'Road Pickup', String? existingTripId}) async {
+  Future<void> stopMeter(String membershipNo, String vehicleCategory,
+      {String tripType = 'Road Pickup', String? existingTripId}) async {
     _isRunning = false;
     _isWaiting = false;
     _isTripCompleted = true;
@@ -450,7 +469,8 @@ class MeterProvider with ChangeNotifier {
       notifyListeners();
 
       if (tripType == 'Road Pickup') {
-        final dateStr = "${DateTime.now().year}.${DateTime.now().month.toString().padLeft(2, '0')}.${DateTime.now().day.toString().padLeft(2, '0')}";
+        final dateStr =
+            "${DateTime.now().year}.${DateTime.now().month.toString().padLeft(2, '0')}.${DateTime.now().day.toString().padLeft(2, '0')}";
         await _firestore
             .collection('roadpickups_hires')
             .doc(dateStr)
@@ -479,10 +499,13 @@ class MeterProvider with ChangeNotifier {
   Future<String> _getAddressFromCoordinate(Position pos) async {
     try {
       Geocoding geocoder = Geocoding();
-      List<Placemark> placemarks = await geocoder.placemarkFromCoordinates(pos.latitude, pos.longitude);
+      List<Placemark> placemarks =
+          await geocoder.placemarkFromCoordinates(pos.latitude, pos.longitude);
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks.first;
-        return "${place.street ?? ''}, ${place.locality ?? place.subLocality ?? ''}".trim().replaceAll(RegExp(r'^,\s*'), '');
+        return "${place.street ?? ''}, ${place.locality ?? place.subLocality ?? ''}"
+            .trim()
+            .replaceAll(RegExp(r'^,\s*'), '');
       }
     } catch (e) {
       debugPrint("Geocoding error: $e");
@@ -494,8 +517,9 @@ class MeterProvider with ChangeNotifier {
     if (_tripId.isEmpty) return;
 
     try {
-      final dateStr = "${DateTime.now().year}.${DateTime.now().month.toString().padLeft(2, '0')}.${DateTime.now().day.toString().padLeft(2, '0')}";
-      
+      final dateStr =
+          "${DateTime.now().year}.${DateTime.now().month.toString().padLeft(2, '0')}.${DateTime.now().day.toString().padLeft(2, '0')}";
+
       if (_tripType == 'Road Pickup') {
         await _firestore
             .collection('roadpickups_hires')

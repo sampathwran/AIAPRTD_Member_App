@@ -18,7 +18,8 @@ class _DarkModePageState extends State<DarkModePage> {
     return Scaffold(
       backgroundColor: isDarkMode ? Colors.grey[900] : Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text("Display Settings", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("Display Settings",
+            style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         elevation: 0,
         backgroundColor: isDarkMode ? Colors.black : Colors.white,
@@ -68,7 +69,8 @@ class _DarkModePageState extends State<DarkModePage> {
                 trailing: Switch(
                   value: isDarkMode,
                   onChanged: (value) {
-                    Provider.of<ThemeProvider>(context, listen: false).toggleTheme();
+                    Provider.of<ThemeProvider>(context, listen: false)
+                        .toggleTheme();
                   },
                 ),
               ),

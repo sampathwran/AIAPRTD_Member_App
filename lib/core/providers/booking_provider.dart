@@ -57,29 +57,31 @@ class BookingProvider extends ChangeNotifier {
     final String? recentJson = prefs.getString('recent_locations');
     if (recentJson != null) {
       final List<dynamic> decoded = json.decode(recentJson);
-      recentLocations = decoded.map((e) => Map<String, dynamic>.from(e)).toList();
+      recentLocations =
+          decoded.map((e) => Map<String, dynamic>.from(e)).toList();
       notifyListeners();
     }
   }
 
-  Future<void> addRecentLocation(String address, LatLng location, String name) async {
+  Future<void> addRecentLocation(
+      String address, LatLng location, String name) async {
     final newLoc = {
       "address": address,
       "lat": location.latitude,
       "lng": location.longitude,
       "name": name,
     };
-    
+
     // Remove if already exists to move to top
     recentLocations.removeWhere((loc) => loc['address'] == address);
-    
+
     recentLocations.insert(0, newLoc);
-    
+
     // Keep only last 5
     if (recentLocations.length > 5) {
       recentLocations = recentLocations.sublist(0, 5);
     }
-    
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('recent_locations', json.encode(recentLocations));
     notifyListeners();
@@ -101,10 +103,11 @@ class BookingProvider extends ChangeNotifier {
       dropControllers[index].dispose();
       dropControllers.removeAt(index);
       dropLatLngs.removeAt(index);
-      
+
       // Re-create all drop markers to ensure indices match
-      _markers.removeWhere((marker) => marker.markerId.value.startsWith('drop_location_'));
-      
+      _markers.removeWhere(
+          (marker) => marker.markerId.value.startsWith('drop_location_'));
+
       for (int i = 0; i < dropLatLngs.length; i++) {
         if (dropLatLngs[i] != null) {
           _markers.add(
@@ -112,13 +115,16 @@ class BookingProvider extends ChangeNotifier {
               markerId: MarkerId('drop_location_$i'),
               position: dropLatLngs[i]!,
               infoWindow: InfoWindow(title: 'Drop: ${dropControllers[i].text}'),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueAzure),
             ),
           );
         }
       }
 
-      if (currentPickupLatLng != null && dropLatLngs.isNotEmpty && dropLatLngs[0] != null) {
+      if (currentPickupLatLng != null &&
+          dropLatLngs.isNotEmpty &&
+          dropLatLngs[0] != null) {
         calculateRoute();
       } else {
         _polylines.clear();
@@ -136,7 +142,8 @@ class BookingProvider extends ChangeNotifier {
   // =========================================================================
   // 💡 1. Function to permanently save a location in Firestore
   // =========================================================================
-  Future<void> saveLocation(String name, LatLng location, String address) async {
+  Future<void> saveLocation(
+      String name, LatLng location, String address) async {
     String? memberId = FirebaseAuth.instance.currentUser?.uid;
 
     if (memberId == null) {
@@ -191,11 +198,13 @@ class BookingProvider extends ChangeNotifier {
     }
   }
 
-  void setPickupLocation(LatLng location, String address, {bool animateCamera = true}) {
+  void setPickupLocation(LatLng location, String address,
+      {bool animateCamera = true}) {
     pickupController.text = address;
     currentPickupLatLng = location;
 
-    _markers.removeWhere((m) => m.markerId == const MarkerId('pickup_location'));
+    _markers
+        .removeWhere((m) => m.markerId == const MarkerId('pickup_location'));
     _markers.add(
       Marker(
         markerId: const MarkerId('pickup_location'),
@@ -207,12 +216,14 @@ class BookingProvider extends ChangeNotifier {
 
     if (animateCamera) {
       isProgrammaticMove = true; // 👈 Added
-      _mapController?.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: location, zoom: 16)));
+      _mapController?.animateCamera(CameraUpdate.newCameraPosition(
+          CameraPosition(target: location, zoom: 16)));
     }
     notifyListeners();
   }
 
-  void setDropLocation(int index, LatLng location, String address, {bool animateCamera = true}) {
+  void setDropLocation(int index, LatLng location, String address,
+      {bool animateCamera = true}) {
     dropControllers[index].text = address;
     dropLatLngs[index] = location;
 
@@ -228,7 +239,8 @@ class BookingProvider extends ChangeNotifier {
 
     if (animateCamera) {
       isProgrammaticMove = true; // 👈 Added
-      _mapController?.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: location, zoom: 16)));
+      _mapController?.animateCamera(CameraUpdate.newCameraPosition(
+          CameraPosition(target: location, zoom: 16)));
     }
     notifyListeners();
   }
@@ -236,19 +248,23 @@ class BookingProvider extends ChangeNotifier {
   Future<List<Map<String, dynamic>>> searchLocations(String query) async {
     if (query.isEmpty) return [];
 
-    final String url = 'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$query&components=country:lk&key=$_googleApiKey';
+    final String url =
+        'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$query&components=country:lk&key=$_googleApiKey';
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['status'] == 'OK') {
           final predictions = data['predictions'] as List;
-          return predictions.map((p) => {
-            "name": p['description'],
-            "place_id": p['place_id'],
-          }).toList();
+          return predictions
+              .map((p) => {
+                    "name": p['description'],
+                    "place_id": p['place_id'],
+                  })
+              .toList();
         } else {
-          debugPrint("Places API Error: ${data['status']} - ${data['error_message']}");
+          debugPrint(
+              "Places API Error: ${data['status']} - ${data['error_message']}");
         }
       }
     } catch (e) {
@@ -257,8 +273,10 @@ class BookingProvider extends ChangeNotifier {
     return [];
   }
 
-  Future<void> fetchPlaceDetailsAndSetLocation(String placeId, String address, {bool isPickup = true, int dropIndex = 0}) async {
-    final String url = 'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$_googleApiKey';
+  Future<void> fetchPlaceDetailsAndSetLocation(String placeId, String address,
+      {bool isPickup = true, int dropIndex = 0}) async {
+    final String url =
+        'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$_googleApiKey';
 
     try {
       final response = await http.get(Uri.parse(url));
@@ -273,7 +291,7 @@ class BookingProvider extends ChangeNotifier {
           } else {
             setDropLocation(dropIndex, latLng, address);
           }
-          
+
           // Add to recent locations
           addRecentLocation(address, latLng, address.split(',').first);
         }
@@ -283,8 +301,12 @@ class BookingProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> getAddressFromLatLng(LatLng location, {bool isPickup = true, int dropIndex = 0, bool animateCamera = true}) async {
-    final String url = 'https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.latitude},${location.longitude}&key=$_googleApiKey';
+  Future<void> getAddressFromLatLng(LatLng location,
+      {bool isPickup = true,
+      int dropIndex = 0,
+      bool animateCamera = true}) async {
+    final String url =
+        'https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.latitude},${location.longitude}&key=$_googleApiKey';
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -294,7 +316,8 @@ class BookingProvider extends ChangeNotifier {
           if (isPickup) {
             setPickupLocation(location, address, animateCamera: animateCamera);
           } else {
-            setDropLocation(dropIndex, location, address, animateCamera: animateCamera);
+            setDropLocation(dropIndex, location, address,
+                animateCamera: animateCamera);
           }
         }
       }
@@ -306,7 +329,8 @@ class BookingProvider extends ChangeNotifier {
   Future<void> updateHoveredAddress(LatLng location) async {
     hoveredAddress = "Fetching address...";
     notifyListeners();
-    final String url = 'https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.latitude},${location.longitude}&key=$_googleApiKey';
+    final String url =
+        'https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.latitude},${location.longitude}&key=$_googleApiKey';
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -326,10 +350,13 @@ class BookingProvider extends ChangeNotifier {
   // 💡 New Route (Draws line between all drops)
   // =========================================================================
   Future<void> calculateRoute() async {
-    if (currentPickupLatLng == null || dropLatLngs.isEmpty || dropLatLngs[0] == null) return;
+    if (currentPickupLatLng == null ||
+        dropLatLngs.isEmpty ||
+        dropLatLngs[0] == null) return;
 
     // Take only non-empty drops
-    List<LatLng> validDrops = dropLatLngs.where((d) => d != null).cast<LatLng>().toList();
+    List<LatLng> validDrops =
+        dropLatLngs.where((d) => d != null).cast<LatLng>().toList();
     if (validDrops.isEmpty) return;
 
     LatLng origin = currentPickupLatLng!;
@@ -343,7 +370,8 @@ class BookingProvider extends ChangeNotifier {
     // 💡 If there are multiple drops (Return/Multiple Drops), add them all as Waypoints
     if (validDrops.length > 1) {
       List<LatLng> waypoints = validDrops.sublist(0, validDrops.length - 1);
-      String waypointsStr = waypoints.map((w) => '${w.latitude},${w.longitude}').join('|');
+      String waypointsStr =
+          waypoints.map((w) => '${w.latitude},${w.longitude}').join('|');
       url += '&waypoints=$waypointsStr';
     }
 
@@ -352,7 +380,6 @@ class BookingProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['routes'].isNotEmpty) {
-
           // 💡 Total distance is calculated by summing up the distances of all legs
           double totalDistance = 0;
           final legs = data['routes'][0]['legs'] as List;
@@ -361,7 +388,8 @@ class BookingProvider extends ChangeNotifier {
           }
           totalDistanceKm = totalDistance / 1000.0;
 
-          String polylineEncoded = data['routes'][0]['overview_polyline']['points'];
+          String polylineEncoded =
+              data['routes'][0]['overview_polyline']['points'];
           List<LatLng> polylineCoordinates = _decodePoly(polylineEncoded);
 
           _polylines.clear();
@@ -379,7 +407,8 @@ class BookingProvider extends ChangeNotifier {
           LatLngBounds bounds = _boundsFromLatLngList(allPoints);
 
           isProgrammaticMove = true; // 👈 Set to true due to auto zoom
-          _mapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+          _mapController
+              ?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
 
           notifyListeners();
         }
@@ -423,7 +452,8 @@ class BookingProvider extends ChangeNotifier {
       if (lList.isEmpty) {
         lList.add(LatLng(lat, lng));
       } else {
-        lList.add(LatLng(lList.last.latitude + lat, lList.last.longitude + lng));
+        lList
+            .add(LatLng(lList.last.latitude + lat, lList.last.longitude + lng));
       }
     } while (index < len);
     return lList;
@@ -450,11 +480,14 @@ class BookingProvider extends ChangeNotifier {
       y0 = y0 - 0.005;
       y1 = y1! + 0.005;
     }
-    return LatLngBounds(northeast: LatLng(x1 ?? 0, y1 ?? 0), southwest: LatLng(x0 ?? 0, y0 ?? 0));
+    return LatLngBounds(
+        northeast: LatLng(x1 ?? 0, y1 ?? 0),
+        southwest: LatLng(x0 ?? 0, y0 ?? 0));
   }
 
   Future<String> _generateTripId() async {
-    final docRef = FirebaseFirestore.instance.collection('system').doc('trip_counter');
+    final docRef =
+        FirebaseFirestore.instance.collection('system').doc('trip_counter');
     final now = DateTime.now();
     final currentYear = now.year % 100;
 
@@ -502,7 +535,8 @@ class BookingProvider extends ChangeNotifier {
     if (lastChar == 'Z') {
       return "${_incrementPrefix(prefix.substring(0, prefix.length - 1))}A";
     }
-    return prefix.substring(0, prefix.length - 1) + String.fromCharCode(lastChar.codeUnitAt(0) + 1);
+    return prefix.substring(0, prefix.length - 1) +
+        String.fromCharCode(lastChar.codeUnitAt(0) + 1);
   }
 
   Future<void> scheduleBooking({
@@ -540,7 +574,10 @@ class BookingProvider extends ChangeNotifier {
       'additionalDrops': dropControllers
           .asMap()
           .entries
-          .where((entry) => entry.key > 0 && entry.value.text.isNotEmpty && dropLatLngs[entry.key] != null)
+          .where((entry) =>
+              entry.key > 0 &&
+              entry.value.text.isNotEmpty &&
+              dropLatLngs[entry.key] != null)
           .map((entry) => {
                 'address': entry.value.text,
                 'lat': dropLatLngs[entry.key]?.latitude,
@@ -578,14 +615,14 @@ class BookingProvider extends ChangeNotifier {
           .doc(tripId)
           .set(bookingData);
 
-      final dateStr = "${DateTime.now().year}.${DateTime.now().month.toString().padLeft(2, '0')}.${DateTime.now().day.toString().padLeft(2, '0')}";
+      final dateStr =
+          "${DateTime.now().year}.${DateTime.now().month.toString().padLeft(2, '0')}.${DateTime.now().day.toString().padLeft(2, '0')}";
       await FirebaseFirestore.instance
           .collection('dayly_trips')
           .doc(dateStr)
           .collection(memberId)
           .doc(tripId)
           .set(bookingData);
-
     } catch (e) {
       debugPrint("❌ Error saving booking to Firestore: $e");
       rethrow;
@@ -660,7 +697,8 @@ class BookingProvider extends ChangeNotifier {
       addDropLocation();
     } else {
       int lastIndex = dropControllers.length - 1;
-      if (dropLatLngs[lastIndex] != null && dropLatLngs[lastIndex] != currentPickupLatLng) {
+      if (dropLatLngs[lastIndex] != null &&
+          dropLatLngs[lastIndex] != currentPickupLatLng) {
         addDropLocation();
       }
     }

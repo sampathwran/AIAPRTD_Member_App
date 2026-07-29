@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:audioplayers/audioplayers.dart'; // Removed old comment, using Audioplayers
-import 'package:aiaprtd_member/core/providers/profile_provider.dart';      // New ProfileProvider
+import 'package:aiaprtd_member/core/providers/profile_provider.dart'; // New ProfileProvider
 import 'package:aiaprtd_member/features/home/home_page.dart';
 import 'package:aiaprtd_member/features/auth/login_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -39,7 +39,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // Typewriter Effect animation
     int charIndex = 0;
-    _characterTimer = Timer.periodic(const Duration(milliseconds: 550), (timer) {
+    _characterTimer =
+        Timer.periodic(const Duration(milliseconds: 550), (timer) {
       if (charIndex < _fullText.length) {
         if (mounted) {
           setState(() {
@@ -74,26 +75,31 @@ class _SplashScreenState extends State<SplashScreen> {
 
     try {
       // Use ProfileProvider here
-      final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+      final profileProvider =
+          Provider.of<ProfileProvider>(context, listen: false);
       bool dataLoaded = await profileProvider.fetchAndStoreMemberData();
 
       if (dataLoaded && mounted) {
         try {
           String myMemberNo = profileProvider.memberNo;
-          QuerySnapshot activeTrips = await FirebaseFirestore.instance.collection('all_bookings')
-            .where('acceptedBy', isEqualTo: myMemberNo)
-            .get();
-          
+          QuerySnapshot activeTrips = await FirebaseFirestore.instance
+              .collection('all_bookings')
+              .where('acceptedBy', isEqualTo: myMemberNo)
+              .get();
+
           DocumentSnapshot? activeTripDoc;
           for (var doc in activeTrips.docs) {
             var data = doc.data() as Map<String, dynamic>;
             String status = data['status']?.toString().toLowerCase() ?? '';
-            if (status == 'accepted' || status == 'arrived' || status == 'started' || status == 'ongoing') {
+            if (status == 'accepted' ||
+                status == 'arrived' ||
+                status == 'started' ||
+                status == 'ongoing') {
               activeTripDoc = doc;
               break;
             }
           }
-          
+
           if (activeTripDoc != null && mounted) {
             Navigator.pushReplacement(
               context,
@@ -185,13 +191,15 @@ class _SplashScreenState extends State<SplashScreen> {
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 1.0,
-                  color: Colors.black.withValues(alpha: 0.7), // 💡 Force normal color
+                  color: Colors.black
+                      .withValues(alpha: 0.7), // 💡 Force normal color
                 ),
               ),
             ),
             const SizedBox(height: 40),
             const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue), // 💡 Force normal color
+              valueColor: AlwaysStoppedAnimation<Color>(
+                  Colors.blue), // 💡 Force normal color
             ),
           ],
         ),

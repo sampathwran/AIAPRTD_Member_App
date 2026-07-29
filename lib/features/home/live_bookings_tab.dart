@@ -12,7 +12,8 @@ class LiveBookingsTab extends StatefulWidget {
   final List<QueryDocumentSnapshot> bookings;
   final Position? currentPosition;
 
-  const LiveBookingsTab({super.key, required this.bookings, this.currentPosition});
+  const LiveBookingsTab(
+      {super.key, required this.bookings, this.currentPosition});
 
   @override
   State<LiveBookingsTab> createState() => _LiveBookingsTabState();
@@ -39,7 +40,8 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
       _displayBookings[doc.id] = doc.data() as Map<String, dynamic>;
     }
     final newIds = newBookings.map((e) => e.id).toSet();
-    _displayBookings.removeWhere((id, data) => !newIds.contains(id) && !_removingIds.contains(id));
+    _displayBookings.removeWhere(
+        (id, data) => !newIds.contains(id) && !_removingIds.contains(id));
   }
 
   void _handleIncomingBookings(List<QueryDocumentSnapshot> newBookings) {
@@ -60,15 +62,20 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
 
   Future<void> _checkWhyRemoved(String docId) async {
     try {
-      final doc = await FirebaseFirestore.instance.collection('all_bookings').doc(docId).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('all_bookings')
+          .doc(docId)
+          .get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         final status = data['status']?.toString().toLowerCase();
-        
-        if (status == 'accepted' || status == 'arrived' || status == 'started') {
+
+        if (status == 'accepted' ||
+            status == 'arrived' ||
+            status == 'started') {
           if (mounted) {
             setState(() {
-              _displayBookings[docId] = data; 
+              _displayBookings[docId] = data;
             });
           }
           await Future.delayed(const Duration(milliseconds: 1500));
@@ -97,11 +104,17 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.flash_on_rounded, size: 60, color: Colors.orange.shade100),
+            Icon(Icons.flash_on_rounded,
+                size: 60, color: Colors.orange.shade100),
             const SizedBox(height: 16),
-            const Text("No Live Bookings", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+            const Text("No Live Bookings",
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87)),
             const SizedBox(height: 8),
-            const Text("Bookings starting within 1 hour appear here.", style: TextStyle(color: Colors.grey)),
+            const Text("Bookings starting within 1 hour appear here.",
+                style: TextStyle(color: Colors.grey)),
           ],
         ),
       );
@@ -116,14 +129,16 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
       DateTime? timeA;
       if (dataA['pickupTime'] != null) {
         timeA = DateTime.tryParse(dataA['pickupTime'].toString());
-      } else if (dataA['startTime'] != null && dataA['startTime'] is Timestamp) {
+      } else if (dataA['startTime'] != null &&
+          dataA['startTime'] is Timestamp) {
         timeA = (dataA['startTime'] as Timestamp).toDate();
       }
 
       DateTime? timeB;
       if (dataB['pickupTime'] != null) {
         timeB = DateTime.tryParse(dataB['pickupTime'].toString());
-      } else if (dataB['startTime'] != null && dataB['startTime'] is Timestamp) {
+      } else if (dataB['startTime'] != null &&
+          dataB['startTime'] is Timestamp) {
         timeB = (dataB['startTime'] as Timestamp).toDate();
       }
 
@@ -153,18 +168,23 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
     );
   }
 
-  Widget _buildLiveCard(BuildContext context, Map<String, dynamic> data, String docId) {
-    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+  Widget _buildLiveCard(
+      BuildContext context, Map<String, dynamic> data, String docId) {
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
     final String myMembershipNo = profileProvider.memberNo;
     final String myName = profileProvider.memberFullName;
-    final String myPhone = profileProvider.memberData?['mobile']?.toString() ?? '';
-    final String myVehicle = profileProvider.memberData?['vehicle_category']?.toString() ?? '';
+    final String myPhone =
+        profileProvider.memberData?['mobile']?.toString() ?? '';
+    final String myVehicle =
+        profileProvider.memberData?['vehicle_category']?.toString() ?? '';
     final String myImage = profileProvider.profileImageUrl;
-    
+
     final systemStatus = OnlineStatusController.checkSystemActive(context);
     final bool isActive = systemStatus['isActive'] == true;
-    final String inactiveReason = systemStatus['reason'] ?? profileProvider.inactiveReason;
-    
+    final String inactiveReason =
+        systemStatus['reason'] ?? profileProvider.inactiveReason;
+
     final bool isOnline = profileProvider.isOnline;
 
     Map<String, dynamic>? getMap(String key) {
@@ -173,26 +193,29 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
       }
       return null;
     }
-    
+
     var pickupMap = getMap('pickupLocation');
     var dropMap = getMap('dropLocation');
 
-    String pickup = data['startAddress'] ?? pickupMap?['address'] ?? 'Unknown Pickup';
+    String pickup =
+        data['startAddress'] ?? pickupMap?['address'] ?? 'Unknown Pickup';
     String drop = data['endAddress'] ?? dropMap?['address'] ?? 'Unknown Drop';
     List<dynamic> additionalDrops = data['additionalDrops'] ?? [];
     double fare = (data['totalFare'] ?? data['estimateFare'] ?? 0.0).toDouble();
     String price = fare.toStringAsFixed(2);
-    
+
     // Date and time extracting from pickupTime
     String date = 'Today';
     String time = 'N/A';
     bool isOverdue = false;
-    
+
     if (data['pickupTime'] != null) {
       try {
         DateTime dt = DateTime.parse(data['pickupTime'].toString());
-        date = "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
-        time = "${dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour)}:${dt.minute.toString().padLeft(2, '0')} ${dt.hour >= 12 ? 'PM' : 'AM'}";
+        date =
+            "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
+        time =
+            "${dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour)}:${dt.minute.toString().padLeft(2, '0')} ${dt.hour >= 12 ? 'PM' : 'AM'}";
         if (DateTime.now().isAfter(dt.add(const Duration(minutes: 5)))) {
           isOverdue = true;
         }
@@ -223,17 +246,16 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
         }
         return null;
       }
-      
+
       double? pLat = parseDouble(pickupMap?['lat'] ?? data['pickupLat']);
       double? pLng = parseDouble(pickupMap?['lng'] ?? data['pickupLng']);
-      
+
       if (pLat != null && pLng != null) {
         double distMeters = Geolocator.distanceBetween(
-          widget.currentPosition!.latitude, 
-          widget.currentPosition!.longitude, 
-          pLat, 
-          pLng
-        );
+            widget.currentPosition!.latitude,
+            widget.currentPosition!.longitude,
+            pLat,
+            pLng);
         double distKm = distMeters / 1000;
         distanceText = "${distKm.toStringAsFixed(1)} km away from you";
       }
@@ -241,8 +263,11 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
 
     String paymentMethod = data['paymentMethod'] ?? 'Cash';
 
-        String currentStatus = data['status']?.toString().toLowerCase() ?? 'pending';
-    bool isAcceptedByOther = currentStatus == 'accepted' || currentStatus == 'arrived' || currentStatus == 'started';
+    String currentStatus =
+        data['status']?.toString().toLowerCase() ?? 'pending';
+    bool isAcceptedByOther = currentStatus == 'accepted' ||
+        currentStatus == 'arrived' ||
+        currentStatus == 'started';
     String acceptedDriverName = data['driverName'] ?? 'Another Driver';
 
     return Stack(
@@ -250,116 +275,142 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
         Opacity(
           opacity: isAcceptedByOther ? 0.4 : 1.0,
           child: Container(
-      margin: const EdgeInsets.only(bottom: 16),
+            margin: const EdgeInsets.only(bottom: 16),
 
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.orange.shade300, width: 2),
-        boxShadow: [
-          BoxShadow(color: Colors.orange.withValues(alpha: 0.15), blurRadius: 15, offset: const Offset(0, 5))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 🛡️ Top Header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.orange.shade50,
-              borderRadius: const BorderRadius.only(topLeft: Radius.circular(14), topRight: Radius.circular(14)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Expanded(
-                  child: Row(
-                    children: [
-                      Icon(Icons.verified, color: Colors.blue, size: 16),
-                      SizedBox(width: 4),
-                      Flexible(child: Text("Verified Member", style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12), overflow: TextOverflow.ellipsis)),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(color: isOverdue ? Colors.red : Colors.orange, borderRadius: BorderRadius.circular(20)),
-                  child: Text(isOverdue ? "LATE" : "LIVE", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
-                ),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.orange.shade300, width: 2),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.orange.withValues(alpha: 0.15),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5))
               ],
             ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 📅 Date & Price
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Row(
+                // 🛡️ Top Header
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(14),
+                        topRight: Radius.circular(14)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Expanded(
+                        child: Row(
+                          children: [
+                            Icon(Icons.verified, color: Colors.blue, size: 16),
+                            SizedBox(width: 4),
+                            Flexible(
+                                child: Text("Verified Member",
+                                    style: TextStyle(
+                                        color: Colors.blue,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12),
+                                    overflow: TextOverflow.ellipsis)),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                            color: isOverdue ? Colors.red : Colors.orange,
+                            borderRadius: BorderRadius.circular(20)),
+                        child: Text(isOverdue ? "LATE" : "LIVE",
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11)),
+                      ),
+                    ],
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 📅 Date & Price
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Icon(Icons.schedule, color: isOverdue ? Colors.red : Colors.grey.shade700, size: 16),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Icon(Icons.schedule,
+                                    color: isOverdue
+                                        ? Colors.red
+                                        : Colors.grey.shade700,
+                                    size: 16),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    "$date • $time",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                        color: isOverdue
+                                            ? Colors.red
+                                            : Colors.grey.shade800),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                           const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              "$date • $time", 
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: isOverdue ? Colors.red : Colors.grey.shade800),
-                              overflow: TextOverflow.ellipsis,
+                          Text("Rs. $price",
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16,
+                                  color: Colors.green)),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // 📍 Locations
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.my_location,
+                              color: Colors.blue, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(pickup,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis),
+                                if (distanceText.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(distanceText,
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.blue.shade700,
+                                          fontWeight: FontWeight.bold)),
+                                ],
+                              ],
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text("Rs. $price", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.green)),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // 📍 Locations
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.my_location, color: Colors.blue, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(pickup, style: const TextStyle(fontWeight: FontWeight.w600), maxLines: 2, overflow: TextOverflow.ellipsis),
-                          if (distanceText.isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Text(distanceText, style: TextStyle(fontSize: 11, color: Colors.blue.shade700, fontWeight: FontWeight.bold)),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                Container(
-                  margin: const EdgeInsets.only(left: 9, top: 4, bottom: 4),
-                  height: 15, width: 2, color: Colors.grey.shade300,
-                ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.location_on, color: Colors.red, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(drop, style: const TextStyle(fontWeight: FontWeight.w600), maxLines: 2, overflow: TextOverflow.ellipsis)),
-                  ],
-                ),
-                if (additionalDrops.isNotEmpty)
-                  ...additionalDrops.map((dropData) => Column(
-                    children: [
                       Container(
-                        margin: const EdgeInsets.only(left: 9, top: 4, bottom: 4),
-                        alignment: Alignment.centerLeft,
+                        margin:
+                            const EdgeInsets.only(left: 9, top: 4, bottom: 4),
                         height: 15,
                         width: 2,
                         color: Colors.grey.shade300,
@@ -367,232 +418,312 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.location_on_outlined, color: Colors.orange, size: 20),
+                          const Icon(Icons.location_on,
+                              color: Colors.red, size: 20),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              dropData['address'] ?? 'Unknown Drop',
-                              style: const TextStyle(fontWeight: FontWeight.w600),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                              child: Text(drop,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis)),
+                        ],
+                      ),
+                      if (additionalDrops.isNotEmpty)
+                        ...additionalDrops.map((dropData) => Column(
+                              children: [
+                                Container(
+                                  margin: const EdgeInsets.only(
+                                      left: 9, top: 4, bottom: 4),
+                                  alignment: Alignment.centerLeft,
+                                  height: 15,
+                                  width: 2,
+                                  color: Colors.grey.shade300,
+                                ),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.location_on_outlined,
+                                        color: Colors.orange, size: 20),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        dropData['address'] ?? 'Unknown Drop',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w600),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            )),
+
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Divider(height: 1),
+                      ),
+
+                      // 💳 Payment
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Icon(
+                                    paymentMethod
+                                            .toLowerCase()
+                                            .contains('passenger')
+                                        ? Icons.person
+                                        : paymentMethod
+                                                .toLowerCase()
+                                                .contains('member')
+                                            ? Icons.group
+                                            : paymentMethod.toLowerCase() ==
+                                                    'card'
+                                                ? Icons.credit_card
+                                                : Icons.money,
+                                    color: Colors.grey.shade600,
+                                    size: 16),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    paymentMethod.toUpperCase(),
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                        color: Colors.grey.shade600),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (data['note'] != null &&
+                                    data['note'].toString().isNotEmpty) ...[
+                                  const SizedBox(width: 12),
+                                  InkWell(
+                                    onTap: () {
+                                      showDialog(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                                  title: const Row(children: [
+                                                    Icon(Icons.notes,
+                                                        color: Colors.blue),
+                                                    SizedBox(width: 8),
+                                                    Text("Booking Note"),
+                                                  ]),
+                                                  content: Text(data['note']),
+                                                  actions: [
+                                                    TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.pop(ctx),
+                                                        child:
+                                                            const Text("Close"))
+                                                  ]));
+                                    },
+                                    child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                            color: Colors.blue.shade50,
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                            border: Border.all(
+                                                color: Colors.blue.shade200)),
+                                        child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.menu_book,
+                                                  color: Colors.blue, size: 14),
+                                              SizedBox(width: 4),
+                                              Text("Note",
+                                                  style: TextStyle(
+                                                      color: Colors.blue,
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.bold)),
+                                            ])),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () => _showMapPreview(context, data),
+                            icon: const Icon(Icons.map, size: 14),
+                            label: const Text("Map",
+                                style: TextStyle(fontSize: 12)),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.blue,
+                              side: const BorderSide(color: Colors.blue),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16)),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 0),
                             ),
                           ),
                         ],
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // ==========================================
+                      // 🟢 🎯 Swipe to Accept Button
+                      // ==========================================
+                      SwipeToAcceptButton(
+                        isOnline: isOnline,
+                        isActive: isActive,
+                        onOfflineAttempt: () {
+                          _showOfflineWarning(context);
+                        },
+                        onInactiveAttempt: () {
+                          _showInactiveWarning(context, inactiveReason);
+                        },
+                        onAccept: () async {
+                          final navigator = Navigator.of(context);
+                          final scaffoldMessenger =
+                              ScaffoldMessenger.of(context);
+                          try {
+                            final existingBookings = await FirebaseFirestore
+                                .instance
+                                .collection('all_bookings')
+                                .where('acceptedBy', isEqualTo: myMembershipNo)
+                                .get();
+
+                            bool hasActive = existingBookings.docs.any((doc) {
+                              String s = doc
+                                      .data()['status']
+                                      ?.toString()
+                                      .toLowerCase() ??
+                                  '';
+                              return s == 'accepted' ||
+                                  s == 'arrived' ||
+                                  s == 'started';
+                            });
+
+                            if (hasActive) {
+                              throw Exception("ALREADY_HAVE_BOOKING");
+                            }
+
+                            final docRef = FirebaseFirestore.instance
+                                .collection('all_bookings')
+                                .doc(docId);
+
+                            // 100% secure Firebase Transaction
+                            await FirebaseFirestore.instance
+                                .runTransaction((transaction) async {
+                              DocumentSnapshot snapshot =
+                                  await transaction.get(docRef);
+
+                              if (!snapshot.exists)
+                                throw Exception("Booking not found");
+
+                              var currentData =
+                                  snapshot.data() as Map<String, dynamic>;
+                              String currentStatus = currentData['status']
+                                      ?.toString()
+                                      .toLowerCase() ??
+                                  '';
+
+                              if (currentStatus == 'pending') {
+                                // Update all_bookings collection
+                                transaction.update(docRef, {
+                                  'status': 'accepted',
+                                  'acceptedBy': myMembershipNo,
+                                  'driverName': myName,
+                                  'driverPhone': myPhone,
+                                  'driverVehicle': myVehicle,
+                                  'driverImage': myImage,
+                                });
+
+                                // Sync with passenger's my_bookings collection
+                                String passengerId =
+                                    currentData['memberId']?.toString() ?? '';
+                                if (passengerId.isNotEmpty) {
+                                  final passengerDocRef = FirebaseFirestore
+                                      .instance
+                                      .collection('members')
+                                      .doc(passengerId)
+                                      .collection('my_bookings')
+                                      .doc(docId);
+
+                                  transaction.set(
+                                      passengerDocRef,
+                                      {
+                                        'status': 'accepted',
+                                        'acceptedBy': myMembershipNo,
+                                        'driverName': myName,
+                                        'driverPhone': myPhone,
+                                        'driverVehicle': myVehicle,
+                                        'driverImage': myImage,
+                                      },
+                                      SetOptions(merge: true));
+                                }
+
+                                // Increment totalAcceptedCount for driver
+                                final driverRef = FirebaseFirestore.instance
+                                    .collection('member')
+                                    .doc(myMembershipNo);
+                                transaction.update(driverRef, {
+                                  'totalAcceptedCount': FieldValue.increment(1)
+                                });
+                              } else {
+                                // Someone else has already taken it!
+                                String takenBy = currentData['acceptedBy'] ??
+                                    'Another Member';
+                                throw Exception("TAKEN:$takenBy");
+                              }
+                            });
+
+                            // Show notification and navigate to new page on success
+                            scaffoldMessenger.showSnackBar(const SnackBar(
+                              content:
+                                  Text("✅ You accepted the ride successfully!"),
+                              backgroundColor: Colors.green,
+                            ));
+
+                            navigator.push(
+                              MaterialPageRoute(
+                                  builder: (context) => ActiveBookingPage(
+                                      bookingData: data, bookingId: docId)),
+                            );
+                            return true;
+                          } catch (e) {
+                            if (e.toString().contains("ALREADY_HAVE_BOOKING")) {
+                              scaffoldMessenger.showSnackBar(const SnackBar(
+                                content: Text(
+                                    "🚨 You already have an active booking! Complete it first."),
+                                backgroundColor: Colors.orange,
+                                duration: Duration(seconds: 4),
+                              ));
+                            } else if (e.toString().contains("TAKEN:")) {
+                              String takenBy = e.toString().split("TAKEN:")[1];
+                              scaffoldMessenger.showSnackBar(SnackBar(
+                                content: Text(
+                                    "❌ Sorry! This hire was just taken by $takenBy."),
+                                backgroundColor: Colors.red,
+                                duration: const Duration(seconds: 4),
+                              ));
+                            } else {
+                              debugPrint("Error accepting booking: $e");
+                              scaffoldMessenger.showSnackBar(const SnackBar(
+                                content: Text(
+                                    "❌ Failed to accept booking. Please try again."),
+                                backgroundColor: Colors.red,
+                              ));
+                            }
+                            return false;
+                          }
+                        },
                       ),
                     ],
-                  )),
-
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Divider(height: 1),
+                  ),
                 ),
-
-                // 💳 Payment
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Icon(
-                            paymentMethod.toLowerCase().contains('passenger') ? Icons.person :
-                            paymentMethod.toLowerCase().contains('member') ? Icons.group :
-                            paymentMethod.toLowerCase() == 'card' ? Icons.credit_card : Icons.money, 
-                            color: Colors.grey.shade600, size: 16
-                          ),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              paymentMethod.toUpperCase(), 
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey.shade600),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (data['note'] != null && data['note'].toString().isNotEmpty) ...[
-                            const SizedBox(width: 12),
-                            InkWell(
-                              onTap: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (ctx) => AlertDialog(
-                                    title: const Row(
-                                      children: [
-                                        Icon(Icons.notes, color: Colors.blue),
-                                        SizedBox(width: 8),
-                                        Text("Booking Note"),
-                                      ]
-                                    ),
-                                    content: Text(data['note']),
-                                    actions: [
-                                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Close"))
-                                    ]
-                                  )
-                                );
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade50,
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(color: Colors.blue.shade200)
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.menu_book, color: Colors.blue, size: 14),
-                                    SizedBox(width: 4),
-                                    Text("Note", style: TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.bold)),
-                                  ]
-                                )
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () => _showMapPreview(context, data),
-                      icon: const Icon(Icons.map, size: 14),
-                      label: const Text("Map", style: TextStyle(fontSize: 12)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.blue,
-                        side: const BorderSide(color: Colors.blue),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-
-                // ==========================================
-                // 🟢 🎯 Swipe to Accept Button
-                // ==========================================
-                SwipeToAcceptButton(
-                  isOnline: isOnline,
-                  isActive: isActive,
-                  onOfflineAttempt: () {
-                    _showOfflineWarning(context);
-                  },
-                  onInactiveAttempt: () {
-                    _showInactiveWarning(context, inactiveReason);
-                  },
-                  onAccept: () async {
-                    final navigator = Navigator.of(context);
-                    final scaffoldMessenger = ScaffoldMessenger.of(context);
-                    try {
-                      final existingBookings = await FirebaseFirestore.instance
-                          .collection('all_bookings')
-                          .where('acceptedBy', isEqualTo: myMembershipNo)
-                          .get();
-                      
-                      bool hasActive = existingBookings.docs.any((doc) {
-                        String s = doc.data()['status']?.toString().toLowerCase() ?? '';
-                        return s == 'accepted' || s == 'arrived' || s == 'started';
-                      });
-                      
-                      if (hasActive) {
-                        throw Exception("ALREADY_HAVE_BOOKING");
-                      }
-
-                      final docRef = FirebaseFirestore.instance.collection('all_bookings').doc(docId);
-
-                      // 100% secure Firebase Transaction
-                      await FirebaseFirestore.instance.runTransaction((transaction) async {
-                        DocumentSnapshot snapshot = await transaction.get(docRef);
-
-                        if (!snapshot.exists) throw Exception("Booking not found");
-
-                        var currentData = snapshot.data() as Map<String, dynamic>;
-                        String currentStatus = currentData['status']?.toString().toLowerCase() ?? '';
-
-                        if (currentStatus == 'pending') {
-                          // Update all_bookings collection
-                          transaction.update(docRef, {
-                            'status': 'accepted',
-                            'acceptedBy': myMembershipNo,
-                            'driverName': myName,
-                            'driverPhone': myPhone,
-                            'driverVehicle': myVehicle,
-                            'driverImage': myImage,
-                          });
-
-                          // Sync with passenger's my_bookings collection
-                          String passengerId = currentData['memberId']?.toString() ?? '';
-                          if (passengerId.isNotEmpty) {
-                            final passengerDocRef = FirebaseFirestore.instance
-                                .collection('members')
-                                .doc(passengerId)
-                                .collection('my_bookings')
-                                .doc(docId);
-                            
-                            transaction.set(passengerDocRef, {
-                              'status': 'accepted',
-                              'acceptedBy': myMembershipNo,
-                              'driverName': myName,
-                              'driverPhone': myPhone,
-                              'driverVehicle': myVehicle,
-                              'driverImage': myImage,
-                            }, SetOptions(merge: true));
-                          }
-
-                          // Increment totalAcceptedCount for driver
-                          final driverRef = FirebaseFirestore.instance.collection('member').doc(myMembershipNo);
-                          transaction.update(driverRef, {
-                            'totalAcceptedCount': FieldValue.increment(1)
-                          });
-                        } else {
-                          // Someone else has already taken it!
-                          String takenBy = currentData['acceptedBy'] ?? 'Another Member';
-                          throw Exception("TAKEN:$takenBy");
-                        }
-                      });
-
-                      // Show notification and navigate to new page on success
-                      scaffoldMessenger.showSnackBar(const SnackBar(
-                        content: Text("✅ You accepted the ride successfully!"),
-                        backgroundColor: Colors.green,
-                      ));
-
-                      navigator.push(
-                        MaterialPageRoute(builder: (context) => ActiveBookingPage(bookingData: data, bookingId: docId)),
-                      );
-                      return true;
-
-                    } catch (e) {
-                      if (e.toString().contains("ALREADY_HAVE_BOOKING")) {
-                        scaffoldMessenger.showSnackBar(const SnackBar(
-                          content: Text("🚨 You already have an active booking! Complete it first."),
-                          backgroundColor: Colors.orange,
-                          duration: Duration(seconds: 4),
-                        ));
-                      } else if (e.toString().contains("TAKEN:")) {
-                        String takenBy = e.toString().split("TAKEN:")[1];
-                        scaffoldMessenger.showSnackBar(SnackBar(
-                          content: Text("❌ Sorry! This hire was just taken by $takenBy."),
-                          backgroundColor: Colors.red,
-                          duration: const Duration(seconds: 4),
-                        ));
-                      } else {
-                        debugPrint("Error accepting booking: $e");
-                        scaffoldMessenger.showSnackBar(const SnackBar(
-                          content: Text("❌ Failed to accept booking. Please try again."),
-                          backgroundColor: Colors.red,
-                        ));
-                      }
-                      return false;
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-        ], // Ends children of Column
-      ), // Ends Column inside Container
-    ), // Ends Container
-  ), // Ends Opacity
-  if (isAcceptedByOther)
+              ], // Ends children of Column
+            ), // Ends Column inside Container
+          ), // Ends Container
+        ), // Ends Opacity
+        if (isAcceptedByOther)
           Positioned.fill(
             child: Container(
               margin: const EdgeInsets.only(bottom: 16),
@@ -604,10 +735,16 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.check_circle_outline, color: Colors.greenAccent, size: 48),
+                    const Icon(Icons.check_circle_outline,
+                        color: Colors.greenAccent, size: 48),
                     const SizedBox(height: 8),
-                    const Text("Accepted by", style: TextStyle(color: Colors.white70, fontSize: 14)),
-                    Text(acceptedDriverName, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text("Accepted by",
+                        style: TextStyle(color: Colors.white70, fontSize: 14)),
+                    Text(acceptedDriverName,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -618,7 +755,6 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
   }
 
   void _showMapPreview(BuildContext context, Map<String, dynamic> data) {
-
     double? parseDouble(dynamic value) {
       if (value == null) {
         return null;
@@ -652,8 +788,12 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
 
     List<dynamic> additionalDrops = data['additionalDrops'] ?? [];
 
-    if (pickupLat == null || pickupLng == null || dropLat == null || dropLng == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Location coordinates not available")));
+    if (pickupLat == null ||
+        pickupLng == null ||
+        dropLat == null ||
+        dropLng == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Location coordinates not available")));
       return;
     }
 
@@ -675,10 +815,14 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
       ),
     };
 
-    double minLat = pickup.latitude < drop.latitude ? pickup.latitude : drop.latitude;
-    double maxLat = pickup.latitude > drop.latitude ? pickup.latitude : drop.latitude;
-    double minLng = pickup.longitude < drop.longitude ? pickup.longitude : drop.longitude;
-    double maxLng = pickup.longitude > drop.longitude ? pickup.longitude : drop.longitude;
+    double minLat =
+        pickup.latitude < drop.latitude ? pickup.latitude : drop.latitude;
+    double maxLat =
+        pickup.latitude > drop.latitude ? pickup.latitude : drop.latitude;
+    double minLng =
+        pickup.longitude < drop.longitude ? pickup.longitude : drop.longitude;
+    double maxLng =
+        pickup.longitude > drop.longitude ? pickup.longitude : drop.longitude;
 
     // Process additional drops
     int dropIndex = 1;
@@ -688,16 +832,15 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
         double? dLng = parseDouble(dropData['lng']);
         if (dLat != null && dLng != null) {
           LatLng addDrop = LatLng(dLat, dLng);
-          markers.add(
-            Marker(
-              markerId: MarkerId('drop_$dropIndex'),
-              position: addDrop,
-              infoWindow: InfoWindow(title: "Drop $dropIndex"),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
-            )
-          );
+          markers.add(Marker(
+            markerId: MarkerId('drop_$dropIndex'),
+            position: addDrop,
+            infoWindow: InfoWindow(title: "Drop $dropIndex"),
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+                BitmapDescriptor.hueOrange),
+          ));
           dropIndex++;
-          
+
           if (dLat < minLat) minLat = dLat;
           if (dLat > maxLat) maxLat = dLat;
           if (dLng < minLng) minLng = dLng;
@@ -747,18 +890,23 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
               ),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Text("Route Preview", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                child: Text("Route Preview",
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ),
               Expanded(
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(16)),
                   child: GoogleMap(
-                    initialCameraPosition: CameraPosition(target: pickup, zoom: 14),
+                    initialCameraPosition:
+                        CameraPosition(target: pickup, zoom: 14),
                     markers: markers,
                     onMapCreated: (controller) {
                       Future.delayed(const Duration(milliseconds: 300), () {
                         try {
-                          controller.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+                          controller.animateCamera(
+                              CameraUpdate.newLatLngBounds(bounds, 50));
                         } catch (e) {
                           debugPrint("Map zoom error: $e");
                         }
@@ -785,7 +933,8 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 60),
+            const Icon(Icons.warning_amber_rounded,
+                color: Colors.orange, size: 60),
             const SizedBox(height: 16),
             const Text(
               "Account Inactive",
@@ -805,9 +954,14 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text("OK", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                child: const Text("OK",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -825,7 +979,8 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
           children: [
             Icon(Icons.offline_bolt_rounded, color: Colors.orange, size: 28),
             SizedBox(width: 8),
-            Text("You are Offline", style: TextStyle(fontWeight: FontWeight.bold)),
+            Text("You are Offline",
+                style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
         content: const Text(
@@ -835,22 +990,28 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("CANCEL", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            child: const Text("CANCEL",
+                style:
+                    TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context); // Close dialog first
               OnlineStatusController.toggleStatus(
                 context: context,
-                currentOnlineState: false, // Currently offline, want to go online
+                currentOnlineState:
+                    false, // Currently offline, want to go online
                 onStateChanged: () {},
               );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text("GO ONLINE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text("GO ONLINE",
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

@@ -37,7 +37,7 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
       builder: (BuildContext builder) {
         final theme = Theme.of(context);
         final isDark = theme.brightness == Brightness.dark;
-        
+
         return Container(
           height: 320,
           decoration: BoxDecoration(
@@ -51,7 +51,8 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
             children: [
               // Header with Done button
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
@@ -64,9 +65,12 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancel', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                      child: const Text('Cancel',
+                          style: TextStyle(color: Colors.grey, fontSize: 16)),
                     ),
-                    const Text('Select Time', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text('Select Time',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     TextButton(
                       onPressed: () {
                         setState(() {
@@ -74,7 +78,11 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
                         });
                         Navigator.of(context).pop();
                       },
-                      child: const Text('Done', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 16)),
+                      child: const Text('Done',
+                          style: TextStyle(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16)),
                     ),
                   ],
                 ),
@@ -109,11 +117,13 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
     );
 
     // After bottom sheet closes, check if selected time is valid
-    if (_selectedDateTime != null && _selectedDateTime!.isBefore(minAllowedTime)) {
+    if (_selectedDateTime != null &&
+        _selectedDateTime!.isBefore(minAllowedTime)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Bookings must be scheduled at least 30 minutes in advance!"),
+            content: Text(
+                "Bookings must be scheduled at least 30 minutes in advance!"),
             backgroundColor: Colors.red,
           ),
         );
@@ -130,7 +140,8 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Row(
             children: [
               Icon(Icons.check_circle, color: Colors.green, size: 28),
@@ -145,9 +156,11 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                Navigator.pushNamedAndRemoveUntil(
+                    context, '/home', (route) => false);
               },
-              child: const Text("OK", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              child: const Text("OK",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ),
           ],
         );
@@ -157,74 +170,79 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
 
   void _showPaymentMethodSheet() {
     showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text("Select Payment Method", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              ListTile(
-                leading: const Icon(Icons.person, color: Colors.blue),
-                title: const Text("Pay by passenger"),
-                trailing: _selectedPaymentMethod == "Pay by passenger" ? const Icon(Icons.check, color: Colors.blue) : null,
-                onTap: () {
-                  setState(() => _selectedPaymentMethod = "Pay by passenger");
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.group, color: Colors.blue),
-                title: const Text("Pay by member"),
-                trailing: _selectedPaymentMethod == "Pay by member" ? const Icon(Icons.check, color: Colors.blue) : null,
-                onTap: () {
-                  setState(() => _selectedPaymentMethod = "Pay by member");
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        );
-      }
-    );
+        context: context,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (context) {
+          return Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("Select Payment Method",
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: const Icon(Icons.person, color: Colors.blue),
+                  title: const Text("Pay by passenger"),
+                  trailing: _selectedPaymentMethod == "Pay by passenger"
+                      ? const Icon(Icons.check, color: Colors.blue)
+                      : null,
+                  onTap: () {
+                    setState(() => _selectedPaymentMethod = "Pay by passenger");
+                    Navigator.pop(context);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.group, color: Colors.blue),
+                  title: const Text("Pay by member"),
+                  trailing: _selectedPaymentMethod == "Pay by member"
+                      ? const Icon(Icons.check, color: Colors.blue)
+                      : null,
+                  onTap: () {
+                    setState(() => _selectedPaymentMethod = "Pay by member");
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
+          );
+        });
   }
 
   void _showAddNoteDialog() {
-    TextEditingController _noteController = TextEditingController(text: _bookingNote);
+    TextEditingController _noteController =
+        TextEditingController(text: _bookingNote);
     showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Add Note"),
-          content: TextField(
-            controller: _noteController,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              hintText: "Type note here...",
-              border: OutlineInputBorder(),
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text("Add Note"),
+            content: TextField(
+              controller: _noteController,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                hintText: "Type note here...",
+                border: OutlineInputBorder(),
+              ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() => _bookingNote = _noteController.text.trim());
-                Navigator.pop(context);
-              },
-              child: const Text("Save"),
-            ),
-          ],
-        );
-      }
-    );
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() => _bookingNote = _noteController.text.trim());
+                  Navigator.pop(context);
+                },
+                child: const Text("Save"),
+              ),
+            ],
+          );
+        });
   }
 
   Future<void> _processBooking() async {
@@ -235,13 +253,18 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
       return;
     }
 
-    final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-    final vehicleProvider = Provider.of<VehicleProvider>(context, listen: false);
-    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+    final bookingProvider =
+        Provider.of<BookingProvider>(context, listen: false);
+    final vehicleProvider =
+        Provider.of<VehicleProvider>(context, listen: false);
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
 
-    if (bookingProvider.currentPickupLatLng == null || bookingProvider.dropLatLngs[0] == null) {
+    if (bookingProvider.currentPickupLatLng == null ||
+        bookingProvider.dropLatLngs[0] == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select both Pickup and Drop locations.")),
+        const SnackBar(
+            content: Text("Please select both Pickup and Drop locations.")),
       );
       return;
     }
@@ -251,7 +274,8 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
 
     if (memberId == 'N/A' || memberId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Member ID not found! Please log in again.")),
+        const SnackBar(
+            content: Text("Member ID not found! Please log in again.")),
       );
       return;
     }
@@ -259,11 +283,11 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
     setState(() => _isBooking = true);
 
     try {
-      final selectedVehicle = vehicleProvider.vehicles[vehicleProvider.selectedVehicleIndex];
+      final selectedVehicle =
+          vehicleProvider.vehicles[vehicleProvider.selectedVehicleIndex];
       final estimateFare = vehicleProvider.calculateEstimateFare(
           bookingProvider.totalDistanceKm,
-          vehicleProvider.selectedVehicleIndex
-      );
+          vehicleProvider.selectedVehicleIndex);
 
       await bookingProvider.scheduleBooking(
         memberId: memberId,
@@ -278,7 +302,6 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
       if (mounted) {
         _showSuccessDialog();
       }
-
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -312,124 +335,172 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Use Expanded to prevent text overflow on small screens
-              Expanded(
-                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Icon(Icons.access_time_filled, color: Colors.blue, size: 20),
+                    // Use Expanded to prevent text overflow on small screens
+                    Expanded(
+                      child: Row(
+                        children: [
+                          const Icon(Icons.access_time_filled,
+                              color: Colors.blue, size: 20),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              "Scheduled Time",
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? Colors.grey.shade300
+                                      : Colors.grey.shade700),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        "Scheduled Time",
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.grey.shade300 : Colors.grey.shade700),
-                        overflow: TextOverflow.ellipsis,
+                    GestureDetector(
+                      onTap: _pickDateTime,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? theme.colorScheme.primary
+                                  .withValues(alpha: 0.15)
+                              : Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: isDark
+                                  ? theme.colorScheme.primary
+                                  : Colors.blue.shade200),
+                        ),
+                        child: Text(
+                          formattedDateTime,
+                          style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue),
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: _pickDateTime,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: isDark ? theme.colorScheme.primary.withValues(alpha: 0.15) : Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: isDark ? theme.colorScheme.primary : Colors.blue.shade200),
+                    color:
+                        isDark ? theme.colorScheme.surface : Colors.transparent,
+                    border: Border.all(
+                        color: isDark
+                            ? Colors.grey.shade800
+                            : Colors.grey.shade200),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
-                    formattedDateTime,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.blue),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: isDark ? theme.colorScheme.surface : Colors.transparent,
-              border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                // Payment
-                Expanded(
-                  flex: 2,
-                  child: InkWell(
-                    onTap: _showPaymentMethodSheet,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                          decoration: BoxDecoration(color: Colors.green.shade600, borderRadius: BorderRadius.circular(4)),
-                          child: Text(
-                            _selectedPaymentMethod == "Pay by passenger" ? "PASSENGER" : "MEMBER", 
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 1)
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
+                    children: [
+                      // Payment
+                      Expanded(
+                        flex: 2,
+                        child: InkWell(
+                          onTap: _showPaymentMethodSheet,
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(
-                                _selectedPaymentMethod, 
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 4),
+                                decoration: BoxDecoration(
+                                    color: Colors.green.shade600,
+                                    borderRadius: BorderRadius.circular(4)),
+                                child: Text(
+                                    _selectedPaymentMethod == "Pay by passenger"
+                                        ? "PASSENGER"
+                                        : "MEMBER",
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 10,
+                                        letterSpacing: 1)),
                               ),
-                              Text("Default", style: TextStyle(color: Colors.grey.shade600, fontSize: 10)),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      _selectedPaymentMethod,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 11),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                    Text("Default",
+                                        style: TextStyle(
+                                            color: Colors.grey.shade600,
+                                            fontSize: 10)),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-                Container(height: 30, width: 1, color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
-                // Add Note
-                Expanded(
-                  flex: 2,
-                  child: InkWell(
-                    onTap: _showAddNoteDialog,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          _bookingNote != null && _bookingNote!.isNotEmpty ? Icons.notes : Icons.edit_outlined, 
-                          color: isDark ? Colors.grey.shade300 : Colors.grey.shade800, 
-                          size: 20
-                        ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            _bookingNote != null && _bookingNote!.isNotEmpty ? _bookingNote! : "Add note", 
-                            style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? Colors.grey.shade300 : Colors.grey.shade800),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                      ),
+                      Container(
+                          height: 30,
+                          width: 1,
+                          color: isDark
+                              ? Colors.grey.shade800
+                              : Colors.grey.shade300),
+                      // Add Note
+                      Expanded(
+                        flex: 2,
+                        child: InkWell(
+                          onTap: _showAddNoteDialog,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                  _bookingNote != null &&
+                                          _bookingNote!.isNotEmpty
+                                      ? Icons.notes
+                                      : Icons.edit_outlined,
+                                  color: isDark
+                                      ? Colors.grey.shade300
+                                      : Colors.grey.shade800,
+                                  size: 20),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  _bookingNote != null &&
+                                          _bookingNote!.isNotEmpty
+                                      ? _bookingNote!
+                                      : "Add note",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark
+                                          ? Colors.grey.shade300
+                                          : Colors.grey.shade800),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
               ],
             ),
           ),
         ),
-        
+
         const SizedBox(height: 12),
 
         // Confirm Button (Fixed at bottom)
@@ -441,16 +512,20 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
               backgroundColor: Colors.blue, // Changed to blue per user request
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
               elevation: 0,
             ),
             child: _isBooking
                 ? const SizedBox(
                     height: 20,
                     width: 20,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2.5),
                   )
-                : const Text("Book Now", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                : const Text("Book Now",
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
         ),
       ],

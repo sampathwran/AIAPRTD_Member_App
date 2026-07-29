@@ -16,12 +16,15 @@ class AdsProvider with ChangeNotifier {
 
   // Fetch Categories Stream
   Stream<QuerySnapshot> getCategoriesStream() {
-    return FirebaseFirestore.instance.collection('marketplace_categories').snapshots();
+    return FirebaseFirestore.instance
+        .collection('marketplace_categories')
+        .snapshots();
   }
 
   // Fetch Ads Stream
   Stream<QuerySnapshot> getAdsStream(String? category) {
-    Query query = FirebaseFirestore.instance.collection('marketplace_ads')
+    Query query = FirebaseFirestore.instance
+        .collection('marketplace_ads')
         .where('status', isEqualTo: 'approved');
 
     if (category != null) {
@@ -40,7 +43,8 @@ class AdsProvider with ChangeNotifier {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) throw 'Location permissions are denied';
+        if (permission == LocationPermission.denied)
+          throw 'Location permissions are denied';
       }
 
       if (permission == LocationPermission.deniedForever) {
@@ -48,11 +52,12 @@ class AdsProvider with ChangeNotifier {
       }
 
       Position position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high)
-      );
+          locationSettings:
+              const LocationSettings(accuracy: LocationAccuracy.high));
 
       // Temporary fix to avoid geocoding package errors
-      String address = "Lat: ${position.latitude.toStringAsFixed(3)}, Lng: ${position.longitude.toStringAsFixed(3)}";
+      String address =
+          "Lat: ${position.latitude.toStringAsFixed(3)}, Lng: ${position.longitude.toStringAsFixed(3)}";
 
       return {
         'success': true,
@@ -86,7 +91,9 @@ class AdsProvider with ChangeNotifier {
       if (user == null) throw "User not logged in";
 
       // Fallback if 'N/A' or empty
-      String safeMembershipNo = (membershipNo.isEmpty || membershipNo == 'N/A') ? user.uid : membershipNo;
+      String safeMembershipNo = (membershipNo.isEmpty || membershipNo == 'N/A')
+          ? user.uid
+          : membershipNo;
 
       // Fetch user's ad count to determine folder index (1, 2, 3...)
       int adCount = 0;
@@ -105,11 +112,13 @@ class AdsProvider with ChangeNotifier {
 
       // Upload Images
       for (var file in imageFiles) {
-        final storageRef = FirebaseStorage.instance.ref()
+        final storageRef = FirebaseStorage.instance
+            .ref()
             .child('marketplace_images')
             .child(safeMembershipNo)
             .child(adIndex.toString())
-            .child('${DateTime.now().millisecondsSinceEpoch}_${imageUrls.length}.jpg');
+            .child(
+                '${DateTime.now().millisecondsSinceEpoch}_${imageUrls.length}.jpg');
         await storageRef.putFile(file);
         final url = await storageRef.getDownloadURL();
         imageUrls.add(url);
@@ -154,7 +163,10 @@ class AdsProvider with ChangeNotifier {
   Future<Map<String, dynamic>> markAdAsSold(String adId) async {
     _setLoading(true);
     try {
-      await FirebaseFirestore.instance.collection('marketplace_ads').doc(adId).update({
+      await FirebaseFirestore.instance
+          .collection('marketplace_ads')
+          .doc(adId)
+          .update({
         'status': 'sold',
         'soldAt': FieldValue.serverTimestamp(),
       });
@@ -170,7 +182,10 @@ class AdsProvider with ChangeNotifier {
   Future<Map<String, dynamic>> deleteAd(String adId) async {
     _setLoading(true);
     try {
-      await FirebaseFirestore.instance.collection('marketplace_ads').doc(adId).delete();
+      await FirebaseFirestore.instance
+          .collection('marketplace_ads')
+          .doc(adId)
+          .delete();
       return {'success': true};
     } catch (e) {
       return {'success': false, 'error': e.toString()};
@@ -180,10 +195,14 @@ class AdsProvider with ChangeNotifier {
   }
 
   // Update Ad Price
-  Future<Map<String, dynamic>> updateAdPrice(String adId, String newPrice) async {
+  Future<Map<String, dynamic>> updateAdPrice(
+      String adId, String newPrice) async {
     _setLoading(true);
     try {
-      await FirebaseFirestore.instance.collection('marketplace_ads').doc(adId).update({
+      await FirebaseFirestore.instance
+          .collection('marketplace_ads')
+          .doc(adId)
+          .update({
         'price': newPrice,
       });
       return {'success': true};
@@ -197,7 +216,10 @@ class AdsProvider with ChangeNotifier {
   // Increment Ad Views
   Future<void> incrementAdViews(String adId) async {
     try {
-      await FirebaseFirestore.instance.collection('marketplace_ads').doc(adId).update({
+      await FirebaseFirestore.instance
+          .collection('marketplace_ads')
+          .doc(adId)
+          .update({
         'views': FieldValue.increment(1),
       });
     } catch (e) {

@@ -45,7 +45,8 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
     super.dispose();
   }
 
-  void _showOtpDialog(String documentId, String membershipNo, String newMobile) {
+  void _showOtpDialog(
+      String documentId, String membershipNo, String newMobile) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -110,9 +111,9 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
                   onPressed: isVerifying
                       ? null
                       : () {
-                    _otpController.clear();
-                    Navigator.pop(dialogContext);
-                  },
+                          _otpController.clear();
+                          Navigator.pop(dialogContext);
+                        },
                   child: const Text(
                     "Cancel",
                     style: TextStyle(color: Colors.grey),
@@ -122,85 +123,86 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
                   onPressed: isVerifying
                       ? null
                       : () async {
-                    final String otp = _otpController.text.trim();
-                    if (otp.length < 6) return;
+                          final String otp = _otpController.text.trim();
+                          if (otp.length < 6) return;
 
-                    setDialogState(() {
-                      isVerifying = true;
-                    });
+                          setDialogState(() {
+                            isVerifying = true;
+                          });
 
-                    final authProvider =
-                    Provider.of<AuthProvider>(context, listen: false);
-                    final profileProvider =
-                    Provider.of<ProfileProvider>(context, listen: false);
+                          final authProvider =
+                              Provider.of<AuthProvider>(context, listen: false);
+                          final profileProvider = Provider.of<ProfileProvider>(
+                              context,
+                              listen: false);
 
-                    bool isSuccess = false;
+                          bool isSuccess = false;
 
-                    try {
-                      isSuccess =
-                      await authProvider.verifyOtpAndUpdateMobile(
-                        documentId: documentId,
-                        membershipNo: membershipNo,
-                        newMobile: newMobile,
-                        otp: otp,
-                      );
-                    } catch (e) {
-                      debugPrint("💡 OTP Verification UI Error: $e");
-                    }
+                          try {
+                            isSuccess =
+                                await authProvider.verifyOtpAndUpdateMobile(
+                              documentId: documentId,
+                              membershipNo: membershipNo,
+                              newMobile: newMobile,
+                              otp: otp,
+                            );
+                          } catch (e) {
+                            debugPrint("💡 OTP Verification UI Error: $e");
+                          }
 
-                    if (!dialogContext.mounted) return;
+                          if (!dialogContext.mounted) return;
 
-                    setDialogState(() {
-                      isVerifying = false;
-                    });
+                          setDialogState(() {
+                            isVerifying = false;
+                          });
 
-                    if (isSuccess) {
-                      Navigator.pop(dialogContext);
+                          if (isSuccess) {
+                            Navigator.pop(dialogContext);
 
-                      setState(() {
-                        _isEditingPhone = false;
-                        _phoneController.text = newMobile;
-                        _otpController.clear();
-                      });
+                            setState(() {
+                              _isEditingPhone = false;
+                              _phoneController.text = newMobile;
+                              _otpController.clear();
+                            });
 
-                      await profileProvider.fetchAndStoreMemberData();
+                            await profileProvider.fetchAndStoreMemberData();
 
-                      if (!context.mounted) return;
+                            if (!context.mounted) return;
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            "Phone number verified and updated successfully! 🎉",
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            "Invalid OTP code. Please try again! ❌",
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                          backgroundColor: Colors.redAccent,
-                        ),
-                      );
-                    }
-                  },
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  "Phone number verified and updated successfully! 🎉",
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  "Invalid OTP code. Please try again! ❌",
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                          }
+                        },
                   child: isVerifying
                       ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
                       : const Text(
-                    "Verify & Save",
-                    style: TextStyle(color: Colors.white),
-                  ),
+                          "Verify & Save",
+                          style: TextStyle(color: Colors.white),
+                        ),
                 ),
               ],
             );
@@ -250,16 +252,15 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
         final String mainStatus =
             data['status']?.toString().toLowerCase() ?? 'pending';
 
-        final bool isDetailsSubmitted =
-            data['isDetailsSubmitted'] == true ||
-                kycApprovalStatus == 'pending' ||
-                kycApprovalStatus == 'approved';
+        final bool isDetailsSubmitted = data['isDetailsSubmitted'] == true ||
+            kycApprovalStatus == 'pending' ||
+            kycApprovalStatus == 'approved';
 
         final bool isFaceApproved = faceStatus == 'approved';
-        final bool isFacePending = faceStatus == 'pending'; // 💡 NEW: Check pending face
+        final bool isFacePending =
+            faceStatus == 'pending'; // 💡 NEW: Check pending face
 
-        final bool isAdminApproved =
-            kycApprovalStatus == 'approved';
+        final bool isAdminApproved = kycApprovalStatus == 'approved';
 
         // 💡 NEW: Show "Action Required" only if it's not fully Approved and not Pending
         final bool showActionRequiredBanner =
@@ -286,89 +287,103 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
               )
             else if (!isAdminApproved)
               _buildPendingApprovalBanner(),
-
-            _buildSection("Basic Info", [
-              _buildReadOnlyTile(Icons.person_outline, "Full Name", fullName, isDark, colorScheme),
-              Divider(
-                height: 1,
-                indent: 55,
-                endIndent: 15,
-              ),
-              _buildReadOnlyTile(Icons.email_outlined, "Email", email, isDark, colorScheme),
-            ], isDark, theme),
-
-            const SizedBox(height: 20),
-
-            _buildSection("Identity Info", [
-              _buildReadOnlyTile(Icons.badge_outlined, "NIC Number", nic, isDark, colorScheme),
-              Divider(
-                height: 1,
-                indent: 55,
-                endIndent: 15,
-              ),
-              _buildReadOnlyTile(Icons.cake_outlined, "Date of Birth", dob, isDark, colorScheme),
-              Divider(
-                height: 1,
-                indent: 55,
-                endIndent: 15,
-              ),
-              _buildReadOnlyTile(
-                gender.toLowerCase() == 'male'
-                    ? Icons.male_outlined
-                    : Icons.female_outlined,
-                "Gender",
-                gender,
+            _buildSection(
+                "Basic Info",
+                [
+                  _buildReadOnlyTile(Icons.person_outline, "Full Name",
+                      fullName, isDark, colorScheme),
+                  Divider(
+                    height: 1,
+                    indent: 55,
+                    endIndent: 15,
+                  ),
+                  _buildReadOnlyTile(Icons.email_outlined, "Email", email,
+                      isDark, colorScheme),
+                ],
                 isDark,
-                colorScheme,
-              ),
-              Divider(
-                height: 1,
-                indent: 55,
-                endIndent: 15,
-              ),
-              _buildReadOnlyTile(
-                Icons.auto_awesome_outlined,
-                "Religion",
-                religion,
-                isDark,
-                colorScheme,
-              ),
-            ], isDark, theme),
-
+                theme),
             const SizedBox(height: 20),
-
-            _buildSection("Contact & Account Info", [
-              _buildPhoneTile(
-                documentId: documentId,
-                membershipNo: membershipNo,
-                mobile: mobile,
-                isDark: isDark,
-                colorScheme: colorScheme,
-              ),
-              Divider(
-                height: 1,
-                indent: 55,
-                endIndent: 15,
-              ),
-              _buildReadOnlyTile(Icons.location_on_outlined, "Address", address, isDark, colorScheme),
-            ], isDark, theme),
-
+            _buildSection(
+                "Identity Info",
+                [
+                  _buildReadOnlyTile(Icons.badge_outlined, "NIC Number", nic,
+                      isDark, colorScheme),
+                  Divider(
+                    height: 1,
+                    indent: 55,
+                    endIndent: 15,
+                  ),
+                  _buildReadOnlyTile(Icons.cake_outlined, "Date of Birth", dob,
+                      isDark, colorScheme),
+                  Divider(
+                    height: 1,
+                    indent: 55,
+                    endIndent: 15,
+                  ),
+                  _buildReadOnlyTile(
+                    gender.toLowerCase() == 'male'
+                        ? Icons.male_outlined
+                        : Icons.female_outlined,
+                    "Gender",
+                    gender,
+                    isDark,
+                    colorScheme,
+                  ),
+                  Divider(
+                    height: 1,
+                    indent: 55,
+                    endIndent: 15,
+                  ),
+                  _buildReadOnlyTile(
+                    Icons.auto_awesome_outlined,
+                    "Religion",
+                    religion,
+                    isDark,
+                    colorScheme,
+                  ),
+                ],
+                isDark,
+                theme),
+            const SizedBox(height: 20),
+            _buildSection(
+                "Contact & Account Info",
+                [
+                  _buildPhoneTile(
+                    documentId: documentId,
+                    membershipNo: membershipNo,
+                    mobile: mobile,
+                    isDark: isDark,
+                    colorScheme: colorScheme,
+                  ),
+                  Divider(
+                    height: 1,
+                    indent: 55,
+                    endIndent: 15,
+                  ),
+                  _buildReadOnlyTile(Icons.location_on_outlined, "Address",
+                      address, isDark, colorScheme),
+                ],
+                isDark,
+                theme),
             if (faceUrl.isNotEmpty) ...[
               const SizedBox(height: 20),
-              _buildSection("Face Verification", [
-                _buildReadOnlyTile(
-                  Icons.face_retouching_natural_rounded,
-                  "Face Status",
-                  // 💡 NEW: Show "Pending Approval" if face status is Pending
-                  isFaceApproved
-                      ? "Verified Successfully ✅"
-                      : (isFacePending ? "Pending Approval ⏳" : "Failed ❌"),
+              _buildSection(
+                  "Face Verification",
+                  [
+                    _buildReadOnlyTile(
+                      Icons.face_retouching_natural_rounded,
+                      "Face Status",
+                      // 💡 NEW: Show "Pending Approval" if face status is Pending
+                      isFaceApproved
+                          ? "Verified Successfully ✅"
+                          : (isFacePending ? "Pending Approval ⏳" : "Failed ❌"),
+                      isDark,
+                      colorScheme,
+                    ),
+                  ],
                   isDark,
-                  colorScheme,
-                ),
-              ], isDark, theme),
+                  theme),
             ],
-
             const SizedBox(height: 10),
           ],
         );
@@ -386,13 +401,13 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
 
     if (!isDetailsSubmitted && !isFaceApproved) {
       message =
-      "Please complete your One-Time Registration & Face Verification to fully activate your account. 📋";
+          "Please complete your One-Time Registration & Face Verification to fully activate your account. 📋";
     } else if (!isDetailsSubmitted) {
       message =
-      "Please complete your One-Time Registration details to fully activate your account.";
+          "Please complete your One-Time Registration details to fully activate your account.";
     } else {
       message =
-      "Please complete your live Face Verification to fully activate your account.";
+          "Please complete your live Face Verification to fully activate your account.";
     }
 
     return Container(
@@ -519,130 +534,131 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
       ),
       subtitle: _isEditingPhone
           ? Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: TextField(
-          controller: _phoneController,
-          keyboardType: TextInputType.phone,
-          autofocus: true,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: isDark ? Colors.white : Colors.black87,
-          ),
-          decoration: InputDecoration(
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(vertical: 4),
-            border: UnderlineInputBorder(
-              borderSide: BorderSide(color: colorScheme.primary),
-            ),
-          ),
-        ),
-      )
+              padding: const EdgeInsets.only(top: 4),
+              child: TextField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                autofocus: true,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+                decoration: InputDecoration(
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                  border: UnderlineInputBorder(
+                    borderSide: BorderSide(color: colorScheme.primary),
+                  ),
+                ),
+              ),
+            )
           : Text(
-        mobile,
-        style: TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: isDark ? Colors.white : Colors.black87,
-        ),
-      ),
+              mobile,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
       trailing: _isSaving
           ? const SizedBox(
-        width: 24,
-        height: 24,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      )
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
           : _isEditingPhone
-          ? Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(
-              Icons.check_circle_rounded,
-              color: Colors.green,
-              size: 24,
-            ),
-            onPressed: () async {
-              final String inputMobile = _phoneController.text.trim();
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.check_circle_rounded,
+                        color: Colors.green,
+                        size: 24,
+                      ),
+                      onPressed: () async {
+                        final String inputMobile = _phoneController.text.trim();
 
-              if (inputMobile.isEmpty || inputMobile == mobile) {
-                setState(() {
-                  _isEditingPhone = false;
-                });
-                return;
-              }
+                        if (inputMobile.isEmpty || inputMobile == mobile) {
+                          setState(() {
+                            _isEditingPhone = false;
+                          });
+                          return;
+                        }
 
-              setState(() {
-                _isSaving = true;
-              });
+                        setState(() {
+                          _isSaving = true;
+                        });
 
-              final scaffoldMessenger = ScaffoldMessenger.of(context);
-              final authProvider =
-              Provider.of<AuthProvider>(context, listen: false);
+                        final scaffoldMessenger = ScaffoldMessenger.of(context);
+                        final authProvider =
+                            Provider.of<AuthProvider>(context, listen: false);
 
-              bool otpSent = false;
+                        bool otpSent = false;
 
-              try {
-                otpSent = await authProvider.requestProfileUpdateOtp(
-                  documentId: documentId,
-                  newMobile: inputMobile,
-                );
-              } catch (e) {
-                debugPrint("💡 OTP Request UI Error: $e");
-              }
+                        try {
+                          otpSent = await authProvider.requestProfileUpdateOtp(
+                            documentId: documentId,
+                            newMobile: inputMobile,
+                          );
+                        } catch (e) {
+                          debugPrint("💡 OTP Request UI Error: $e");
+                        }
 
-              if (!context.mounted) return;
+                        if (!context.mounted) return;
 
-              setState(() {
-                _isSaving = false;
-              });
+                        setState(() {
+                          _isSaving = false;
+                        });
 
-              if (otpSent) {
-                _showOtpDialog(documentId, membershipNo, inputMobile);
-              } else {
-                scaffoldMessenger.showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      "Failed to send OTP. Please try again! ❌",
+                        if (otpSent) {
+                          _showOtpDialog(documentId, membershipNo, inputMobile);
+                        } else {
+                          scaffoldMessenger.showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "Failed to send OTP. Please try again! ❌",
+                              ),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                        }
+                      },
                     ),
-                    behavior: SnackBarBehavior.floating,
-                    backgroundColor: Colors.redAccent,
+                    IconButton(
+                      icon: const Icon(
+                        Icons.cancel_rounded,
+                        color: Colors.redAccent,
+                        size: 24,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _phoneController.text = mobile;
+                          _isEditingPhone = false;
+                        });
+                      },
+                    ),
+                  ],
+                )
+              : IconButton(
+                  icon: const Icon(
+                    Icons.edit_square,
+                    color: Colors.blueGrey,
+                    size: 20,
                   ),
-                );
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(
-              Icons.cancel_rounded,
-              color: Colors.redAccent,
-              size: 24,
-            ),
-            onPressed: () {
-              setState(() {
-                _phoneController.text = mobile;
-                _isEditingPhone = false;
-              });
-            },
-          ),
-        ],
-      )
-          : IconButton(
-        icon: const Icon(
-          Icons.edit_square,
-          color: Colors.blueGrey,
-          size: 20,
-        ),
-        onPressed: () {
-          setState(() {
-            _isEditingPhone = true;
-          });
-        },
-      ),
+                  onPressed: () {
+                    setState(() {
+                      _isEditingPhone = true;
+                    });
+                  },
+                ),
     );
   }
 
-  Widget _buildSection(String title, List<Widget> children, bool isDark, ThemeData theme) {
+  Widget _buildSection(
+      String title, List<Widget> children, bool isDark, ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -676,7 +692,8 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
     );
   }
 
-  Widget _buildReadOnlyTile(IconData icon, String title, String subtitle, bool isDark, ColorScheme colorScheme) {
+  Widget _buildReadOnlyTile(IconData icon, String title, String subtitle,
+      bool isDark, ColorScheme colorScheme) {
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),

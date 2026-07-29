@@ -41,7 +41,8 @@ class CommunityAssistanceProvider extends ChangeNotifier {
     if (await _audioRecorder.hasPermission()) {
       try {
         final directory = await getApplicationDocumentsDirectory();
-        final String fileName = 'assistance_note_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        final String fileName =
+            'assistance_note_${DateTime.now().millisecondsSinceEpoch}.m4a';
         final String filePath = '${directory.path}/$fileName';
 
         await _audioRecorder.start(
@@ -71,14 +72,16 @@ class CommunityAssistanceProvider extends ChangeNotifier {
 
         // 1. Get Location
         Position position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(accuracy: LocationAccuracy.high)
-        );
+            locationSettings:
+                const LocationSettings(accuracy: LocationAccuracy.high));
 
         // 2. Upload Audio
         final File file = File(path);
         final String fileName = path.split('/').last;
-        final ref = FirebaseStorage.instance.ref().child('community_assistance_audio/$fileName');
-        
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child('community_assistance_audio/$fileName');
+
         final uploadTask = await ref.putFile(file);
         final String downloadUrl = await uploadTask.ref.getDownloadURL();
         await file.delete();
@@ -87,7 +90,10 @@ class CommunityAssistanceProvider extends ChangeNotifier {
         final String memberId = memberData['membershipNo'] ?? 'Unknown';
         final String requestId = "REQ_${DateTime.now().millisecondsSinceEpoch}";
 
-        await FirebaseFirestore.instance.collection('community_assistance_requests').doc(requestId).set({
+        await FirebaseFirestore.instance
+            .collection('community_assistance_requests')
+            .doc(requestId)
+            .set({
           'requestId': requestId,
           'requesterId': memberId,
           'requesterName': memberData['firstName'] ?? 'Unknown',
@@ -111,7 +117,7 @@ class CommunityAssistanceProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint("Error submitting assistance request: $e");
     }
-    
+
     _isSubmitting = false;
     notifyListeners();
     return false;
@@ -150,12 +156,15 @@ class CommunityAssistanceProvider extends ChangeNotifier {
       if (memberData == null) return false;
 
       Position position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high)
-      );
+          locationSettings:
+              const LocationSettings(accuracy: LocationAccuracy.high));
 
       final String memberId = memberData['membershipNo'] ?? 'Unknown';
 
-      await FirebaseFirestore.instance.collection('community_assistance_requests').doc(requestId).update({
+      await FirebaseFirestore.instance
+          .collection('community_assistance_requests')
+          .doc(requestId)
+          .update({
         'status': 'accepted',
         'helperId': memberId,
         'helperName': memberData['firstName'] ?? 'Unknown',
@@ -177,7 +186,6 @@ class CommunityAssistanceProvider extends ChangeNotifier {
         .where('status', isEqualTo: 'pending')
         .snapshots()
         .listen((snapshot) async {
-      
       final memberData = profile.memberData;
       if (memberData == null) return;
       final String currentMemberId = memberData['membershipNo'] ?? '';
@@ -188,15 +196,14 @@ class CommunityAssistanceProvider extends ChangeNotifier {
 
       for (var doc in snapshot.docs) {
         var data = doc.data();
-        if (data['requesterId'] == currentMemberId) continue; // Skip own requests
-        
+        if (data['requesterId'] == currentMemberId)
+          continue; // Skip own requests
+
         GeoPoint? reqLoc = data['requesterLocation'] as GeoPoint?;
         if (reqLoc != null) {
           // Calculate distance in meters
           double distance = Geolocator.distanceBetween(
-            currentLat, currentLng, 
-            reqLoc.latitude, reqLoc.longitude
-          );
+              currentLat, currentLng, reqLoc.latitude, reqLoc.longitude);
 
           // If within 5km (5000 meters)
           if (distance <= 5000) {
@@ -207,7 +214,8 @@ class CommunityAssistanceProvider extends ChangeNotifier {
       }
 
       // Sort by distance
-      validRequests.sort((a, b) => (a['distanceMeters'] as double).compareTo(b['distanceMeters'] as double));
+      validRequests.sort((a, b) => (a['distanceMeters'] as double)
+          .compareTo(b['distanceMeters'] as double));
 
       _nearbyRequests = validRequests;
       notifyListeners();

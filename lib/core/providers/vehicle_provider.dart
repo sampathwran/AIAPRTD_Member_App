@@ -17,7 +17,8 @@ class VehicleProvider with ChangeNotifier {
   Map<String, dynamic>? _vehicleData;
   bool _isLoading = false;
 
-  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _vehicleSubscription;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
+      _vehicleSubscription;
   String? _currentMembershipNo;
 
   Map<String, dynamic>? get vehicleData => _vehicleData;
@@ -31,7 +32,8 @@ class VehicleProvider with ChangeNotifier {
       notifyListeners();
       return;
     }
-    if (_currentMembershipNo == cleanMembershipNo && _vehicleSubscription != null) {
+    if (_currentMembershipNo == cleanMembershipNo &&
+        _vehicleSubscription != null) {
       return;
     }
     await _vehicleSubscription?.cancel();
@@ -39,8 +41,12 @@ class VehicleProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    _vehicleSubscription = _firestore.collection('vehicles').doc(cleanMembershipNo).snapshots().listen(
-          (snapshot) {
+    _vehicleSubscription = _firestore
+        .collection('vehicles')
+        .doc(cleanMembershipNo)
+        .snapshots()
+        .listen(
+      (snapshot) {
         if (snapshot.exists && snapshot.data() != null) {
           _vehicleData = Map<String, dynamic>.from(snapshot.data()!);
         } else {
@@ -57,7 +63,8 @@ class VehicleProvider with ChangeNotifier {
     );
   }
 
-  Future<void> requestAddVehicle(String membershipNo, Map<String, dynamic> details) async {
+  Future<void> requestAddVehicle(
+      String membershipNo, Map<String, dynamic> details) async {
     try {
       await _firestore.collection('vehicles').doc(membershipNo).set({
         'membershipNo': membershipNo,
@@ -81,14 +88,20 @@ class VehicleProvider with ChangeNotifier {
     }
   }
 
-  Future<void> updateDocumentStatus(String membershipNo, int docIndex, String newStatus, String? reason) async {
+  Future<void> updateDocumentStatus(String membershipNo, int docIndex,
+      String newStatus, String? reason) async {
     try {
-      final DocumentReference<Map<String, dynamic>> reference = _firestore.collection('vehicles').doc(membershipNo);
-      final DocumentSnapshot<Map<String, dynamic>> snapshot = await reference.get();
-      if (!snapshot.exists || snapshot.data() == null) throw Exception('Vehicle data not found');
+      final DocumentReference<Map<String, dynamic>> reference =
+          _firestore.collection('vehicles').doc(membershipNo);
+      final DocumentSnapshot<Map<String, dynamic>> snapshot =
+          await reference.get();
+      if (!snapshot.exists || snapshot.data() == null)
+        throw Exception('Vehicle data not found');
 
-      final List<dynamic> documents = List<dynamic>.from(snapshot.data()!['documents'] ?? []);
-      if (docIndex < 0 || docIndex >= documents.length) throw Exception('Invalid document index');
+      final List<dynamic> documents =
+          List<dynamic>.from(snapshot.data()!['documents'] ?? []);
+      if (docIndex < 0 || docIndex >= documents.length)
+        throw Exception('Invalid document index');
 
       final Map<String, dynamic> document = documents[docIndex] is Map
           ? Map<String, dynamic>.from(documents[docIndex])
@@ -103,15 +116,18 @@ class VehicleProvider with ChangeNotifier {
     }
   }
 
-  Future<void> uploadVehiclePhoto(String membershipNo, String label, String filePath) async {
+  Future<void> uploadVehiclePhoto(
+      String membershipNo, String label, String filePath) async {
     try {
       final File imageFile = File(filePath);
-      final Reference storageReference = _storage.ref().child('vehicle_photos/$membershipNo/$label.jpg');
-      final TaskSnapshot uploadSnapshot = await storageReference.putFile(imageFile);
+      final Reference storageReference =
+          _storage.ref().child('vehicle_photos/$membershipNo/$label.jpg');
+      final TaskSnapshot uploadSnapshot =
+          await storageReference.putFile(imageFile);
       final String imageUrl = await uploadSnapshot.ref.getDownloadURL();
 
       final WriteBatch batch = _firestore.batch();
-      
+
       batch.update(_firestore.collection('vehicles').doc(membershipNo), {
         'vehiclePhotos.$label.url': imageUrl,
         'vehiclePhotos.$label.status': 'pending',
@@ -120,10 +136,13 @@ class VehicleProvider with ChangeNotifier {
       });
 
       // Update new Single Source of Truth collection
-      batch.set(_firestore.collection('member_inactive_reasons').doc(membershipNo), {
-        label: 'pending_approval',
-        'status': 'INACTIVE',
-      }, SetOptions(merge: true));
+      batch.set(
+          _firestore.collection('member_inactive_reasons').doc(membershipNo),
+          {
+            label: 'pending_approval',
+            'status': 'INACTIVE',
+          },
+          SetOptions(merge: true));
 
       await batch.commit();
     } catch (error) {
@@ -131,45 +150,64 @@ class VehicleProvider with ChangeNotifier {
     }
   }
 
-  Future<void> uploadDocument(String membershipNo, int docIndex, String filePath) async {
+  Future<void> uploadDocument(
+      String membershipNo, int docIndex, String filePath) async {
     try {
       final File imageFile = File(filePath);
-      final Reference storageReference = _storage.ref().child('compliance_docs/$membershipNo/doc_$docIndex.jpg');
-      final TaskSnapshot uploadSnapshot = await storageReference.putFile(imageFile);
+      final Reference storageReference = _storage
+          .ref()
+          .child('compliance_docs/$membershipNo/doc_$docIndex.jpg');
+      final TaskSnapshot uploadSnapshot =
+          await storageReference.putFile(imageFile);
       final String downloadUrl = await uploadSnapshot.ref.getDownloadURL();
-      final DocumentReference<Map<String, dynamic>> reference = _firestore.collection('vehicles').doc(membershipNo);
-      final DocumentSnapshot<Map<String, dynamic>> snapshot = await reference.get();
+      final DocumentReference<Map<String, dynamic>> reference =
+          _firestore.collection('vehicles').doc(membershipNo);
+      final DocumentSnapshot<Map<String, dynamic>> snapshot =
+          await reference.get();
 
-      if (!snapshot.exists || snapshot.data() == null) throw Exception('Vehicle data not found');
-      final List<dynamic> documents = List<dynamic>.from(snapshot.data()!['documents'] ?? []);
+      if (!snapshot.exists || snapshot.data() == null)
+        throw Exception('Vehicle data not found');
+      final List<dynamic> documents =
+          List<dynamic>.from(snapshot.data()!['documents'] ?? []);
 
       // 💡 FIXED: Added { } block to the while loop
       while (documents.length < 5) {
         documents.add({'status': 'empty', 'reason': '', 'url': ''});
       }
 
-      if (docIndex < 0 || docIndex >= documents.length) throw Exception('Invalid document index');
+      if (docIndex < 0 || docIndex >= documents.length)
+        throw Exception('Invalid document index');
 
-      documents[docIndex] = {'status': 'pending', 'reason': '', 'url': downloadUrl};
-      
+      documents[docIndex] = {
+        'status': 'pending',
+        'reason': '',
+        'url': downloadUrl
+      };
+
       final WriteBatch batch = _firestore.batch();
-      
+
       batch.update(reference, {
         'documents': documents,
         'status': 'pending', // 💡 Send back to Admin request queue
       });
 
       String fieldName = '';
-      if (docIndex == 0) fieldName = 'revenue_licence';
-      else if (docIndex == 1) fieldName = 'insurance_policy';
-      else if (docIndex == 2) fieldName = 'vehicle_registration_document';
+      if (docIndex == 0)
+        fieldName = 'revenue_licence';
+      else if (docIndex == 1)
+        fieldName = 'insurance_policy';
+      else if (docIndex == 2)
+        fieldName = 'vehicle_registration_document';
       else if (docIndex == 3 || docIndex == 4) fieldName = 'driving_licence';
 
       if (fieldName.isNotEmpty) {
-        batch.set(_firestore.collection('member_inactive_reasons').doc(membershipNo), {
-          fieldName: 'pending_approval',
-          'status': 'INACTIVE',
-        }, SetOptions(merge: true));
+        batch.set(
+            _firestore.collection('member_inactive_reasons').doc(membershipNo),
+            {
+              fieldName: 'pending_approval',
+              'status': 'INACTIVE',
+            },
+            SetOptions(merge: true));
       }
 
       await batch.commit();
@@ -186,7 +224,6 @@ class VehicleProvider with ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
-
 
   // ==========================================
   // 2. VEHICLE CATEGORIES & FARES
@@ -218,49 +255,46 @@ class VehicleProvider with ChangeNotifier {
     try {
       await _ratesSubscription?.cancel();
 
-      _ratesSubscription = _firestore.collection('rates').snapshots().listen(
-              (snapshot) {
-            if (snapshot.docs.isNotEmpty) {
-              _vehicles = snapshot.docs.map((doc) {
-                // 💡 FIXED: Removed unnecessary cast. doc.data() is already a Map.
-                final data = doc.data();
-                return {
-                  "id": doc.id,
-                  "name": data['name'] ?? 'Unknown',
-                  "baseFare": (data['baseFare'] ?? 0).toDouble(),
-                  "baseDistance": (data['baseDistance'] ?? 0).toDouble(),
-                  "perKm": (data['perKm'] ?? 0).toDouble(),
-                  "perMinute": (data['perMinute'] ?? 0).toDouble(),
-                  "nightFarePct": (data['nightFarePct'] ?? 0).toDouble(),
-                  "peakFarePct": (data['peakFarePct'] ?? 0).toDouble(),
-                  "image": data['image'] ?? '',
-                };
-              }).toList();
+      _ratesSubscription =
+          _firestore.collection('rates').snapshots().listen((snapshot) {
+        if (snapshot.docs.isNotEmpty) {
+          _vehicles = snapshot.docs.map((doc) {
+            // 💡 FIXED: Removed unnecessary cast. doc.data() is already a Map.
+            final data = doc.data();
+            return {
+              "id": doc.id,
+              "name": data['name'] ?? 'Unknown',
+              "baseFare": (data['baseFare'] ?? 0).toDouble(),
+              "baseDistance": (data['baseDistance'] ?? 0).toDouble(),
+              "perKm": (data['perKm'] ?? 0).toDouble(),
+              "perMinute": (data['perMinute'] ?? 0).toDouble(),
+              "nightFarePct": (data['nightFarePct'] ?? 0).toDouble(),
+              "peakFarePct": (data['peakFarePct'] ?? 0).toDouble(),
+              "image": data['image'] ?? '',
+            };
+          }).toList();
 
-              _vehicles.sort((a, b) {
-                int indexA = customOrder.indexOf(a['id']);
-                int indexB = customOrder.indexOf(b['id']);
+          _vehicles.sort((a, b) {
+            int indexA = customOrder.indexOf(a['id']);
+            int indexB = customOrder.indexOf(b['id']);
 
-                if (indexA == -1) indexA = 999;
-                if (indexB == -1) indexB = 999;
+            if (indexA == -1) indexA = 999;
+            if (indexB == -1) indexB = 999;
 
-                return indexA.compareTo(indexB);
-              });
+            return indexA.compareTo(indexB);
+          });
+        } else {
+          _vehicles = _getDummyCategories();
+        }
 
-            } else {
-              _vehicles = _getDummyCategories();
-            }
-
-            _isCategoriesLoading = false;
-            notifyListeners();
-          },
-          onError: (error) {
-            debugPrint("❌ Error listening to rates: $error");
-            _vehicles = _getDummyCategories();
-            _isCategoriesLoading = false;
-            notifyListeners();
-          }
-      );
+        _isCategoriesLoading = false;
+        notifyListeners();
+      }, onError: (error) {
+        debugPrint("❌ Error listening to rates: $error");
+        _vehicles = _getDummyCategories();
+        _isCategoriesLoading = false;
+        notifyListeners();
+      });
     } catch (e) {
       debugPrint("Error setting up rates stream: $e");
       _vehicles = _getDummyCategories();
@@ -292,8 +326,22 @@ class VehicleProvider with ChangeNotifier {
 
   List<Map<String, dynamic>> _getDummyCategories() {
     return [
-      {"id": "budget", "name": "Budget (Alto)", "baseFare": 500.0, "baseDistance": 4.0, "perKm": 115.0, "image": ""},
-      {"id": "mini", "name": "Mini (Axia)", "baseFare": 600.0, "baseDistance": 4.0, "perKm": 120.0, "image": ""},
+      {
+        "id": "budget",
+        "name": "Budget (Alto)",
+        "baseFare": 500.0,
+        "baseDistance": 4.0,
+        "perKm": 115.0,
+        "image": ""
+      },
+      {
+        "id": "mini",
+        "name": "Mini (Axia)",
+        "baseFare": 600.0,
+        "baseDistance": 4.0,
+        "perKm": 120.0,
+        "image": ""
+      },
     ];
   }
 
