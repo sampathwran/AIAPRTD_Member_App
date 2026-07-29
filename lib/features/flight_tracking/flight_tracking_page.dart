@@ -169,7 +169,7 @@ class _FlightTrackingPageState extends State<FlightTrackingPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.flight_off_rounded,
+            Icon(Icons.airplanemode_inactive_rounded,
                 size: 64, color: Colors.grey.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             Text(
