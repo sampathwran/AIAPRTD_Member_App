@@ -280,7 +280,7 @@ class _MobileReloadPageState extends State<MobileReloadPage>
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
+                            child: Image.asset(
                               provider.logoUrl,
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) =>
@@ -533,7 +533,7 @@ class _MobileReloadPageState extends State<MobileReloadPage>
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(6),
-                            child: Image.network(
+                            child: Image.asset(
                               provider.logoUrl,
                               fit: BoxFit.contain,
                             ),

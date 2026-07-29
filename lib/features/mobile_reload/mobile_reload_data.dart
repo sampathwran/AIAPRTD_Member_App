@@ -34,29 +34,25 @@ const List<NetworkProvider> networkProviders = [
   NetworkProvider(
     id: 'dialog',
     name: 'Dialog',
-    logoUrl:
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Dialog_Axiata_logo.svg/1200px-Dialog_Axiata_logo.svg.png',
+    logoUrl: 'assets/images/dialog_logo.jpg',
     colorHex: 'ED1C24',
   ),
   NetworkProvider(
     id: 'mobitel',
     name: 'Mobitel',
-    logoUrl:
-        'https://upload.wikimedia.org/wikipedia/en/thumb/5/52/Mobitel_%28Sri_Lanka%29_logo.svg/1200px-Mobitel_%28Sri_Lanka%29_logo.svg.png',
+    logoUrl: 'assets/images/mobitel_logo.jpg',
     colorHex: '00A650',
   ),
   NetworkProvider(
     id: 'airtel',
     name: 'Airtel',
-    logoUrl:
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Airtel_logo.svg/1200px-Airtel_logo.svg.png',
+    logoUrl: 'assets/images/airtel_logo.jpg',
     colorHex: 'FF0000',
   ),
   NetworkProvider(
     id: 'hutch',
     name: 'Hutch',
-    logoUrl:
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Hutch_logo.svg/1200px-Hutch_logo.svg.png',
+    logoUrl: 'assets/images/hutch_logo.jpg',
     colorHex: 'F7941D',
   ),
 ];
