@@ -59,13 +59,15 @@ class _AppUsagePageState extends State<AppUsagePage> {
             if (earningsProv.hasFetched && earningsProv.totalTrips == 0) {
               balance = 0.0;
             }
+            final pendingAmount = financeProv.pendingAppUsagePayments;
+            final effectiveBalance = (balance - pendingAmount).clamp(0.0, double.infinity);
             
             return TabBarView(
               children: [
                 // Tab 1: Outstanding (Union Charge & History)
                 Column(
                   children: [
-                    OutstandingBalanceCard(balance: balance, limit: financeProv.appUsageLimit),
+                    OutstandingBalanceCard(balance: balance, limit: financeProv.appUsageLimit, pendingAmount: pendingAmount),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                       child: SizedBox(
@@ -75,9 +77,19 @@ class _AppUsagePageState extends State<AppUsagePage> {
                             context: context,
                             isScrollControlled: true,
                             backgroundColor: Colors.transparent,
-                            builder: (_) => Padding(
-                              padding: const EdgeInsets.only(top: 60.0),
-                              child: SingleChildScrollView(child: UploadSlipForm(balance: balance)),
+                            builder: (sheetContext) => Container(
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                              ),
+                              margin: const EdgeInsets.only(top: 60.0),
+                              padding: EdgeInsets.only(
+                                top: 24, 
+                                left: 24, 
+                                right: 24, 
+                                bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24
+                              ),
+                              child: SingleChildScrollView(child: UploadSlipForm(balance: effectiveBalance)),
                             ),
                           ),
                           icon: const Icon(Icons.upload_file_rounded, color: Colors.white),

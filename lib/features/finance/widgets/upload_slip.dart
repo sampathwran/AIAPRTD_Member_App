@@ -20,6 +20,19 @@ class UploadSlipForm extends StatefulWidget {
 class _UploadSlipFormState extends State<UploadSlipForm> {
   bool isUploading = false;
   File? selectedImage;
+  final TextEditingController _amountController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _amountController.text = widget.balance.toStringAsFixed(2);
+  }
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    super.dispose();
+  }
 
   Future<void> pickImage(ImageSource source) async {
     final picker = ImagePicker();
@@ -47,11 +60,13 @@ class _UploadSlipFormState extends State<UploadSlipForm> {
       final TaskSnapshot snapshot = await uploadTask;
       final String downloadUrl = await snapshot.ref.getDownloadURL();
 
+      final double enteredAmount = double.tryParse(_amountController.text) ?? widget.balance;
+
       final docRef = FirebaseFirestore.instance.collection('app_usage_payments').doc();
       await docRef.set({
         'paymentId': docRef.id,
         'driverId': memNo,
-        'amount': widget.balance, // Full balance is paid
+        'amount': enteredAmount,
         'imageUrl': downloadUrl,
         'status': 'pending',
         'timestamp': FieldValue.serverTimestamp(),
@@ -92,11 +107,26 @@ class _UploadSlipFormState extends State<UploadSlipForm> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  "Note: A ${finance.driverCommissionRate.toStringAsFixed(0)}% commission per trip is currently set by the Admin Panel. This percentage may change as determined by the Union.",
+                  "Note: An ${finance.appUsageChargeRate.toStringAsFixed(0)}% commission per trip is currently set by the Admin Panel. This percentage may change as determined by the Union.",
                   style: TextStyle(color: Colors.orange.shade800, fontSize: 12),
                 ),
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        
+        // Amount input field
+        TextFormField(
+          controller: _amountController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: "Payment Amount",
+            prefixText: "Rs. ",
+            prefixStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            filled: true,
+            fillColor: Colors.grey.shade50,
           ),
         ),
         const SizedBox(height: 25),

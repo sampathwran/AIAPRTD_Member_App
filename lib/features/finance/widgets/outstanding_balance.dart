@@ -6,8 +6,9 @@ import 'package:aiaprtd_member/features/finance/widgets/commission_rates.dart';
 class OutstandingBalanceCard extends StatelessWidget {
   final double balance;
   final double limit;
+  final double pendingAmount;
 
-  const OutstandingBalanceCard({super.key, required this.balance, required this.limit});
+  const OutstandingBalanceCard({super.key, required this.balance, required this.limit, this.pendingAmount = 0.0});
 
   @override
   Widget build(BuildContext context) {
@@ -76,11 +77,25 @@ class OutstandingBalanceCard extends StatelessWidget {
                 style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
               ),
               Text(
-                NumberFormat('#,##0.00').format(balance),
+                NumberFormat('#,##0.00').format((balance - pendingAmount).clamp(0.0, double.infinity)),
                 style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
               ),
             ],
           ),
+          if (pendingAmount > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: Row(
+                children: [
+                  const Icon(Icons.access_time_rounded, color: Colors.orangeAccent, size: 14),
+                  const SizedBox(width: 4),
+                  Text(
+                    "Pending Approval: LKR ${NumberFormat('#,##0.00').format(pendingAmount)}",
+                    style: const TextStyle(color: Colors.orangeAccent, fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
           const SizedBox(height: 20),
           _buildProgressBar(),
         ],

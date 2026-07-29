@@ -27,6 +27,7 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
   final TextEditingController _whatsappController = TextEditingController();
   GoogleMapController? _mapController;
   static const platform = MethodChannel('com.aiaprtd.whatsapp_share');
+  bool _isProcessing = false;
 
   Future<void> _sendWhatsAppBill(MeterProvider meter) async {
     String phone = _whatsappController.text.trim();
@@ -202,12 +203,17 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
   }
 
   Future<void> _collectCashAndRate(MeterProvider meter, String driverMembershipNo) async {
-    // 1. Mark as collected in meter provider
-    await meter.collectCash(driverMembershipNo);
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
     
     // 2. Save bill to passenger's booking history
     String passengerId = widget.bookingData?['memberId']?.toString() ?? '';
-    if (passengerId.isNotEmpty && widget.bookingId != null) {
+    
+    try {
+      // 1. Mark as collected in meter provider
+      await meter.collectCash(driverMembershipNo);
+      
+      if (passengerId.isNotEmpty && widget.bookingId != null) {
       final billDetails = {
         'tripId': meter.tripId,
         'distanceKm': meter.totalDistanceKm,
@@ -250,6 +256,12 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
       );
     } catch (e) {
       debugPrint("Error processing finance commission: $e");
+    }
+
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
     }
 
     if (passengerId.isNotEmpty && widget.bookingId != null) {
@@ -490,8 +502,10 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
                           padding: const EdgeInsets.symmetric(vertical: 20),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
-                        onPressed: () => _collectCashAndRate(meter, membershipNo),
-                        child: const Text("COLLECT CASH", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                        onPressed: _isProcessing ? null : () => _collectCashAndRate(meter, membershipNo),
+                        child: _isProcessing 
+                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : const Text("COLLECT CASH", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                       )
                     ],
                   ),

@@ -160,16 +160,15 @@ class _AssistanceTrackingPageState extends State<AssistanceTrackingPage> {
 
     // Move camera to fit both if both exist
     if (reqLoc != null && helpLoc != null && _mapController != null) {
-      LatLngBounds bounds;
-      if (reqLoc.latitude > helpLoc.latitude) {
-        bounds = LatLngBounds(
-            southwest: LatLng(helpLoc.latitude, helpLoc.longitude),
-            northeast: LatLng(reqLoc.latitude, reqLoc.longitude));
-      } else {
-        bounds = LatLngBounds(
-            southwest: LatLng(reqLoc.latitude, reqLoc.longitude),
-            northeast: LatLng(helpLoc.latitude, helpLoc.longitude));
-      }
+      double minLat = reqLoc.latitude < helpLoc.latitude ? reqLoc.latitude : helpLoc.latitude;
+      double maxLat = reqLoc.latitude > helpLoc.latitude ? reqLoc.latitude : helpLoc.latitude;
+      double minLng = reqLoc.longitude < helpLoc.longitude ? reqLoc.longitude : helpLoc.longitude;
+      double maxLng = reqLoc.longitude > helpLoc.longitude ? reqLoc.longitude : helpLoc.longitude;
+      
+      LatLngBounds bounds = LatLngBounds(
+        southwest: LatLng(minLat, minLng),
+        northeast: LatLng(maxLat, maxLng),
+      );
       _mapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 100));
     } else if (reqLoc != null && _mapController != null && newMarkers.length == 1) {
        _mapController!.animateCamera(CameraUpdate.newLatLng(LatLng(reqLoc.latitude, reqLoc.longitude)));

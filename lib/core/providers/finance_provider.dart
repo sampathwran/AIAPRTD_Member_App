@@ -10,6 +10,7 @@ class FinanceProvider extends ChangeNotifier {
   double _driverCommissionRate = 10.0;
   double get driverCommissionRate => _driverCommissionRate;
   double _appUsageChargeRate = 3.0;
+  double get appUsageChargeRate => _appUsageChargeRate;
   double _memberSavingsRate = 7.0;
   double _monthlyMembershipFee = 500.0;
   double get monthlyMembershipFee => _monthlyMembershipFee;
@@ -25,6 +26,9 @@ class FinanceProvider extends ChangeNotifier {
 
   double _myAppUsageChargeBalance = 0.0;
   double get myAppUsageChargeBalance => _myAppUsageChargeBalance;
+
+  double _pendingAppUsagePayments = 0.0;
+  double get pendingAppUsagePayments => _pendingAppUsagePayments;
 
   List<Map<String, dynamic>> _p2pPayables = [];
   List<Map<String, dynamic>> get p2pPayables => _p2pPayables;
@@ -79,6 +83,25 @@ class FinanceProvider extends ChangeNotifier {
     });
     
     _listenToP2PDebts(membershipNo);
+    _listenToPendingAppUsagePayments(membershipNo);
+  }
+
+  void _listenToPendingAppUsagePayments(String membershipNo) {
+    _firestore
+        .collection('app_usage_payments')
+        .where('driverId', isEqualTo: membershipNo)
+        .where('status', isEqualTo: 'pending')
+        .snapshots()
+        .listen((snapshot) {
+      double totalPending = 0.0;
+      for (var doc in snapshot.docs) {
+        totalPending += (doc.data()['amount'] ?? 0.0).toDouble();
+      }
+      _pendingAppUsagePayments = totalPending;
+      notifyListeners();
+    }, onError: (e) {
+      debugPrint("Error listening to pending app usage payments: $e");
+    });
   }
 
   void _listenToP2PDebts(String membershipNo) {
