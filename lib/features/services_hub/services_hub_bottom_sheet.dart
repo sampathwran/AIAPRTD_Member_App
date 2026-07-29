@@ -39,10 +39,10 @@ class ServicesHubBottomSheet extends StatelessWidget {
         },
       },
       {
-        'icon': Icons.directions_car_rounded,
-        'label': 'Fleet Tracking',
+        'icon': Icons.flight_takeoff_rounded,
+        'label': 'Flight Tracking',
         'color': Colors.green,
-        'onTap': () => _showComingSoon(context, 'Fleet Tracking', Colors.green),
+        'onTap': () => _showComingSoon(context, 'Flight Tracking', Colors.green),
       },
       {
         'icon': Icons.receipt_long_rounded,
