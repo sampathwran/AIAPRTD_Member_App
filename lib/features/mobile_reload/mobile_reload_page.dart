@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:aiaprtd_member/core/providers/finance_provider.dart';
 import 'mobile_reload_data.dart';
 import 'dart:math' as math;
 
@@ -12,7 +14,6 @@ class MobileReloadPage extends StatefulWidget {
 class _MobileReloadPageState extends State<MobileReloadPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final double _savingsBalance = 2450.00; // Mock savings balance
 
   // Form State
   NetworkProvider? _selectedProvider;
@@ -59,9 +60,11 @@ class _MobileReloadPageState extends State<MobileReloadPage>
       return;
     }
 
-    if (amount > _savingsBalance) {
+    final currentSavings = context.read<FinanceProvider>().mySavingsBalance;
+
+    if (amount > currentSavings) {
       _showError(
-          'Insufficient savings balance. You only have Rs. ${_savingsBalance.toStringAsFixed(2)}');
+          'Insufficient savings balance. You only have Rs. ${currentSavings.toStringAsFixed(2)}');
       return;
     }
 
@@ -105,6 +108,9 @@ class _MobileReloadPageState extends State<MobileReloadPage>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
+    // Get real savings balance
+    final savingsBalance = context.watch<FinanceProvider>().mySavingsBalance;
 
     return Scaffold(
       backgroundColor:
@@ -154,7 +160,7 @@ class _MobileReloadPageState extends State<MobileReloadPage>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Rs. ${_savingsBalance.toStringAsFixed(2)}',
+                      'Rs. ${savingsBalance.toStringAsFixed(2)}',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 28,
