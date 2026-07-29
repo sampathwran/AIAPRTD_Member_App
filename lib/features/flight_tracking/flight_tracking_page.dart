@@ -23,6 +23,7 @@ class _FlightTrackingPageState extends State<FlightTrackingPage>
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool _showLandedHistory = false;
   final FlightService _flightService = FlightService();
   Future<List<FlightData>>? _arrivalsFuture;
   Future<List<FlightData>>? _departuresFuture;
@@ -299,12 +300,13 @@ class _FlightTrackingPageState extends State<FlightTrackingPage>
 
           final allFlights = snapshot.data ?? [];
 
-          // Filter based on search query
+          // Filter based on search query and landed history
           final flights = allFlights.where((f) {
             final matchesSearch = _searchQuery.isEmpty ||
                 f.flightNumber.toLowerCase().contains(_searchQuery) ||
                 f.airline.toLowerCase().contains(_searchQuery);
-            return matchesSearch;
+            final matchesHistory = _showLandedHistory || f.status != 'Landed';
+            return matchesSearch && matchesHistory;
           }).toList();
 
           if (flights.isEmpty) {
@@ -326,13 +328,50 @@ class _FlightTrackingPageState extends State<FlightTrackingPage>
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: flights.length,
-            itemBuilder: (context, index) {
-              final flight = flights[index];
-              return _buildFlightCard(flight);
-            },
+          return Column(
+            children: [
+              // Filter Toggle
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      "Show Past Flights",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.grey[400]
+                            : Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: 24,
+                      child: Switch(
+                        value: _showLandedHistory,
+                        onChanged: (val) {
+                          setState(() {
+                            _showLandedHistory = val;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: flights.length,
+                  itemBuilder: (context, index) {
+                    final flight = flights[index];
+                    return _buildFlightCard(flight);
+                  },
+                ),
+              ),
+            ],
           );
         },
       ),
