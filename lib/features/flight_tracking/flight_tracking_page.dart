@@ -72,43 +72,69 @@ class _FlightTrackingPageState extends State<FlightTrackingPage>
                   final isSelected = _selectedAirport == airport['code'];
                   return Padding(
                     padding: const EdgeInsets.only(right: 12),
-                    child: InkWell(
+                    child: GestureDetector(
                       onTap: () {
                         setState(() {
                           _selectedAirport = airport['code']!;
                         });
                       },
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
+                            horizontal: 20, vertical: 12),
                         decoration: BoxDecoration(
+                          gradient: isSelected
+                              ? const LinearGradient(
+                                  colors: [
+                                    Color(0xFF3B82F6),
+                                    Color(0xFF2563EB)
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                )
+                              : null,
                           color: isSelected
-                              ? colorScheme.primary
-                              : (isDark ? Colors.grey[800] : Colors.grey[200]),
-                          borderRadius: BorderRadius.circular(20),
+                              ? null
+                              : (isDark
+                                  ? const Color(0xFF2A2A2A)
+                                  : Colors.grey[100]),
+                          borderRadius: BorderRadius.circular(24),
                           border: Border.all(
                             color: isSelected
-                                ? colorScheme.primary
-                                : Colors.transparent,
+                                ? Colors.transparent
+                                : (isDark
+                                    ? Colors.grey[700]!
+                                    : Colors.grey[300]!),
+                            width: 1.5,
                           ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.blue.withValues(alpha: 0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  )
+                                ]
+                              : [],
                         ),
                         child: Row(
                           children: [
                             Icon(
-                              Icons.local_airport_rounded,
-                              size: 16,
+                              Icons.location_on_rounded,
+                              size: 18,
                               color: isSelected
                                   ? Colors.white
                                   : (isDark
                                       ? Colors.grey[400]
                                       : Colors.grey[600]),
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 8),
                             Text(
                               "${airport['code']} - ${airport['name']}",
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
+                                fontSize: 14,
                                 color: isSelected
                                     ? Colors.white
                                     : (isDark
