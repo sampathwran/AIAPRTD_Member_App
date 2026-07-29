@@ -404,7 +404,10 @@ class _FlightTrackingPageState extends State<FlightTrackingPage>
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
-      child: Padding(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => _showFlightDetailsBottomSheet(context, flight),
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
@@ -528,9 +531,174 @@ class _FlightTrackingPageState extends State<FlightTrackingPage>
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            const Center(
+              child: Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey, size: 20),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  void _showFlightDetailsBottomSheet(BuildContext context, FlightData flight) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    Widget buildDetailItem(String label, String? value, {bool highlight = false}) {
+      final displayValue = (value == null || value.isEmpty) ? "N/A" : value;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            displayValue,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: highlight ? FontWeight.bold : FontWeight.w600,
+              color: highlight ? theme.primaryColor : (isDark ? Colors.white : Colors.black87),
+            ),
+          ),
+        ],
+      );
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Header
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                        )
+                      ],
+                    ),
+                    width: 56,
+                    height: 56,
+                    child: Image.network(
+                      'https://images.kiwi.com/airlines/64/${flight.airlineIata}.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.flight, size: 32, color: Colors.blue),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          flight.flightNumber,
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          flight.airline,
+                          style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: theme.primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      flight.status,
+                      style: TextStyle(
+                        color: theme.primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              const Divider(),
+              const SizedBox(height: 16),
+              // Details Grid
+              Row(
+                children: [
+                  Expanded(child: buildDetailItem("Scheduled", flight.scheduledTime)),
+                  Expanded(
+                      child: buildDetailItem(
+                          flight.type == 'Arrival' ? "Estimated Arr." : "Estimated Dep.",
+                          flight.estimatedTime,
+                          highlight: true)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: buildDetailItem(
+                      flight.type == 'Arrival' ? "Actual Arr." : "Actual Dep.",
+                      flight.type == 'Arrival' ? flight.actualArrTime : flight.actualDepTime,
+                    ),
+                  ),
+                  Expanded(child: buildDetailItem("Aircraft", flight.aircraftIcao)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: buildDetailItem("Terminal", flight.terminal)),
+                  Expanded(child: buildDetailItem("Gate", flight.gate)),
+                  Expanded(child: buildDetailItem("Baggage", flight.baggageBelt)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: buildDetailItem("Callsign", flight.callsign)),
+                  Expanded(child: const SizedBox()), // Empty slot for alignment
+                ],
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -9,6 +9,15 @@ class FlightData {
   final String status;
   final String type; // 'Arrival' or 'Departure'
 
+  // Extended fields
+  final String? actualDepTime;
+  final String? actualArrTime;
+  final String? terminal;
+  final String? gate;
+  final String? baggageBelt;
+  final String? callsign;
+  final String? aircraftIcao;
+
   FlightData({
     required this.flightNumber,
     required this.airline,
@@ -19,6 +28,13 @@ class FlightData {
     required this.estimatedTime,
     required this.status,
     required this.type,
+    this.actualDepTime,
+    this.actualArrTime,
+    this.terminal,
+    this.gate,
+    this.baggageBelt,
+    this.callsign,
+    this.aircraftIcao,
   });
 
   factory FlightData.fromJson(Map<String, dynamic> json, String type) {
@@ -67,6 +83,14 @@ class FlightData {
       estimatedTime: formatTime(estTime),
       status: status,
       type: type,
+      actualDepTime: formatTime(json['dep_actual']),
+      actualArrTime: formatTime(json['arr_actual']),
+      terminal: type == 'Arrival' ? json['arr_terminal'] : json['dep_terminal'],
+      gate: type == 'Arrival' ? json['arr_gate'] : json['dep_gate'],
+      baggageBelt:
+          type == 'Arrival' ? json['arr_baggage'] : json['dep_baggage'],
+      callsign: json['flight_icao'],
+      aircraftIcao: json['aircraft_icao'],
     );
   }
 }
