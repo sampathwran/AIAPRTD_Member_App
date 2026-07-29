@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aiaprtd_member/features/marketplace/ads_page.dart';
+import 'package:aiaprtd_member/features/flight_tracking/flight_tracking_page.dart';
 
 class ServicesHubBottomSheet extends StatelessWidget {
   const ServicesHubBottomSheet({super.key});
@@ -42,7 +43,13 @@ class ServicesHubBottomSheet extends StatelessWidget {
         'icon': Icons.flight_takeoff_rounded,
         'label': 'Flight Tracking',
         'color': Colors.green,
-        'onTap': () => _showComingSoon(context, 'Flight Tracking', Colors.green),
+        'onTap': () {
+          Navigator.pop(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const FlightTrackingPage()),
+          );
+        },
       },
       {
         'icon': Icons.receipt_long_rounded,
@@ -131,7 +138,8 @@ class ServicesHubBottomSheet extends StatelessWidget {
       SnackBar(
         content: Text(
           "$label - Coming Soon! 🚀",
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          style:
+              const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
