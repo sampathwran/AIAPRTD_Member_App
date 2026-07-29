@@ -286,12 +286,15 @@ class _MobileReloadPageState extends State<MobileReloadPage>
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.asset(
-                              provider.logoUrl,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Icon(Icons.signal_cellular_alt_rounded,
-                                      color: color),
+                            child: Transform.scale(
+                              scale: provider.id == 'mobitel' ? 1.3 : 1.0,
+                              child: Image.asset(
+                                provider.logoUrl,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Icon(Icons.signal_cellular_alt_rounded,
+                                        color: color),
+                              ),
                             ),
                           ),
                         ),
@@ -539,9 +542,12 @@ class _MobileReloadPageState extends State<MobileReloadPage>
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(6),
-                            child: Image.asset(
-                              provider.logoUrl,
-                              fit: BoxFit.contain,
+                            child: Transform.scale(
+                              scale: provider.id == 'mobitel' ? 1.3 : 1.0,
+                              child: Image.asset(
+                                provider.logoUrl,
+                                fit: BoxFit.contain,
+                              ),
                             ),
                           ),
                         ),
