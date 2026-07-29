@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:aiaprtd_member/firebase_options.dart';
 import 'package:aiaprtd_member/core/services/notification_service.dart';
+import 'package:aiaprtd_member/core/services/background_location_service.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 // ==========================================
@@ -60,6 +61,9 @@ void main() async {
 
   // Initialize Local Notifications
   await NotificationService().init();
+
+  // Initialize Background Location Service
+  await initializeBackgroundService();
 
   runApp(
     MultiProvider(

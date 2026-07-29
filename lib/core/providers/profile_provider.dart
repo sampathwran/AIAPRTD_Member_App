@@ -2,12 +2,14 @@
 
 import 'dart:async';
 import 'dart:io';
-import 'package:app_to_foreground/app_to_foreground.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:dash_bubble/dash_bubble.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:dash_bubble/dash_bubble.dart';
+import 'package:app_to_foreground/app_to_foreground.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 import 'package:aiaprtd_member/features/profile/member_status/profile_status_evaluator.dart';
 
@@ -488,7 +490,12 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
       _memberData!['onlineStatus'] =
       isGoingOnline ? 'online' : 'offline';
 
+      // Save to SharedPreferences for background isolate
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isOnline', isGoingOnline);
+
       if (isGoingOnline) {
+        FlutterBackgroundService().startService();
         // 💡 NEW: Request Permission when going Online.
         // (Request early because we cannot request permission when App is Minimized)
         bool hasPermission = await DashBubble.instance.hasOverlayPermission();
@@ -496,6 +503,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
           await DashBubble.instance.requestOverlayPermission();
         }
       } else {
+        FlutterBackgroundService().invoke('stopService');
         // Hide Bubble anyway when going Offline
         await _stopFloatingBubble();
       }
