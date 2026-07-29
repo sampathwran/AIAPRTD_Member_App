@@ -20,15 +20,23 @@ class _FlightTrackingPageState extends State<FlightTrackingPage>
 
   String _selectedAirport = 'CMB';
   late TabController _tabController;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.trim().toLowerCase();
+      });
+    });
   }
 
   @override
   void dispose() {
+    _searchController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -152,6 +160,53 @@ class _FlightTrackingPageState extends State<FlightTrackingPage>
             ),
           ),
 
+          // Search Bar
+          Container(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: TextField(
+              controller: _searchController,
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+              decoration: InputDecoration(
+                hintText: 'Search by Flight No. (e.g. UL 504)',
+                hintStyle: TextStyle(
+                    color: isDark ? Colors.grey[500] : Colors.grey[400]),
+                prefixIcon: Icon(Icons.search,
+                    color: isDark ? Colors.grey[400] : Colors.grey[500]),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear,
+                            color:
+                                isDark ? Colors.grey[400] : Colors.grey[500]),
+                        onPressed: () {
+                          _searchController.clear();
+                          FocusScope.of(context).unfocus();
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                      color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+                      width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide:
+                      BorderSide(color: colorScheme.primary, width: 1.5),
+                ),
+              ),
+            ),
+          ),
+
           // Custom TabBar for Arrivals / Departures
           Container(
             color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
@@ -187,8 +242,14 @@ class _FlightTrackingPageState extends State<FlightTrackingPage>
   }
 
   Widget _buildFlightList({required String type}) {
-    // Filter dummy data based on tab type
-    final flights = dummyFlights.where((f) => f.type == type).toList();
+    // Filter dummy data based on tab type and search query
+    final flights = dummyFlights.where((f) {
+      final matchesType = f.type == type;
+      final matchesSearch = _searchQuery.isEmpty ||
+          f.flightNumber.toLowerCase().contains(_searchQuery) ||
+          f.airline.toLowerCase().contains(_searchQuery);
+      return matchesType && matchesSearch;
+    }).toList();
 
     if (_selectedAirport != 'CMB') {
       return Center(
@@ -205,6 +266,23 @@ class _FlightTrackingPageState extends State<FlightTrackingPage>
             const Text(
               "(Dummy data only available for CMB)",
               style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (flights.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off_rounded,
+                size: 64, color: Colors.grey.withValues(alpha: 0.5)),
+            const SizedBox(height: 16),
+            const Text(
+              "No flights found matching your search.",
+              style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
           ],
         ),
