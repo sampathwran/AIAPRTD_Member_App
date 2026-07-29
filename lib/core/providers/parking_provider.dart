@@ -180,7 +180,8 @@ class ParkingProvider extends ChangeNotifier {
       }
       notifyListeners();
     } catch (e) {
-      // 
+      print('Error: $e');
+    }
 
     // Find the current slot data
     final slot = _parkingSlots.firstWhere(
@@ -205,5 +206,4 @@ class ParkingProvider extends ChangeNotifier {
       }
     }
   }
-}
 }
