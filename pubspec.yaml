@@ -1,7 +1,7 @@
 name: aiaprtd_member
 description: "A new Flutter project."
 publish_to: 'none'
-version: 0.1.1+3
+version: 0.1.2+4
 
 environment:
   sdk: ^3.0.0
@@ -60,11 +60,15 @@ flutter:
   # 📌 ඇසෙට්ස් (Logo & Sound) ලියාපදිංචි කරපු කොටස
   assets:
     - assets/images/
+    - assets/images/map_markers/
     - assets/images/logo.png
     - assets/sounds/intro.mp3
     - assets/sounds/go_sound.mp3
     - assets/sounds/off_sound.mp3
     - assets/sounds/error_sound.mp3
+    - assets/sounds/police_alert.mp3
+    - assets/sounds/barrier_alert.mp3
+    - assets/sounds/speed_alert.mp3
     - assets/vehicles.json
     - assets/front.png
     - assets/back.png

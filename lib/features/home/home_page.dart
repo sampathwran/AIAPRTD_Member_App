@@ -2,10 +2,12 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
+import 'package:cloud_firestore/cloud_firestore.dart';
 // ignore: depend_on_referenced_packages, spell_check
 import 'package:audioplayers/audioplayers.dart';
 import 'package:provider/provider.dart';
@@ -98,12 +100,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   DateTime? _lastFirebaseUpdateTime;
 
+  StreamSubscription<QuerySnapshot>? _trafficReportsSubscription;
+  final Set<Marker> _trafficMarkers = {};
+  final Map<String, BitmapDescriptor> _trafficIcons = {};
+  final List<Map<String, dynamic>> _activeTrafficReports = [];
+  final Set<String> _alerted500mTrafficReports = {};
+  final Set<String> _alerted200mTrafficReports = {};
+  final AudioPlayer _alertAudioPlayer = AudioPlayer();
+
   final GlobalKey<State> _footerBadgeKey = GlobalKey<State>();
 
   @override
   void initState() {
     super.initState();
     _createCustomMarker();
+    _generateTrafficIcons();
     _checkPermissionsAndStartTracking();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -137,13 +148,180 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             .startListeningForRequests(profileProvider);
       }
     });
+
+    _listenToTrafficReports();
+  }
+
+  void _listenToTrafficReports() {
+    _trafficReportsSubscription = FirebaseFirestore.instance
+        .collection('traffic_reports')
+        .where('isActive', isEqualTo: true)
+        .snapshots()
+        .listen((snapshot) {
+      if (!mounted) return;
+      
+      final now = DateTime.now();
+      _trafficMarkers.clear();
+      _activeTrafficReports.clear();
+      
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        
+        final denials = data['denials'] ?? 0;
+        if (denials >= 2) continue;
+
+        Timestamp? reportedTs = data['lastVerifiedAt'] ?? data['reportedAt'];
+        if (reportedTs != null) {
+          final diff = now.difference(reportedTs.toDate());
+          if (diff.inHours >= 4) continue;
+        }
+
+        final lat = data['latitude'];
+        final lng = data['longitude'];
+        final type = data['type'] as String? ?? 'unknown';
+
+        _activeTrafficReports.add({
+          'id': doc.id,
+          'latitude': lat,
+          'longitude': lng,
+          'type': type,
+        });
+
+        _trafficMarkers.add(
+          Marker(
+            markerId: MarkerId('traffic_${doc.id}'),
+            position: LatLng(lat, lng),
+            icon: _trafficIcons[type] ?? BitmapDescriptor.defaultMarker,
+            onTap: () => _showTrafficReportDetails(doc.id, data),
+          ),
+        );
+      }
+      _buildAllMarkers();
+    });
+  }
+
+  void _showTrafficReportDetails(String docId, Map<String, dynamic> data) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) {
+        final type = data['type'] as String? ?? 'unknown';
+        final confirmations = data['confirmations'] ?? 0;
+        final denials = data['denials'] ?? 0;
+        
+        final userId = FirebaseAuth.instance.currentUser?.uid;
+        final List<dynamic> votedUsers = data['votedUsers'] ?? [];
+        final bool hasVoted = userId != null && votedUsers.contains(userId);
+
+        double dist = 1000.0;
+        if (_currentPosition != null) {
+          dist = Geolocator.distanceBetween(
+            _currentPosition!.latitude, _currentPosition!.longitude,
+            data['latitude'], data['longitude'],
+          );
+        }
+        final bool isCloseEnough = dist <= 500.0;
+
+        final typeLabel = type == 'traffic_police' ? 'Traffic Police' : 
+                          type == 'police_barrier' ? 'Police Barrier' : 'High Speed Check';
+        
+        Timestamp? ts = data['reportedAt'];
+        String timeStr = 'Unknown';
+        if (ts != null) {
+          final diff = DateTime.now().difference(ts.toDate());
+          if (diff.inMinutes < 60) timeStr = '${diff.inMinutes} mins ago';
+          else timeStr = '${diff.inHours} hours ago';
+        }
+
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(typeLabel, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Text('Reported $timeStr', style: const TextStyle(color: Colors.grey)),
+              const SizedBox(height: 16),
+              
+              if (hasVoted) ...[
+                const Icon(Icons.check_circle, color: Colors.green, size: 40),
+                const SizedBox(height: 8),
+                const Text('You have already verified this.', style: TextStyle(fontSize: 16)),
+              ] else if (!isCloseEnough) ...[
+                const Icon(Icons.location_off, color: Colors.orange, size: 40),
+                const SizedBox(height: 8),
+                const Text('You must be within 500m to verify.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center),
+              ] else ...[
+                const Text('Is it still there?', style: TextStyle(fontSize: 16)),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        if (userId != null) {
+                          FirebaseFirestore.instance.collection('traffic_reports').doc(docId).update({
+                            'denials': FieldValue.increment(1),
+                            'lastVerifiedAt': FieldValue.serverTimestamp(),
+                            'votedUsers': FieldValue.arrayUnion([userId]),
+                          });
+                        }
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thanks for verifying!')));
+                      },
+                      icon: const Icon(Icons.thumb_down, color: Colors.red),
+                      label: Text('Not there ($denials)', style: const TextStyle(color: Colors.red)),
+                    ),
+                    FilledButton.icon(
+                      onPressed: () {
+                        if (userId != null) {
+                          FirebaseFirestore.instance.collection('traffic_reports').doc(docId).update({
+                            'confirmations': FieldValue.increment(1),
+                            'lastVerifiedAt': FieldValue.serverTimestamp(),
+                            'votedUsers': FieldValue.arrayUnion([userId]),
+                          });
+                        }
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thanks for verifying!')));
+                      },
+                      icon: const Icon(Icons.thumb_up),
+                      label: Text('Still there ($confirmations)'),
+                    ),
+                  ],
+                )
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _buildAllMarkers() {
+    if (!mounted) return;
+    setState(() {
+      _markers.clear();
+      if (_currentPosition != null) {
+        _markers.add(Marker(
+          markerId: const MarkerId('driver_location'),
+          position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+          rotation: _currentHeading,
+          flat: true,
+          anchor: const Offset(0.5, 0.5),
+          icon: _customLocationIcon,
+        ));
+      }
+      _markers.addAll(_trafficMarkers);
+    });
   }
 
   @override
   void dispose() {
     _positionStreamSubscription?.cancel();
     _compassStreamSubscription?.cancel();
+    _trafficReportsSubscription?.cancel();
     _audioPlayer.dispose();
+    _alertAudioPlayer.dispose();
     super.dispose();
   }
 
@@ -217,6 +395,76 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  Future<void> _generateTrafficIcons() async {
+    const int targetWidth = 50; // Reduced significantly for all icons
+
+    try {
+      final Uint8List policeBytes = await _getBytesFromAsset('assets/images/map_markers/traffic_police.png', targetWidth);
+      _trafficIcons['traffic_police'] = BitmapDescriptor.bytes(policeBytes);
+    } catch (e) {
+      debugPrint("Error loading traffic_police icon: $e");
+    }
+
+    try {
+      final Uint8List barrierBytes = await _getBytesFromAsset('assets/images/map_markers/police_barrier.png', 40); // Reduced size for barrier
+      _trafficIcons['police_barrier'] = BitmapDescriptor.bytes(barrierBytes);
+    } catch (e) {
+      debugPrint("Error loading police_barrier icon: $e");
+    }
+
+    try {
+      final Uint8List speedBytes = await _getBytesFromAsset('assets/images/map_markers/high_speed.png', targetWidth);
+      _trafficIcons['high_speed'] = BitmapDescriptor.bytes(speedBytes);
+    } catch (e) {
+      debugPrint("Error loading high_speed icon: $e");
+    }
+  }
+
+  Future<Uint8List> _getBytesFromAsset(String path, int width) async {
+    ByteData data = await rootBundle.load(path);
+    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(), targetWidth: width);
+    ui.FrameInfo fi = await codec.getNextFrame();
+    return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!.buffer.asUint8List();
+  }
+
+  void _checkTrafficAlerts(Position position) {
+    for (final report in _activeTrafficReports) {
+      final String id = report['id'];
+      final double lat = report['latitude'];
+      final double lng = report['longitude'];
+      final String type = report['type'];
+
+      final double dist = Geolocator.distanceBetween(
+        position.latitude, position.longitude,
+        lat, lng,
+      );
+
+      final String sound = type == 'traffic_police'
+          ? 'sounds/police_alert.mp3'
+          : type == 'police_barrier'
+              ? 'sounds/barrier_alert.mp3'
+              : 'sounds/speed_alert.mp3';
+
+      // 500m alert - first warning
+      if (dist <= 500 && !_alerted500mTrafficReports.contains(id)) {
+        _alerted500mTrafficReports.add(id);
+        _alertAudioPlayer.play(AssetSource(sound));
+      }
+
+      // 200m alert - close warning
+      if (dist <= 200 && !_alerted200mTrafficReports.contains(id)) {
+        _alerted200mTrafficReports.add(id);
+        _alertAudioPlayer.play(AssetSource(sound));
+      }
+
+      // Reset when driver moves > 800m away
+      if (dist > 800) {
+        _alerted500mTrafficReports.remove(id);
+        _alerted200mTrafficReports.remove(id);
+      }
+    }
+  }
+
   void _syncLocationToFirebase(double lat, double lng, double bearing) {
     if (!mounted) return;
     final profileProvider =
@@ -285,16 +533,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       setState(() {
         _currentPosition = position;
         _isLoading = false;
-        _markers.clear();
-        _markers.add(Marker(
-          markerId: const MarkerId('driver_location'),
-          position: LatLng(position.latitude, position.longitude),
-          rotation: _currentHeading,
-          flat: true,
-          anchor: const Offset(0.5, 0.5),
-          icon: _customLocationIcon,
-        ));
       });
+      _buildAllMarkers();
+      _checkTrafficAlerts(position);
 
       if (!_isFirstLocationFound && _mapController != null) {
         _updateCamera();
@@ -311,19 +552,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         if ((heading - _currentHeading).abs() > 10) {
           setState(() {
             _currentHeading = heading;
-            if (_currentPosition != null) {
-              _markers.clear();
-              _markers.add(Marker(
-                markerId: const MarkerId('driver_location'),
-                position: LatLng(
-                    _currentPosition!.latitude, _currentPosition!.longitude),
-                rotation: heading,
-                flat: true,
-                anchor: const Offset(0.5, 0.5),
-                icon: _customLocationIcon,
-              ));
-            }
           });
+          _buildAllMarkers();
           if (_currentPosition != null) {
             _syncLocationToFirebase(_currentPosition!.latitude,
                 _currentPosition!.longitude, heading);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'flight_data.dart';
 import 'flight_service.dart';
 
@@ -38,6 +39,18 @@ class _FlightTrackingPageState extends State<FlightTrackingPage>
       });
     });
     _fetchFlights();
+    _logView();
+  }
+
+  void _logView() {
+    try {
+      FirebaseFirestore.instance.collection('analytics').doc('flight_tracking').set({
+        'totalViews': FieldValue.increment(1),
+        'lastViewed': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint("Analytics error: $e");
+    }
   }
 
   Future<void> _fetchFlights() async {

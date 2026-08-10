@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aiaprtd_member/features/marketplace/ads_page.dart';
 import 'package:aiaprtd_member/features/flight_tracking/flight_tracking_page.dart';
 import 'package:aiaprtd_member/features/mobile_reload/mobile_reload_page.dart';
+import 'package:aiaprtd_member/features/ev_charging/ev_charging_page.dart';
+import 'package:aiaprtd_member/features/services_hub/report_traffic_page.dart';
+import 'package:aiaprtd_member/core/utils/icon_mapper.dart';
 
 class ServicesHubBottomSheet extends StatelessWidget {
   const ServicesHubBottomSheet({super.key});
@@ -18,84 +22,7 @@ class ServicesHubBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-
-    final services = [
-      {
-        'icon': Icons.phone_android_rounded,
-        'label': 'Mobile Reload',
-        'color': Colors.blue,
-        'onTap': () {
-          Navigator.pop(context);
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const MobileReloadPage()),
-          );
-        },
-      },
-      {
-        'icon': Icons.shopping_cart_rounded,
-        'label': 'Marketplace',
-        'color': Colors.orange,
-        'onTap': () {
-          Navigator.pop(context);
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AdsPage()),
-          );
-        },
-      },
-      {
-        'icon': Icons.flight_takeoff_rounded,
-        'label': 'Flight Tracking',
-        'color': Colors.green,
-        'onTap': () {
-          Navigator.pop(context);
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const FlightTrackingPage()),
-          );
-        },
-      },
-      {
-        'icon': Icons.receipt_long_rounded,
-        'label': 'Pay Fines',
-        'color': Colors.red,
-        'onTap': () => _showComingSoon(context, 'Pay Fines', Colors.red),
-      },
-      {
-        'icon': Icons.local_parking_rounded,
-        'label': 'Parking',
-        'color': Colors.purple,
-        'onTap': () => _showComingSoon(context, 'Parking', Colors.purple),
-      },
-      {
-        'icon': Icons.account_balance_wallet_rounded,
-        'label': 'Finance & Loans',
-        'color': Colors.teal,
-        'onTap': () => _showComingSoon(context, 'Finance & Loans', Colors.teal),
-      },
-      {
-        'icon': Icons.storefront_rounded,
-        'label': 'Welfare Shops',
-        'color': Colors.brown,
-        'onTap': () => _showComingSoon(context, 'Welfare Shops', Colors.brown),
-      },
-      {
-        'icon': Icons.local_car_wash_rounded,
-        'label': 'Service Stations',
-        'color': Colors.indigo,
-        'onTap': () =>
-            _showComingSoon(context, 'Service Stations', Colors.indigo),
-      },
-      {
-        'icon': Icons.settings_suggest_rounded,
-        'label': 'Vehicle Parts',
-        'color': Colors.cyan,
-        'onTap': () => _showComingSoon(context, 'Vehicle Parts', Colors.cyan),
-      },
-    ];
 
     return Container(
       decoration: BoxDecoration(
@@ -115,7 +42,7 @@ class ServicesHubBottomSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 16), // Reduced from 24
+          const SizedBox(height: 16),
           const Text(
             'Driver Services Hub',
             style: TextStyle(
@@ -123,7 +50,7 @@ class ServicesHubBottomSheet extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 4), // Reduced from 8
+          const SizedBox(height: 4),
           Text(
             'Access all your essential tools in one place',
             style: TextStyle(
@@ -131,41 +58,116 @@ class ServicesHubBottomSheet extends StatelessWidget {
               fontSize: 14,
             ),
           ),
-          const SizedBox(height: 20), // Reduced from 32
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: 24,
-              crossAxisSpacing: 16,
-              childAspectRatio: 0.8, // Adjust height
-            ),
-            itemCount: services.length,
-            itemBuilder: (context, index) {
-              final service = services[index];
-              return _ServiceItem(
-                icon: service['icon'] as IconData,
-                label: service['label'] as String,
-                color: service['color'] as Color,
-                onTap: service['onTap'] as VoidCallback,
+          const SizedBox(height: 20),
+          
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('driver_services_hub')
+                .orderBy('order')
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: Padding(
+                  padding: EdgeInsets.all(32.0),
+                  child: CircularProgressIndicator(),
+                ));
+              }
+
+              if (snapshot.hasError) {
+                return const Center(child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text('Error loading services', style: TextStyle(color: Colors.red)),
+                ));
+              }
+
+              final allDocs = snapshot.data?.docs ?? [];
+              // Filter active services locally to avoid Firestore composite index requirement
+              final docs = allDocs.where((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                return data['isActive'] == true;
+              }).toList();
+
+              if (docs.isEmpty) {
+                return const Center(child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text('No services available at the moment.'),
+                ));
+              }
+
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 24,
+                  crossAxisSpacing: 16,
+                  childAspectRatio: 0.8,
+                ),
+                itemCount: docs.length,
+                itemBuilder: (context, index) {
+                  final data = docs[index].data() as Map<String, dynamic>;
+                  final label = data['label'] ?? 'Unknown';
+                  final imageUrl = data['imageUrl'] as String?;
+                  final iconName = data['icon'] ?? 'apps';
+                  final colorHex = data['colorHex'] ?? '#2196F3';
+                  final actionType = data['actionType'] ?? 'coming_soon';
+                  final actionTarget = data['actionTarget'] ?? '';
+
+                  return _ServiceItem(
+                    imageUrl: imageUrl,
+                    fallbackIcon: IconMapper.getIcon(iconName),
+                    label: label,
+                    color: IconMapper.getColor(colorHex),
+                    onTap: () => _handleServiceTap(context, actionType, actionTarget, label, IconMapper.getColor(colorHex)),
+                  );
+                },
               );
             },
           ),
-          const SizedBox(height: 16), // safe area buffer
+          const SizedBox(height: 16),
         ],
       ),
     );
   }
 
+  void _handleServiceTap(BuildContext context, String actionType, String actionTarget, String label, Color color) {
+    if (actionType == 'internal_route') {
+      Navigator.pop(context);
+      
+      Widget? targetPage;
+      if (actionTarget == '/mobile_reload' || actionTarget == 'MobileReloadPage' || actionTarget == 'mobile_reload') {
+        targetPage = const MobileReloadPage();
+      } else if (actionTarget == '/marketplace' || actionTarget == 'AdsPage' || actionTarget == 'marketplace') {
+        targetPage = const AdsPage();
+      } else if (actionTarget == '/flight_tracking' || actionTarget == 'FlightTrackingPage' || actionTarget == 'flight_tracking') {
+        targetPage = const FlightTrackingPage();
+      } else if (actionTarget == '/ev_charging' || actionTarget == 'EvChargingPage' || actionTarget == 'ev_charging') {
+        targetPage = const EvChargingPage();
+      } else if (actionTarget == '/report_traffic' || actionTarget == 'ReportTrafficPage' || actionTarget == 'report_traffic') {
+        targetPage = const ReportTrafficPage();
+      }
+
+      if (targetPage != null) {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => targetPage!));
+      } else {
+        _showComingSoon(context, label, color);
+      }
+    } else if (actionType == 'webview') {
+      Navigator.pop(context);
+      // In a real implementation, navigate to a WebView page
+      // Navigator.push(context, MaterialPageRoute(builder: (context) => WebViewPage(url: actionTarget, title: label)));
+      _showComingSoon(context, 'Web: $label', color);
+    } else {
+      _showComingSoon(context, label, color);
+    }
+  }
+
   void _showComingSoon(BuildContext context, String label, Color color) {
-    Navigator.pop(context); // Close bottom sheet
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           "$label - Coming Soon! 🚀",
-          style:
-              const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -176,13 +178,15 @@ class ServicesHubBottomSheet extends StatelessWidget {
 }
 
 class _ServiceItem extends StatelessWidget {
-  final IconData icon;
+  final String? imageUrl;
+  final IconData fallbackIcon;
   final String label;
   final Color color;
   final VoidCallback onTap;
 
   const _ServiceItem({
-    required this.icon,
+    this.imageUrl,
+    required this.fallbackIcon,
     required this.label,
     required this.color,
     required this.onTap,
@@ -200,7 +204,7 @@ class _ServiceItem extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: color.withValues(alpha: isDark ? 0.2 : 0.1),
               shape: BoxShape.circle,
@@ -209,11 +213,26 @@ class _ServiceItem extends StatelessWidget {
                 width: 1.5,
               ),
             ),
-            child: Icon(
-              icon,
-              color: isDark ? color.withOpacity(0.9) : color,
-              size: 28,
-            ),
+            child: imageUrl != null && imageUrl!.isNotEmpty
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(32),
+                    child: Image.network(
+                      imageUrl!,
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.cover,
+                      errorBuilder: (ctx, err, stack) => Icon(
+                        fallbackIcon,
+                        color: isDark ? color.withOpacity(0.9) : color,
+                        size: 64,
+                      ),
+                    ),
+                  )
+                : Icon(
+                    fallbackIcon,
+                    color: isDark ? color.withOpacity(0.9) : color,
+                    size: 64,
+                  ),
           ),
           const SizedBox(height: 12),
           Text(
