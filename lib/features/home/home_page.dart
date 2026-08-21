@@ -24,6 +24,9 @@ import 'package:aiaprtd_member/features/home/online_button_widget.dart';
 import 'package:aiaprtd_member/features/home/widgets/meter/mini_meter_widget.dart';
 import 'package:aiaprtd_member/core/providers/meter_provider.dart';
 import 'package:aiaprtd_member/features/home/trip_summary_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:aiaprtd_member/features/home/birthday_wishes_overlay.dart';
+import 'package:aiaprtd_member/features/home/special_day_wishes_overlay.dart';
 
 // Neutral Grey Theme - easy on the eyes
 const String _mapStyle = '''
@@ -109,6 +112,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final AudioPlayer _alertAudioPlayer = AudioPlayer();
 
   final GlobalKey<State> _footerBadgeKey = GlobalKey<State>();
+  
+  bool _showBirthdayWishes = false;
+  bool _showSpecialDayWishes = false;
+  String _specialDayTitle = '';
+  String _specialDayType = '';
 
   @override
   void initState() {
@@ -137,6 +145,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
         await profileProvider.fetchAndStoreMemberData();
+        _checkBirthday();
+        _checkSpecialDays();
 
         if (!mounted) return;
 
@@ -313,6 +323,79 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
       _markers.addAll(_trafficMarkers);
     });
+  }
+
+  Future<void> _checkBirthday() async {
+    try {
+      final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+      final dobStr = profileProvider.memberData?['dob'] as String?;
+      if (dobStr == null || dobStr.isEmpty) return;
+
+      // Ensure it's in format like YYYY/MM/DD or YYYY-MM-DD
+      DateTime dob;
+      try {
+        dob = DateTime.parse(dobStr.replaceAll('/', '-'));
+      } catch (e) {
+        return; // invalid date format
+      }
+
+      DateTime now = DateTime.now();
+      if (now.month == dob.month && now.day == dob.day) {
+        // It's their birthday! Check if we already showed it today
+        final prefs = await SharedPreferences.getInstance();
+        final lastShownDate = prefs.getString('last_birthday_shown_date');
+        final todayStr = "${now.year}-${now.month}-${now.day}";
+
+        if (lastShownDate != todayStr) {
+          // Show birthday!
+          setState(() {
+            _showBirthdayWishes = true;
+          });
+          await prefs.setString('last_birthday_shown_date', todayStr);
+        }
+      }
+    } catch (e) {
+      debugPrint("Birthday check error: $e");
+    }
+  }
+
+  Future<void> _checkSpecialDays() async {
+    try {
+      final now = DateTime.now();
+      final todayMMDD =
+          "${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+
+      final doc = await FirebaseFirestore.instance
+          .collection('system_settings')
+          .doc('special_days')
+          .get();
+
+      if (doc.exists && doc.data() != null) {
+        final List<dynamic> events = doc.data()!['events'] ?? [];
+        for (var event in events) {
+          if (event['date'] == todayMMDD && event['isActive'] == true) {
+            
+            // Check if we already showed it today
+            final prefs = await SharedPreferences.getInstance();
+            final lastShownKey = 'last_special_day_${event['type']}_shown_date';
+            final todayStr = "${now.year}-${now.month}-${now.day}";
+            final lastShownDate = prefs.getString(lastShownKey);
+
+            if (lastShownDate != todayStr) {
+              setState(() {
+                _showSpecialDayWishes = true;
+                _specialDayTitle = event['title'] ?? 'Happy Special Day!';
+                _specialDayType = event['type'] ?? 'celebration';
+              });
+              await prefs.setString(lastShownKey, todayStr);
+            }
+            break; // Only show one special day at a time
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Special Days check error: $e");
+    }
   }
 
   @override
@@ -658,6 +741,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     // No-op, managed by profile provider now
                   },
                 ),
+                if (_showBirthdayWishes)
+                  BirthdayWishesOverlay(
+                    firstName: profileProvider.memberData?['firstName'] ?? '',
+                    lastName: profileProvider.memberData?['lastName'] ?? '',
+                    onClose: () {
+                      setState(() {
+                        _showBirthdayWishes = false;
+                      });
+                    },
+                  )
+                else if (_showSpecialDayWishes)
+                  SpecialDayWishesOverlay(
+                    title: _specialDayTitle,
+                    type: _specialDayType,
+                    onClose: () {
+                      setState(() {
+                        _showSpecialDayWishes = false;
+                      });
+                    },
+                  ),
               ],
             ),
     );

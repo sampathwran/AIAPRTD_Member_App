@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:aiaprtd_member/core/providers/meter_provider.dart';
 import 'package:aiaprtd_member/core/providers/finance_provider.dart';
@@ -56,6 +57,12 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
       // 3. Generate PDF
       final pdf = pw.Document();
 
+      // Load fonts to support Sinhala/Tamil/Unicode
+      final font = await PdfGoogleFonts.notoSansRegular();
+      final sinhalaFont = await PdfGoogleFonts.notoSansSinhalaRegular();
+      final tamilFont = await PdfGoogleFonts.notoSansTamilRegular();
+      final boldFont = await PdfGoogleFonts.notoSansBold();
+
       final startDateStr = meter.startTime != null
           ? DateFormat('yyyy-MM-dd').format(meter.startTime!)
           : 'Unknown';
@@ -68,6 +75,11 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
 
       pdf.addPage(
         pw.Page(
+          theme: pw.ThemeData.withFont(
+            base: font,
+            bold: boldFont,
+            fontFallback: [sinhalaFont, tamilFont],
+          ),
           margin: const pw.EdgeInsets.all(32),
           build: (pw.Context context) {
             return pw.Stack(

@@ -57,25 +57,22 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
     for (var doc in allDocs) {
       var data = doc.data() as Map<String, dynamic>;
 
-      String category =
-          (data['vehicleCategory'] ?? data['selectedCategory'] ?? '')
-              .toString()
-              .toLowerCase();
-
-      String normCategory = category
-          .replaceAll(' ', '')
-          .replaceAll('_', '')
-          .replaceAll('van', '');
-      String normMyCat = myCategory
-          .toLowerCase()
-          .replaceAll(' ', '')
-          .replaceAll('_', '')
-          .replaceAll('van', '');
+      String category = '';
+      if (data['vehicle'] != null && data['vehicle'] is Map && data['vehicle']['id'] != null) {
+        category = data['vehicle']['id'].toString();
+      } else {
+        category = (data['vehicleCategory'] ?? data['selectedCategory'] ?? '').toString();
+      }
+      category = category.toLowerCase();
+      
+      String normCategory = category.replaceAll(' ', '').replaceAll('_', '').replaceAll('van', '');
+      String normMyCat = myCategory.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('van', '');
 
       // 1. Category check
       if (normCategory.isEmpty) normCategory = 'unknown';
-      if (normCategory != normMyCat) {
-        continue;
+      if (normCategory != normMyCat && !normCategory.contains(normMyCat) && !normMyCat.contains(normCategory)) {
+        debugPrint("Booking ${doc.id} skipped: Category mismatch ($normCategory != $normMyCat)");
+        continue; // Category filter re-enabled
       }
 
       // 2. Radius filter
@@ -98,7 +95,8 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
             pLng);
         double distanceKm = distanceInMeters / 1000;
         if (distanceKm > _searchRadiusKm) {
-          continue; // Out of radius
+          debugPrint("Booking ${doc.id} skipped: Out of radius (${distanceKm.toStringAsFixed(1)}km > $_searchRadiusKm)");
+          continue; // Radius filter re-enabled
         }
       }
 
@@ -114,6 +112,7 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
         Duration diff = startTime.difference(now);
 
         if (diff.inMinutes < 0) {
+          debugPrint("Booking ${doc.id} skipped: Expired (diff = ${diff.inMinutes} mins)");
           FirebaseFirestore.instance
               .collection('all_bookings')
               .doc(doc.id)
@@ -125,11 +124,14 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
         }
 
         if (diff.inMinutes <= 60) {
+          debugPrint("Booking ${doc.id} added to LIVE (diff = ${diff.inMinutes} mins)");
           live.add(doc);
         } else {
+          debugPrint("Booking ${doc.id} added to SCHEDULED (diff = ${diff.inMinutes} mins)");
           scheduled.add(doc);
         }
       } else {
+        debugPrint("Booking ${doc.id} added to SCHEDULED (no valid startTime found)");
         scheduled.add(doc);
       }
     }

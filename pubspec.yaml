@@ -43,6 +43,9 @@ dependencies:
   share_plus: ^13.2.0
   font_awesome_flutter: ^11.0.0
   flutter_background_service: ^5.1.0
+  lottie: ^3.5.1
+  confetti: ^0.8.0
+  printing: ^5.15.0
 
 
 
