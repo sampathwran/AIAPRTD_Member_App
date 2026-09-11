@@ -1,5 +1,6 @@
 // ignore_for_file: spell_check_on_languages
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class TripCountWidget extends StatelessWidget {
   final Map<String, dynamic> memberData; // FIXED: Accepts a Map
@@ -15,7 +16,7 @@ class TripCountWidget extends StatelessWidget {
       children: [
         Text(trips,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        const Text("Trips", style: TextStyle(color: Colors.grey, fontSize: 12)),
+        Text('profile.trips'.tr(), style: TextStyle(color: Colors.grey, fontSize: 12)),
       ],
     );
   }

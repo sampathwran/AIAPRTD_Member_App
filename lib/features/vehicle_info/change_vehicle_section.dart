@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -163,7 +164,7 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
                   // List
                   Expanded(
                     child: filteredItems.isEmpty
-                        ? const Center(child: Text("No results found"))
+                        ? Center(child: Text("No results found"))
                         : ListView.builder(
                             physics: const BouncingScrollPhysics(),
                             itemCount: filteredItems.length,
@@ -329,7 +330,7 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
           const SizedBox(height: 24),
 
           Center(
-            child: Text("Add New Vehicle Request",
+            child: Text('profile.add_new_vehicle_request'.tr(),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
@@ -339,7 +340,7 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
           const SizedBox(height: 8),
           Center(
             child: Text(
-              "Select your vehicle details from the list below",
+              'profile.select_vehicle_details'.tr(),
               style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
               textAlign: TextAlign.center,
             ),
@@ -349,7 +350,7 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
 
           // 1. Brand Selection
           _buildSelectionBox(
-            label: "Vehicle Brand",
+            label: 'profile.vehicle_brand'.tr(),
             value: selectedBrand,
             icon: Icons.directions_car_outlined,
             isEnabled: vehicleData.isNotEmpty,
@@ -368,7 +369,7 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
 
           // 2. Model Selection
           _buildSelectionBox(
-            label: "Vehicle Model",
+            label: 'profile.vehicle_model'.tr(),
             value: selectedModel,
             icon: Icons.settings_suggest_outlined,
             isEnabled: selectedBrand != null &&
@@ -440,8 +441,8 @@ class _ChangeVehicleSectionState extends State<ChangeVehicleSection> {
                       });
                     }
                   : null,
-              child: const Text(
-                "Send Request to Admin",
+              child: Text(
+                'profile.send_request_to_admin'.tr(),
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),

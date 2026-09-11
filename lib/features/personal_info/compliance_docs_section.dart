@@ -1,6 +1,7 @@
 // ignore_for_file: spell_check_on_languages, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -18,12 +19,12 @@ class ComplianceDocsSection extends StatelessWidget {
     required this.membershipNo,
   });
 
-  static const List<String> _documentTitles = [
-    'Revenue License',
-    'Insurance Policy',
-    'Registration Document',
-    'Driving License (Front)',
-    'Driving License (Back)',
+  static List<String> get _documentTitles => [
+    'profile.revenue_license'.tr(),
+    'profile.insurance_policy'.tr(),
+    'profile.registration_document'.tr(),
+    'profile.driving_license_front'.tr(),
+    'profile.driving_license_back'.tr(),
   ];
 
 // =========================================================================
@@ -130,21 +131,21 @@ class ComplianceDocsSection extends StatelessWidget {
     int? remainingDays,
   ) {
     if (remainingDays == null) {
-      return 'Expiry Date: $expiryDate';
+      return "${'profile.expiry_date_prefix'.tr()}$expiryDate";
     }
 
     if (remainingDays < 0) {
       final int expiredDays = remainingDays.abs();
 
       if (expiredDays == 1) {
-        return 'Expired 1 day ago';
+        return 'profile.expired_1_day_ago'.tr();
       }
 
-      return 'Expired $expiredDays days ago';
+      return 'profile.expired_days_ago'.tr().replaceFirst('{}', expiredDays.toString());
     }
 
     if (remainingDays == 0) {
-      return 'Expires Today';
+      return 'profile.expires_today'.tr();
     }
 
     if (remainingDays == 1) {
@@ -155,7 +156,7 @@ class ComplianceDocsSection extends StatelessWidget {
       return 'Expires in $remainingDays days';
     }
 
-    return 'Expiry Date: $expiryDate';
+    return "${'profile.expiry_date_prefix'.tr()}$expiryDate";
   }
 
   Color _getExpiryColor(int? remainingDays, bool isDark) {
@@ -191,7 +192,7 @@ class ComplianceDocsSection extends StatelessWidget {
     }
 
     if (status == 'approved') {
-      if (title == 'Registration Document') {
+      if (title == 'profile.registration_document'.tr()) {
         return false;
       }
 
@@ -220,18 +221,20 @@ class ComplianceDocsSection extends StatelessWidget {
       final backStatus =
           backDoc['status']?.toString().trim().toLowerCase() ?? 'empty';
 
-      final frontExpiry = _getExpiryDate(frontDoc);
+      String? frontExpiry = _getExpiryDate(frontDoc);
       final backExpiry = _getExpiryDate(backDoc);
+      if (frontExpiry == null || frontExpiry.isEmpty) frontExpiry = backExpiry;
+
 
       final frontRemaining = _getRemainingDays(frontExpiry);
       final backRemaining = _getRemainingDays(backExpiry);
 
       final canUploadFront = _canUpload(
-          title: 'Driving License (Front)',
+          title: 'profile.driving_license_front'.tr(),
           status: frontStatus,
           remainingDays: frontRemaining);
       final canUploadBack = _canUpload(
-          title: 'Driving License (Back)',
+          title: 'profile.driving_license_back'.tr(),
           status: backStatus,
           remainingDays: backRemaining);
 
@@ -249,8 +252,8 @@ class ComplianceDocsSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
       ),
       child: ExpansionTile(
-        title: const Text(
-          'Compliance Documents',
+        title: Text(
+          'profile.compliance_documents'.tr(),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
@@ -287,7 +290,10 @@ class ComplianceDocsSection extends StatelessWidget {
       BuildContext context, Map<String, dynamic> document) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final String? expiryDate = _getExpiryDate(document);
+    String? expiryDate = _getExpiryDate(document);
+
+
+
     final int? remainingDays = _getRemainingDays(expiryDate);
 
     const Color statusColor = Colors.green;
@@ -309,7 +315,7 @@ class ComplianceDocsSection extends StatelessWidget {
           Icons.badge_rounded,
           color: statusColor,
         ),
-        title: const Text(
+        title: Text(
           'Driving License',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -378,7 +384,10 @@ class ComplianceDocsSection extends StatelessWidget {
     final String status =
         document['status']?.toString().trim().toLowerCase() ?? 'empty';
 
-    final String? expiryDate = _getExpiryDate(document);
+    String? expiryDate = _getExpiryDate(document);
+    if (index == 3 && (expiryDate == null || expiryDate.trim().isEmpty) && _documents.length > 4) {
+      expiryDate = _getExpiryDate(_documents[4]);
+    }
     final int? remainingDays = _getRemainingDays(expiryDate);
 
     final bool canUpload = _canUpload(
@@ -429,7 +438,7 @@ class ComplianceDocsSection extends StatelessWidget {
                 fontSize: 12,
               ),
             ),
-            if (title != 'Registration Document' &&
+            if (title != 'profile.registration_document'.tr() &&
                 expiryDate != null &&
                 expiryDate.trim().isNotEmpty)
               Padding(
@@ -498,7 +507,7 @@ class ComplianceDocsSection extends StatelessWidget {
       context: context,
       builder: (dialogContext) {
         return SimpleDialog(
-          title: const Text('Select Document Source'),
+          title: Text('profile.select_document_source'.tr()),
           children: [
             SimpleDialogOption(
               onPressed: () {
@@ -507,14 +516,14 @@ class ComplianceDocsSection extends StatelessWidget {
                   ImageSource.camera,
                 );
               },
-              child: const Row(
+              child: Row(
                 children: [
                   Icon(
                     Icons.camera_alt,
                     color: Colors.blue,
                   ),
                   SizedBox(width: 12),
-                  Text('Take a Photo'),
+                  Text('profile.take_photo'.tr()),
                 ],
               ),
             ),
@@ -525,14 +534,14 @@ class ComplianceDocsSection extends StatelessWidget {
                   ImageSource.gallery,
                 );
               },
-              child: const Row(
+              child: Row(
                 children: [
                   Icon(
                     Icons.photo_library,
                     color: Colors.green,
                   ),
                   SizedBox(width: 12),
-                  Text('Choose from Gallery'),
+                  Text('profile.choose_from_gallery'.tr()),
                 ],
               ),
             ),
@@ -599,7 +608,7 @@ class ComplianceDocsSection extends StatelessWidget {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Upload failed: $error'),
+          content: Text("${'profile.upload_failed'.tr()}: $error"),
           backgroundColor: Colors.red,
         ),
       );

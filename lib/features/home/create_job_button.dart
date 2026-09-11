@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class CreateJobButton extends StatelessWidget {
   final VoidCallback onTap;
@@ -16,7 +17,7 @@ class CreateJobButton extends StatelessWidget {
           backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
           child: Icon(Icons.add_box, color: colorScheme.primary),
         ),
-        title: Text("Create Booking",
+        title: Text('home.create_booking'.tr(),
             style: theme.textTheme.titleMedium
                 ?.copyWith(fontWeight: FontWeight.bold)),
         trailing: Icon(Icons.arrow_forward_ios,

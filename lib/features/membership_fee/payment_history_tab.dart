@@ -1,5 +1,6 @@
 // ignore_for_file: spell_check_on_languages
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:intl/intl.dart';
 
 class PaymentHistoryTab extends StatefulWidget {
@@ -187,7 +188,7 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Payment Behavior",
+                    Text('finance.payment_behavior'.tr(),
                         style: TextStyle(
                             fontWeight: FontWeight.w900,
                             color: sectionTitleColor,
@@ -226,7 +227,7 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
             children: [
               Expanded(
                 child: _buildGradientCard(
-                  title: arrearsMonths > 0 ? "Overdue Date" : "Next Payment",
+                  title: arrearsMonths > 0 ? "Overdue Date" : 'finance.next_payment'.tr(),
                   value: nextPaymentDate,
                   icon: Icons.calendar_month,
                   colors: arrearsMonths > 0
@@ -237,10 +238,10 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildGradientCard(
-                  title: "Arrears",
+                  title: 'finance.arrears'.tr(),
                   value: arrearsMonths > 0
                       ? "$arrearsMonths Months"
-                      : "No Arrears",
+                      : 'finance.no_arrears'.tr(),
                   icon: arrearsMonths > 0
                       ? Icons.warning_amber_rounded
                       : Icons.check_circle,
@@ -306,9 +307,9 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                           color: textColor)),
-                  subtitle: const Text("Awaiting admin approval...",
+                  subtitle: Text("Awaiting admin approval...",
                       style: TextStyle(color: Colors.orange, fontSize: 13)),
-                  trailing: const Text("Pending",
+                  trailing: Text("Pending",
                       style: TextStyle(
                           color: Colors.orange, fontWeight: FontWeight.bold)),
                 ),
@@ -320,7 +321,7 @@ class _PaymentHistoryTabState extends State<PaymentHistoryTab> {
           // ========================================================
           // PAYMENT HISTORY LIST
           // ========================================================
-          _buildSectionTitle("Payment History", sectionTitleColor),
+          _buildSectionTitle('finance.payment_history'.tr(), sectionTitleColor),
           const SizedBox(height: 12),
 
           if (paymentHistory.isEmpty)

@@ -1,10 +1,14 @@
 // ignore_for_file: spell_check_on_languages, spell_check_on_word
 
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 
 import 'package:aiaprtd_member/core/providers/profile_provider.dart';
 import 'package:aiaprtd_member/core/providers/auth_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
 import 'package:aiaprtd_member/features/profile/face_verification_page.dart';
 
 class PersonalDetailsTab extends StatefulWidget {
@@ -20,6 +24,7 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
 
   bool _isEditingPhone = false;
   bool _isSaving = false;
+  String? _verificationId;
 
   @override
   void initState() {
@@ -73,8 +78,8 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "We have sent a 6-digit OTP code to your registered email address to verify your new mobile number.",
+                  Text(
+                    "We have sent a 6-digit OTP code to your new mobile number via SMS to verify it.",
                     style: TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                   const SizedBox(height: 15),
@@ -114,7 +119,7 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
                           _otpController.clear();
                           Navigator.pop(dialogContext);
                         },
-                  child: const Text(
+                  child: Text(
                     "Cancel",
                     style: TextStyle(color: Colors.grey),
                   ),
@@ -130,8 +135,6 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
                             isVerifying = true;
                           });
 
-                          final authProvider =
-                              Provider.of<AuthProvider>(context, listen: false);
                           final profileProvider = Provider.of<ProfileProvider>(
                               context,
                               listen: false);
@@ -139,13 +142,35 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
                           bool isSuccess = false;
 
                           try {
-                            isSuccess =
-                                await authProvider.verifyOtpAndUpdateMobile(
-                              documentId: documentId,
-                              membershipNo: membershipNo,
-                              newMobile: newMobile,
-                              otp: otp,
+                            PhoneAuthCredential credential = PhoneAuthProvider.credential(
+                              verificationId: _verificationId!,
+                              smsCode: otp,
                             );
+
+                            try {
+                               await FirebaseAuth.instance.currentUser?.linkWithCredential(credential);
+                               isSuccess = true;
+                            } on FirebaseAuthException catch (e) {
+                               if (e.code == 'credential-already-in-use' || e.code == 'provider-already-linked') {
+                                   isSuccess = true;
+                               } else {
+                                   isSuccess = false;
+                               }
+                            }
+
+                            if (isSuccess) {
+                               await FirebaseFirestore.instance.collection('member').doc(documentId).update({
+                                 'mobile': newMobile,
+                               });
+                       
+                               final url = Uri.parse('https://aiaprtd.lk/wp-json/aiaprtd-sync/v1/update-profile');
+                               await http.post(url, body: {
+                                 'membership_no': membershipNo,
+                                 'mobile': newMobile
+                               }).catchError((e) {
+                                 return http.Response('Error', 500);
+                               });
+                            }
                           } catch (e) {
                             debugPrint("💡 OTP Verification UI Error: $e");
                           }
@@ -199,7 +224,7 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text(
+                      : Text(
                           "Verify & Save",
                           style: TextStyle(color: Colors.white),
                         ),
@@ -217,13 +242,13 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
     return Consumer<ProfileProvider>(
       builder: (context, profileProvider, child) {
         if (profileProvider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(child: CircularProgressIndicator());
         }
 
         final data = profileProvider.memberData;
 
         if (data == null) {
-          return const Center(child: Text("Profile data not found! ❌"));
+          return Center(child: Text("Profile data not found! ❌"));
         }
 
         final String documentId = profileProvider.documentId;
@@ -288,32 +313,32 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
             else if (!isAdminApproved)
               _buildPendingApprovalBanner(),
             _buildSection(
-                "Basic Info",
+                'profile.basic_info'.tr(),
                 [
-                  _buildReadOnlyTile(Icons.person_outline, "Full Name",
+                  _buildReadOnlyTile(Icons.person_outline, 'profile.full_name'.tr(),
                       fullName, isDark, colorScheme),
                   Divider(
                     height: 1,
                     indent: 55,
                     endIndent: 15,
                   ),
-                  _buildReadOnlyTile(Icons.email_outlined, "Email", email,
+                  _buildReadOnlyTile(Icons.email_outlined, 'profile.email'.tr(), email,
                       isDark, colorScheme),
                 ],
                 isDark,
                 theme),
             const SizedBox(height: 20),
             _buildSection(
-                "Identity Info",
+                'profile.identity_info'.tr(),
                 [
-                  _buildReadOnlyTile(Icons.badge_outlined, "NIC Number", nic,
+                  _buildReadOnlyTile(Icons.badge_outlined, 'profile.nic_number'.tr(), nic,
                       isDark, colorScheme),
                   Divider(
                     height: 1,
                     indent: 55,
                     endIndent: 15,
                   ),
-                  _buildReadOnlyTile(Icons.cake_outlined, "Date of Birth", dob,
+                  _buildReadOnlyTile(Icons.cake_outlined, 'profile.date_of_birth'.tr(), dob,
                       isDark, colorScheme),
                   Divider(
                     height: 1,
@@ -324,7 +349,7 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
                     gender.toLowerCase() == 'male'
                         ? Icons.male_outlined
                         : Icons.female_outlined,
-                    "Gender",
+                    'profile.gender'.tr(),
                     gender,
                     isDark,
                     colorScheme,
@@ -336,7 +361,7 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
                   ),
                   _buildReadOnlyTile(
                     Icons.auto_awesome_outlined,
-                    "Religion",
+                    'profile.religion'.tr(),
                     religion,
                     isDark,
                     colorScheme,
@@ -346,7 +371,7 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
                 theme),
             const SizedBox(height: 20),
             _buildSection(
-                "Contact & Account Info",
+                'profile.contact_account_info'.tr(),
                 [
                   _buildPhoneTile(
                     documentId: documentId,
@@ -360,7 +385,7 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
                     indent: 55,
                     endIndent: 15,
                   ),
-                  _buildReadOnlyTile(Icons.location_on_outlined, "Address",
+                  _buildReadOnlyTile(Icons.location_on_outlined, 'profile.address'.tr(),
                       address, isDark, colorScheme),
                 ],
                 isDark,
@@ -368,11 +393,11 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
             if (faceUrl.isNotEmpty) ...[
               const SizedBox(height: 20),
               _buildSection(
-                  "Face Verification",
+                  'profile.face_verification'.tr(),
                   [
                     _buildReadOnlyTile(
                       Icons.face_retouching_natural_rounded,
-                      "Face Status",
+                      'profile.face_status'.tr(),
                       // 💡 NEW: Show "Pending Approval" if face status is Pending
                       isFaceApproved
                           ? "Verified Successfully ✅"
@@ -459,7 +484,7 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 icon: const Icon(Icons.face_retouching_natural, size: 20),
-                label: const Text(
+                label: Text(
                   "Verify Face Now",
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
@@ -528,8 +553,8 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
         ),
         child: Icon(Icons.phone_outlined, color: colorScheme.primary, size: 22),
       ),
-      title: const Text(
-        "Phone Number",
+      title: Text(
+        'profile.phone_number'.tr(),
         style: TextStyle(fontSize: 12, color: Colors.grey),
       ),
       subtitle: _isEditingPhone
@@ -592,39 +617,41 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
                         });
 
                         final scaffoldMessenger = ScaffoldMessenger.of(context);
-                        final authProvider =
-                            Provider.of<AuthProvider>(context, listen: false);
 
-                        bool otpSent = false;
-
-                        try {
-                          otpSent = await authProvider.requestProfileUpdateOtp(
-                            documentId: documentId,
-                            newMobile: inputMobile,
-                          );
-                        } catch (e) {
-                          debugPrint("💡 OTP Request UI Error: $e");
+                        String formattedMobile = inputMobile;
+                        if (formattedMobile.startsWith('0')) {
+                          formattedMobile = '+94${formattedMobile.substring(1)}';
+                        } else if (!formattedMobile.startsWith('+')) {
+                          formattedMobile = '+$formattedMobile';
                         }
 
-                        if (!context.mounted) return;
-
-                        setState(() {
-                          _isSaving = false;
-                        });
-
-                        if (otpSent) {
-                          _showOtpDialog(documentId, membershipNo, inputMobile);
-                        } else {
-                          scaffoldMessenger.showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                "Failed to send OTP. Please try again! ❌",
-                              ),
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: Colors.redAccent,
-                            ),
-                          );
-                        }
+                        await FirebaseAuth.instance.verifyPhoneNumber(
+                          phoneNumber: formattedMobile,
+                          verificationCompleted: (PhoneAuthCredential credential) async {
+                            // Let the user manually enter to be safe
+                          },
+                          verificationFailed: (FirebaseAuthException e) {
+                            if (!mounted) return;
+                            setState(() => _isSaving = false);
+                            scaffoldMessenger.showSnackBar(
+                              SnackBar(
+                                content: Text(e.message ?? 'Verification failed'),
+                                backgroundColor: Colors.redAccent,
+                              )
+                            );
+                          },
+                          codeSent: (String verificationId, int? resendToken) {
+                            if (!mounted) return;
+                            setState(() {
+                              _isSaving = false;
+                              _verificationId = verificationId;
+                            });
+                            _showOtpDialog(documentId, membershipNo, inputMobile);
+                          },
+                          codeAutoRetrievalTimeout: (String verificationId) {
+                            _verificationId = verificationId;
+                          },
+                        );
                       },
                     ),
                     IconButton(

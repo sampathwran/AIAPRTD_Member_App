@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -11,6 +12,8 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
   bool _isInitialized = false;
   String? _currentMemberId;
+  String? _currentMemberNo;
+  StreamSubscription? _notifSubscription;
 
   Future<void> init() async {
     if (_isInitialized) return;
@@ -40,14 +43,21 @@ class NotificationService {
     _isInitialized = true;
   }
 
-  void startListening(String memberId) {
-    if (_currentMemberId == memberId) return; // already listening for this user
+    void startListening(String memberId, String memberNo) {
+    debugPrint("=== NOTIFICATION_DEBUG: startListening called. memberId: $memberId, memberNo: $memberNo ===");
+    if (memberId.isEmpty || memberId == 'N/A' || memberId == 'null') { debugPrint("=== NOTIFICATION_DEBUG: Ignored because memberId is invalid ==="); return; }
+    if (_currentMemberId == memberId && _currentMemberNo == memberNo && _notifSubscription != null) { debugPrint("=== NOTIFICATION_DEBUG: Ignored because already listening to these IDs ==="); return; }
+    
     _currentMemberId = memberId;
-
-    FirebaseFirestore.instance
+    _currentMemberNo = memberNo;
+    
+    _notifSubscription?.cancel();
+    debugPrint("=== NOTIFICATION_DEBUG: Attached Firestore listener for notifications ===");
+    _notifSubscription = FirebaseFirestore.instance
         .collection('notifications')
         .snapshots()
         .listen((snapshot) {
+      debugPrint("=== NOTIFICATION_DEBUG: Snapshot received with ${snapshot.docChanges.length} changes ===");
       for (var change in snapshot.docChanges) {
         // Only trigger for newly added documents while listening
         if (change.type == DocumentChangeType.added) {
@@ -57,9 +67,13 @@ class NotificationService {
           // Check target
           final targetType = data['targetType'];
           final targetMembers = data['targetMembers'] as List<dynamic>? ?? [];
+          debugPrint("=== NOTIFICATION_DEBUG: Received Notification '${data['title']}', targetType: $targetType, targetMembers: $targetMembers ===");
 
+          if (targetType == 'all' || (targetType == 'specific' && (targetMembers.contains(memberId) || targetMembers.contains(memberNo)))) {
+            debugPrint("=== NOTIFICATION_DEBUG: Notification MATCHED member IDs! ===");
+          }
           if (targetType == 'all' ||
-              (targetType == 'specific' && targetMembers.contains(memberId))) {
+              (targetType == 'specific' && (targetMembers.contains(memberId) || targetMembers.contains(memberNo)))) {
             final scheduledAt = data['scheduledAt'] as Timestamp?;
             final now = DateTime.now();
 

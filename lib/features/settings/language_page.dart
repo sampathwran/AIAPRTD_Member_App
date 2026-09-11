@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class LanguagePage extends StatefulWidget {
   const LanguagePage({super.key});
@@ -10,6 +11,18 @@ class LanguagePage extends StatefulWidget {
 class _LanguagePageState extends State<LanguagePage> {
   // Currently selected language (If coming from Backend, it should be set here)
   String selectedLanguage = "English";
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (context.locale.languageCode == 'si') {
+      selectedLanguage = "සිංහල";
+    } else if (context.locale.languageCode == 'ta') {
+      selectedLanguage = "தமிழ்";
+    } else {
+      selectedLanguage = "English";
+    }
+  }
 
   final List<String> languages = ["English", "සිංහල", "தமிழ்"];
 
@@ -50,7 +63,6 @@ class _LanguagePageState extends State<LanguagePage> {
                   bool isSelected = selectedLanguage == lang;
 
                   return ListTile(
-                    enabled: isEnglish,
                     title: Row(
                       children: [
                         Text(lang,
@@ -58,37 +70,26 @@ class _LanguagePageState extends State<LanguagePage> {
                               fontWeight: isSelected
                                   ? FontWeight.bold
                                   : FontWeight.normal,
-                              color: isEnglish ? Colors.black87 : Colors.grey,
+                              color: Colors.black87,
                             )),
-                        if (!isEnglish) ...[
-                          const SizedBox(width: 10),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Text("Coming Soon",
-                                style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.blue,
-                                    fontWeight: FontWeight.bold)),
-                          ),
-                        ]
                       ],
                     ),
                     trailing: isSelected
                         ? const Icon(Icons.check_circle, color: Colors.blue)
                         : null,
-                    onTap: isEnglish
-                        ? () {
+                    onTap: () {
                             setState(() {
                               selectedLanguage = lang;
                             });
-                            // Language switching logic should be written here (Provider or Localisation)
-                          }
-                        : null,
+                            
+                            if (lang == "English") {
+                              context.setLocale(const Locale('en', 'US'));
+                            } else if (lang == "සිංහල") {
+                              context.setLocale(const Locale('si', 'LK'));
+                            } else if (lang == "தமிழ்") {
+                              context.setLocale(const Locale('ta', 'LK'));
+                            }
+                          },
                   );
                 },
               ),

@@ -1,5 +1,6 @@
 // ignore_for_file: spell_check_on_languages
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class RatingWidget extends StatelessWidget {
   // FIXED: Now accepts the entire memberData
@@ -33,7 +34,7 @@ class RatingWidget extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 2),
-        const Text("Rating",
+        Text('profile.rating'.tr(),
             style: TextStyle(
                 color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w500)),
       ],

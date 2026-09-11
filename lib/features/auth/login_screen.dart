@@ -3,6 +3,7 @@
 // ==========================================
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
@@ -42,6 +43,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (input.isEmpty || password.isEmpty) {
       _showSnackBar("Please fill in all fields");
+      return;
+    }
+
+    // NEW STRICT CHECK: Prevent email login
+    if (input.contains('@')) {
+      _showSnackBar("Please login using your Membership Number (e.g. AIAPRTD-24-XXXX), not your email address.");
       return;
     }
 
@@ -213,7 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 15),
 
                 Text(
-                  'AIAPRTD MEMBER',
+                  'login.title'.tr(),
                   style: theme.textTheme.titleLarge?.copyWith(
                     color: colorScheme.primary,
                     letterSpacing: 1.5,
@@ -222,7 +229,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 5),
 
                 Text(
-                  'Sign in to continue',
+                  'login.subtitle'.tr(),
                   style: theme.textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 40),
@@ -230,10 +237,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Username/Email Field
                 TextField(
                   controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
+                  keyboardType: TextInputType.text,
                   style: TextStyle(color: colorScheme.onSurface),
                   decoration: InputDecoration(
-                    labelText: 'Membership No / Email',
+                    labelText: 'login.email_hint'.tr(),
                     prefixIcon:
                         Icon(Icons.person_outline, color: colorScheme.primary),
                   ),
@@ -246,7 +253,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: _obscurePassword,
                   style: TextStyle(color: colorScheme.onSurface),
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: 'login.password_label'.tr(),
                     prefixIcon: Icon(Icons.lock_open_outlined,
                         color: colorScheme.primary),
                     suffixIcon: IconButton(
@@ -276,7 +283,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       );
                     },
                     child: Text(
-                      'Forgot Password?',
+                      'login.forgot_password'.tr(),
                       style: TextStyle(
                           color: colorScheme.primary,
                           fontWeight: FontWeight.w600),
@@ -351,7 +358,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: CircularProgressIndicator(
                                 color: Colors.white, strokeWidth: 2),
                           )
-                        : const Text('LOGIN'),
+                        : Text('login.login_button'.tr()),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -365,7 +372,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     );
                   },
                   child: Text(
-                    'First time login? Click here',
+                    'login.first_time_login'.tr(),
                     style: TextStyle(
                         color: colorScheme.secondary,
                         decoration: TextDecoration.underline,
@@ -406,3 +413,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+

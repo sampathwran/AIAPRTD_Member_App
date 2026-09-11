@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class RoadPickupButton extends StatelessWidget {
   final VoidCallback onTap;
@@ -16,7 +17,7 @@ class RoadPickupButton extends StatelessWidget {
           backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
           child: Icon(Icons.directions_car, color: colorScheme.primary),
         ),
-        title: Text("Road Pickup",
+        title: Text('home.road_pickup'.tr(),
             style: theme.textTheme.titleMedium
                 ?.copyWith(fontWeight: FontWeight.bold)),
         trailing: Icon(Icons.arrow_forward_ios,
@@ -26,3 +27,4 @@ class RoadPickupButton extends StatelessWidget {
     );
   }
 }
+

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -107,13 +108,13 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
             Icon(Icons.flash_on_rounded,
                 size: 60, color: Colors.orange.shade100),
             const SizedBox(height: 16),
-            const Text("No Live Bookings",
+            Text('profile.no_live_booking'.tr(),
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87)),
             const SizedBox(height: 8),
-            const Text("Bookings starting within 1 hour appear here.",
+            Text("Bookings starting within 1 hour appear here.",
                 style: TextStyle(color: Colors.grey)),
           ],
         ),
@@ -518,7 +519,7 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
                                                         onPressed: () =>
                                                             Navigator.pop(ctx),
                                                         child:
-                                                            const Text("Close"))
+                                                            Text("Close"))
                                                   ]));
                                     },
                                     child: Container(
@@ -551,7 +552,7 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
                           OutlinedButton.icon(
                             onPressed: () => _showMapPreview(context, data),
                             icon: const Icon(Icons.map, size: 14),
-                            label: const Text("Map",
+                            label: Text("Map",
                                 style: TextStyle(fontSize: 12)),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.blue,
@@ -738,7 +739,7 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
                     const Icon(Icons.check_circle_outline,
                         color: Colors.greenAccent, size: 48),
                     const SizedBox(height: 8),
-                    const Text("Accepted by",
+                    Text("Accepted by",
                         style: TextStyle(color: Colors.white70, fontSize: 14)),
                     Text(acceptedDriverName,
                         style: const TextStyle(
@@ -936,7 +937,7 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
             const Icon(Icons.warning_amber_rounded,
                 color: Colors.orange, size: 60),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               "Account Inactive",
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
@@ -957,7 +958,7 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text("OK",
+                child: Text("OK",
                     style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
@@ -983,14 +984,14 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
                 style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
-        content: const Text(
+        content: Text(
           "Please go ONLINE first to accept new bookings. You can change your status on the Home screen.",
           style: TextStyle(fontSize: 16),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("CANCEL",
+            child: Text("CANCEL",
                 style:
                     TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
@@ -1009,7 +1010,7 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text("GO ONLINE",
+            child: Text("GO ONLINE",
                 style: TextStyle(
                     color: Colors.white, fontWeight: FontWeight.bold)),
           ),

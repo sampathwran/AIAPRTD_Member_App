@@ -30,9 +30,11 @@ class _NotificationBellWidgetState extends State<NotificationBellWidget> {
   Widget build(BuildContext context) {
     final profileProv = context.watch<ProfileProvider>();
     final memberId = profileProv.documentId;
+    final memberNo = profileProv.memberNo;
+    debugPrint("=== BELL_WIDGET_BUILD === memberId: $memberId, memberNo: $memberNo");
 
-    if (memberId.isNotEmpty && !_serviceStarted) {
-      NotificationService().startListening(memberId);
+    if (memberId.isNotEmpty && memberId != 'N/A' && memberId != 'null') {
+      NotificationService().startListening(memberId, memberNo);
       _serviceStarted = true;
     }
 
@@ -48,7 +50,7 @@ class _NotificationBellWidgetState extends State<NotificationBellWidget> {
 
             final targetType = data['targetType'];
             final targetMembers = data['targetMembers'] as List<dynamic>? ?? [];
-            if (targetType != 'all' && !targetMembers.contains(memberId))
+            if (targetType != 'all' && !targetMembers.contains(memberId) && !targetMembers.contains(memberNo))
               continue;
 
             final scheduledAt = data['scheduledAt'] as Timestamp?;
@@ -56,7 +58,7 @@ class _NotificationBellWidgetState extends State<NotificationBellWidget> {
               continue;
 
             final readBy = List<String>.from(data['readBy'] ?? []);
-            if (!readBy.contains(memberId)) {
+            if (!readBy.contains(memberId) && !readBy.contains(memberNo)) {
               unreadCount++;
             }
           }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -129,7 +130,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Reset Password'),
+        title: Text('auth.reset_password'.tr()),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -235,7 +236,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               strokeWidth: 2.5,
                             ),
                           )
-                        : const Text('Send Reset Details'),
+                        : Text('auth.send_reset_details'.tr()),
                   ),
                 ),
               ],

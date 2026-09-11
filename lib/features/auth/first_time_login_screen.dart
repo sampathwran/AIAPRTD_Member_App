@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:aiaprtd_member/core/services/mail_service.dart';
 
 class FirstTimeLoginScreen extends StatefulWidget {
   const FirstTimeLoginScreen({super.key});
@@ -17,6 +17,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
   final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _otpController = TextEditingController();
 
   bool _isLoading = false;
   bool _isObscureText = true;
@@ -26,38 +27,39 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
   String? _targetEmail;
   String? _targetUid;
   String? _sourceCollection;
-  final _otpController = TextEditingController();
+  String? _verificationId;
+  String? _mobileNumber;
 
   @override
   void dispose() {
     _identifierController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _otpController.dispose();
     super.dispose();
   }
 
-  // 1. Check if Membership No or Email exists in Firestore simultaneously (OR Query)
+  // 1. Check if Membership No exists and trigger SMS
   Future<void> _checkMemberInFirestore() async {
     String input = _identifierController.text.trim();
     if (input.isEmpty) {
-      _showSnackBar("Please enter your Membership Number or Email Address",
-          Colors.redAccent);
+      _showSnackBar("Please enter your Membership Number", Colors.redAccent);
+      return;
+    }
+
+    if (input.contains('@')) {
+      _showSnackBar("Please enter your Membership No (e.g. AIAPRTD-26-XXXX), not your Email.", Colors.redAccent);
       return;
     }
 
     setState(() => _isLoading = true);
-    debugPrint("🔍 Checking Firestore (OR Query) for: $input");
+    debugPrint("🔍 Checking Firestore for: $input");
 
     try {
       // 1. Check 'member' collection first
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('member')
-          .where(
-            Filter.or(
-              Filter('membershipNo', isEqualTo: input),
-              Filter('user_email', isEqualTo: input),
-            ),
-          )
+          .where('membershipNo', isEqualTo: input)
           .limit(1)
           .get();
 
@@ -73,107 +75,129 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
         // 2. Fallback to 'web_sync_member' collection
         QuerySnapshot webSyncSnapshot = await FirebaseFirestore.instance
             .collection('web_sync_member')
-            .where(
-              Filter.or(
-                Filter('membershipNo', isEqualTo: input),
-                Filter('user_email', isEqualTo: input),
-              ),
-            )
+            .where('membershipNo', isEqualTo: input)
             .limit(1)
             .get();
 
         if (webSyncSnapshot.docs.isNotEmpty) {
-          memberData =
-              webSyncSnapshot.docs.first.data() as Map<String, dynamic>;
+          memberData = webSyncSnapshot.docs.first.data() as Map<String, dynamic>;
           targetUid = webSyncSnapshot.docs.first.id;
           sourceCollection = 'web_sync_member';
         }
       }
 
       if (memberData == null) {
-        debugPrint("❌ No record found in Firestore for this Input!");
-        _showSnackBar(
-            "No pre-registered account found with this Membership No/Email.",
-            Colors.redAccent);
+        _showSnackBar("No pre-registered account found with this Membership No.", Colors.redAccent);
+        setState(() => _isLoading = false);
         return;
       }
 
-      // Record found!
+      // Record found! Extract details
       _targetEmail = memberData['user_email'] ?? memberData['email'];
       _targetUid = targetUid;
+      _sourceCollection = sourceCollection;
+      
+      String? rawMobile = memberData['mobile'] ?? memberData['whatsapp_number'] ?? memberData['whatsapp'];
 
       if (_targetEmail == null || _targetEmail!.isEmpty) {
-        _showSnackBar("Associated email not found in record. Contact Admin.",
-            Colors.redAccent);
+        _showSnackBar("Associated email not found in record. Contact Admin.", Colors.redAccent);
+        setState(() => _isLoading = false);
+        return;
+      }
+      
+      if (rawMobile == null || rawMobile.isEmpty) {
+        _showSnackBar("Associated Mobile Number not found in record. Contact Admin.", Colors.redAccent);
+        setState(() => _isLoading = false);
         return;
       }
 
-      debugPrint("✅ Admin Record Found! Matched Email: $_targetEmail");
+      // Format Mobile Number to E.164 (+94)
+      _mobileNumber = rawMobile;
+      if (_mobileNumber!.startsWith('0')) {
+        _mobileNumber = '+94${_mobileNumber!.substring(1)}';
+      } else if (!_mobileNumber!.startsWith('+')) {
+        _mobileNumber = '+$_mobileNumber';
+      }
 
-      // Generate OTP and save to Firestore
-      int otp = 100000 + (DateTime.now().millisecondsSinceEpoch % 900000);
-      await FirebaseFirestore.instance
-          .collection(sourceCollection!)
-          .doc(targetUid)
-          .set({
-        'temp_otp': otp.toString(),
-        'otp_generated_at': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      debugPrint("✅ Admin Record Found! Sending SMS to: $_mobileNumber");
+      _showSnackBar("Sending SMS to $_mobileNumber...", Colors.green);
 
-      // Send OTP via Email
-      await MailService.sendOTP(
-        toEmail: _targetEmail!,
-        otp: otp.toString(),
+      // Trigger Firebase Phone Auth
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: _mobileNumber!,
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          // Auto-resolution (rarely happens on testing unless physical SIM matches)
+          try {
+            await FirebaseAuth.instance.signInWithCredential(credential);
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+                _currentStep = 2; // Auto verified, jump to password!
+              });
+              _showSnackBar("Phone automatically verified!", Colors.green);
+            }
+          } catch (e) {
+            debugPrint("Auto-verification sign-in failed: $e");
+          }
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          if (mounted) {
+            setState(() => _isLoading = false);
+            _showSnackBar(e.message ?? 'Phone verification failed.', Colors.redAccent);
+          }
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+              _verificationId = verificationId;
+              _currentStep = 1; // Go to OTP verification step
+            });
+            _showSnackBar('SMS Code sent to $_mobileNumber', Colors.green);
+          }
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          _verificationId = verificationId;
+        },
       );
 
-      _sourceCollection = sourceCollection;
-
-      setState(() {
-        _currentStep = 1; // Go to OTP verification step
-      });
     } catch (e) {
       debugPrint("❌ Error: $e");
       _showSnackBar("Error checking record: ${e.toString()}", Colors.redAccent);
-    } finally {
       setState(() => _isLoading = false);
     }
   }
 
-  // 1.5 Verify OTP
+  // 1.5 Verify OTP (Firebase SMS)
   Future<void> _verifyOtp() async {
     String inputOtp = _otpController.text.trim();
     if (inputOtp.isEmpty) {
-      _showSnackBar("Please enter the OTP", Colors.redAccent);
+      _showSnackBar("Please enter the SMS OTP", Colors.redAccent);
+      return;
+    }
+
+    if (_verificationId == null) {
+      _showSnackBar("Verification session expired. Please go back and try again.", Colors.redAccent);
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      var doc = await FirebaseFirestore.instance
-          .collection(_sourceCollection!)
-          .doc(_targetUid)
-          .get();
-      if (!doc.exists) {
-        _showSnackBar("Error: Record no longer exists", Colors.redAccent);
-        return;
-      }
+      PhoneAuthCredential credential = PhoneAuthProvider.credential(
+        verificationId: _verificationId!,
+        smsCode: inputOtp,
+      );
 
-      final data = doc.data()!;
-      if (inputOtp == (data['temp_otp'] ?? '').toString().trim()) {
-        // Correct OTP
-        await FirebaseFirestore.instance
-            .collection(_sourceCollection!)
-            .doc(_targetUid)
-            .update({
-          'temp_otp': FieldValue.delete(),
-        });
-        setState(() {
-          _currentStep = 2; // Go to password setup
-        });
-      } else {
-        _showSnackBar("Invalid OTP. Please try again.", Colors.redAccent);
-      }
+      // Sign in temporarily with Phone Auth to prove they own the number
+      await FirebaseAuth.instance.signInWithCredential(credential);
+
+      setState(() {
+        _currentStep = 2; // Go to password setup
+      });
+      _showSnackBar("Phone Verified!", Colors.green);
+    } on FirebaseAuthException catch (e) {
+      _showSnackBar("Invalid SMS OTP: ${e.message}", Colors.redAccent);
     } catch (e) {
       _showSnackBar("Error verifying OTP: $e", Colors.redAccent);
     } finally {
@@ -183,92 +207,77 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
 
   // 2. Create and Activate new Account in Firebase Auth
   Future<void> _submitFirstTimeDetails() async {
-    debugPrint("🚀 Submit button clicked!");
-
     if (!_formKey.currentState!.validate()) {
-      debugPrint("❌ Form validation failed!");
       return;
     }
 
-    debugPrint("✅ Validation passed. Starting account creation...");
     setState(() => _isLoading = true);
 
     try {
-      // A. Create new user in Firebase Auth
-      UserCredential userCredential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _targetEmail!,
-        password: _passwordController.text.trim(),
-      );
-
-      User? user = userCredential.user;
+      // Because we signed in with Phone Auth in step 1.5, we have a currentUser!
+      User? user = FirebaseAuth.instance.currentUser;
+      
+      if (user == null) {
+        // Fallback: If not signed in (e.g. timeout), just try to create normal account
+        UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: _targetEmail!,
+          password: _passwordController.text.trim(),
+        );
+        user = userCredential.user;
+      } else {
+        // Link the existing Phone Auth session to an Email & Password so they can log in via Password later!
+        AuthCredential emailCred = EmailAuthProvider.credential(
+          email: _targetEmail!,
+          password: _passwordController.text.trim(),
+        );
+        try {
+          await user.linkWithCredential(emailCred);
+        } on FirebaseAuthException catch (linkError) {
+          if (linkError.code == 'credential-already-in-use' || linkError.code == 'email-already-in-use') {
+             // If email already has an account, we might need to just update the password and sign in with email!
+             _showSnackBar("Email already registered. You might just need to log in.", Colors.orange);
+             // Sign out the phone auth so they can log in cleanly
+             await FirebaseAuth.instance.signOut();
+             Navigator.pushReplacementNamed(context, '/login');
+             return;
+          } else {
+             rethrow;
+          }
+        }
+      }
 
       if (user != null) {
-        debugPrint("✅ Auth User Created! UID: ${user.uid}");
+        debugPrint("✅ Auth User Created/Linked! UID: ${user.uid}");
 
         // 🗄️ B. Firestore Update
-        // If they are in 'member' collection, update their auth_uid
-        // If they are only in 'web_sync_member', we DO NOT create a partial 'member' document
-        // to avoid breaking the ProfileProvider. The ProfileProvider will fall back to web_sync_member!
-        // So we only update if they were found in the 'member' collection.
-        // Or we can just update whichever collection they were found in to track activation.
-
-        // Since we didn't save _sourceCollection to a state variable, we will query to be safe,
-        // or we can just safely merge auth_uid into web_sync_member as well.
-        // Actually, creating the Firebase Auth account is enough. When they login, ProfileProvider will handle it.
-        // But let's write to web_sync_member just to be safe.
         await FirebaseFirestore.instance
             .collection('web_sync_member')
             .doc(_targetUid)
             .set({
-          'auth_uid': user.uid, // Actual Auth UID
+          'auth_uid': user.uid,
           'isProfileComplete': true,
           'activatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
 
-        // Create member collection from source document
-        if (_sourceCollection != null && _targetUid != null) {
-          var webSyncDoc = await FirebaseFirestore.instance
-              .collection(_sourceCollection!)
-              .doc(_targetUid)
-              .get();
-          if (webSyncDoc.exists) {
-            var data = webSyncDoc.data()!;
-            data['auth_uid'] = user.uid;
-            data['isProfileComplete'] = true;
-            data['activatedAt'] = FieldValue.serverTimestamp();
-            data['status'] = 'inactive member';
-            data['profile_status'] = 'inactive member';
+        // Update member collection if it was the source
+        if (_sourceCollection == 'member' && _targetUid != null) {
             await FirebaseFirestore.instance
                 .collection('member')
                 .doc(_targetUid)
-                .set(data);
-          }
+                .set({
+              'auth_uid': user.uid,
+              'isProfileComplete': true,
+              'activatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
         }
 
-        // Try writing to member as well IF it exists (merge will only add to it, but wait, merge will create it if it doesn't exist!)
-        // So let's NOT write to member collection.
-        // Just writing to web_sync_member is fine. ProfileProvider will find them by email.
-
-        debugPrint("✅ Firestore write successful!");
-
         if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Account Activated Successfully! Welcome.'),
-              backgroundColor: Colors.green),
-        );
-
-        debugPrint("➡️ Navigating to /home...");
+        _showSnackBar('Account Activated Successfully! Welcome.', Colors.green);
         Navigator.pushReplacementNamed(context, '/home');
-      } else {
-        debugPrint("⚠️ Error: User object creation failed!");
       }
     } on FirebaseAuthException catch (e) {
       debugPrint("🔥 FirebaseAuthException: ${e.code} - ${e.message}");
       if (!mounted) return;
-
       String errorMsg = e.message ?? 'An error occurred';
       if (e.code == 'email-already-in-use') {
         errorMsg = 'This account is already activated. Please log in normally.';
@@ -277,12 +286,10 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
       }
       _showSnackBar(errorMsg, Colors.redAccent);
     } catch (e) {
-      debugPrint("❌ General Error: ${e.toString()}");
       if (!mounted) return;
       _showSnackBar("Error: $e", Colors.redAccent);
     } finally {
       if (mounted) setState(() => _isLoading = false);
-      debugPrint("🏁 Finally block executed.");
     }
   }
 
@@ -296,13 +303,13 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Activate Account'),
+        title: Text('auth.activate_account'.tr()),
         backgroundColor: const Color(0xFF1E3A8A),
         foregroundColor: Colors.white,
         centerTitle: true,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Form(
@@ -310,17 +317,17 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Center(
+                    Center(
                       child: Icon(Icons.lock_reset_rounded,
                           size: 90, color: Color(0xFF1E3A8A)),
                     ),
                     const SizedBox(height: 15),
 
-                    // STEP 0: MEMBERSHIP NO / EMAIL check section
+                    // STEP 0: MEMBERSHIP NO check section
                     if (_currentStep == 0) ...[
-                      const Center(
+                      Center(
                         child: Text(
-                          'Welcome!\nPlease enter your Membership Number or Register Email provided by Admin to activate your account.',
+                          'auth.welcome_activate'.tr(),
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               fontSize: 14, color: Colors.grey, height: 1.4),
@@ -329,10 +336,10 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
                       const SizedBox(height: 35),
                       _buildTextField(
                         controller: _identifierController,
-                        label: 'Membership No / Email',
+                        label: 'e.g. AIAPRTD-26-XXXX',
                         icon: Icons.assignment_ind_outlined,
                         validator: (val) => val!.trim().isEmpty
-                            ? 'Please enter your Membership No or Email'
+                            ? 'Please enter your Membership No'
                             : null,
                       ),
                       const SizedBox(height: 40),
@@ -346,8 +353,8 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
                                 borderRadius: BorderRadius.circular(12)),
                           ),
                           onPressed: _checkMemberInFirestore,
-                          child: const Text(
-                            'Check Status',
+                          child: Text(
+                            'Check Status & Send SMS',
                             style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.white,
@@ -361,7 +368,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
                     if (_currentStep == 1) ...[
                       Center(
                         child: Text(
-                          'We have sent a verification code to your email.\nPlease enter it below.',
+                          "${'auth.sms_sent'.tr()}\n$_mobileNumber",
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                               fontSize: 14, color: Colors.grey, height: 1.4),
@@ -370,10 +377,10 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
                       const SizedBox(height: 35),
                       _buildTextField(
                         controller: _otpController,
-                        label: 'OTP Code',
-                        icon: Icons.password,
+                        label: 'SMS OTP Code',
+                        icon: Icons.message,
                         validator: (val) =>
-                            val!.trim().isEmpty ? 'Please enter the OTP' : null,
+                            val!.trim().isEmpty ? 'Please enter the SMS OTP' : null,
                       ),
                       const SizedBox(height: 40),
                       SizedBox(
@@ -386,7 +393,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
                                 borderRadius: BorderRadius.circular(12)),
                           ),
                           onPressed: _verifyOtp,
-                          child: const Text(
+                          child: Text(
                             'Verify OTP',
                             style: TextStyle(
                                 fontSize: 16,
@@ -401,7 +408,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
                     if (_currentStep == 2) ...[
                       Center(
                         child: Text(
-                          'Account Verified for $_targetEmail.\nPlease set a new password to complete your activation.',
+                          'auth.phone_verified'.tr(),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                               fontSize: 14, color: Colors.grey, height: 1.4),
@@ -423,7 +430,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
                       const SizedBox(height: 20),
                       _buildTextField(
                         controller: _confirmPasswordController,
-                        label: 'Confirm Password',
+                        label: 'auth.confirm_password'.tr(),
                         icon: Icons.lock,
                         isPassword: true,
                         validator: (val) {
@@ -445,7 +452,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
                                 borderRadius: BorderRadius.circular(12)),
                           ),
                           onPressed: _submitFirstTimeDetails,
-                          child: const Text(
+                          child: Text(
                             'Activate & Save',
                             style: TextStyle(
                                 fontSize: 16,

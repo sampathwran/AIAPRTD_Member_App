@@ -1,7 +1,7 @@
 name: aiaprtd_member
 description: "A new Flutter project."
 publish_to: 'none'
-version: 0.1.2+4
+version: 0.1.2+5
 
 environment:
   sdk: ^3.0.0
@@ -19,7 +19,6 @@ dependencies:
   geolocator: ^14.0.2
   flutter_compass: ^0.8.1
   firebase_storage: ^13.4.5
-  intl: ^0.20.3
   cached_network_image: ^3.4.1
   http: ^1.6.0
   image_picker: ^1.2.3
@@ -46,6 +45,9 @@ dependencies:
   lottie: ^3.5.1
   confetti: ^0.8.0
   printing: ^5.15.0
+  flutter_localizations:
+    sdk: flutter
+  easy_localization: ^3.0.8
 
 
 
@@ -71,6 +73,7 @@ flutter:
     - assets/sounds/error_sound.mp3
     - assets/sounds/police_alert.mp3
     - assets/sounds/barrier_alert.mp3
+    - assets/translations/
     - assets/sounds/speed_alert.mp3
     - assets/vehicles.json
     - assets/front.png

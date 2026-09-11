@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class SosPage extends StatelessWidget {
   const SosPage({super.key});
@@ -7,10 +8,12 @@ class SosPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar:
-          AppBar(title: const Text("SOS Alert"), backgroundColor: Colors.red),
+          AppBar(title: Text('home.sos_alert'.tr()), backgroundColor: Colors.red),
       body: const Center(
         child: Text("SOS Page - SOS Logic should be implemented here"),
       ),
     );
   }
 }
+
+

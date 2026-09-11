@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:aiaprtd_member/core/providers/theme_provider.dart';
 import 'package:aiaprtd_member/core/providers/earnings_provider.dart';
@@ -41,7 +42,7 @@ class _EarningsPageState extends State<EarningsPage> {
       backgroundColor: bgColor,
       appBar: AppBar(
         title: Text(
-          "My Earnings",
+          'finance.my_earnings'.tr(),
           style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
         ),
         centerTitle: true,
@@ -102,13 +103,13 @@ class _EarningsPageState extends State<EarningsPage> {
                             scrollDirection: Axis.horizontal,
                             child: Row(
                               children: [
-                                _buildTimePeriodChip("Daily", provider, isDark),
+                                _buildTimePeriodChip('finance.daily'.tr(), provider, isDark),
                                 const SizedBox(width: 8),
                                 _buildTimePeriodChip(
-                                    "Weekly", provider, isDark),
+                                    'finance.weekly'.tr(), provider, isDark),
                                 const SizedBox(width: 8),
                                 _buildTimePeriodChip(
-                                    "Monthly", provider, isDark),
+                                    'finance.monthly'.tr(), provider, isDark),
                               ],
                             ),
                           ),
@@ -127,7 +128,7 @@ class _EarningsPageState extends State<EarningsPage> {
 
                           // Filters Row
                           Text(
-                            "Trip History",
+                            'finance.trip_history'.tr(),
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -139,13 +140,13 @@ class _EarningsPageState extends State<EarningsPage> {
                             scrollDirection: Axis.horizontal,
                             child: Row(
                               children: [
-                                _buildFilterChip("All", isDark),
+                                _buildFilterChip('finance.all'.tr(), isDark),
                                 const SizedBox(width: 8),
-                                _buildFilterChip("Bookings", isDark),
+                                _buildFilterChip('finance.bookings'.tr(), isDark),
                                 const SizedBox(width: 8),
-                                _buildFilterChip("Pickups", isDark),
+                                _buildFilterChip('finance.pickups'.tr(), isDark),
                                 const SizedBox(width: 8),
-                                _buildFilterChip("Cancelled", isDark),
+                                _buildFilterChip('finance.cancelled'.tr(), isDark),
                               ],
                             ),
                           ),

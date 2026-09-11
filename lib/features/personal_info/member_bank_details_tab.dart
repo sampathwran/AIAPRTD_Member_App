@@ -1,6 +1,7 @@
 // ignore_for_file: spell_check_on_languages
 
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:local_auth/local_auth.dart'; // 💡 NEW: Local Auth package
@@ -185,7 +186,7 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
     _loadExistingData(bankData);
 
     if (paymentProvider.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: CircularProgressIndicator());
     }
 
     return SingleChildScrollView(
@@ -222,7 +223,7 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
                     icon: Icon(
                         _isEditing ? Icons.close : Icons.security_rounded,
                         size: 18),
-                    label: Text(_isEditing ? "Cancel" : "Verify & Edit"),
+                    label: Text(_isEditing ? "Cancel" : 'profile.verify_edit'.tr()),
                   ),
               ],
             ),
@@ -335,7 +336,7 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
                         },
                   child: paymentProvider.isLocalLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
+                      : Text(
                           "Save Bank Details",
                           style: TextStyle(
                             fontSize: 16,
@@ -406,7 +407,7 @@ class _BankDetailsTabState extends State<BankDetailsTab> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               "ACCOUNT HOLDER",
               style: TextStyle(color: Colors.white54, fontSize: 10),
             ),

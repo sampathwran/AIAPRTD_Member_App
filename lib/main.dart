@@ -1,6 +1,7 @@
 // ignore_for_file: spell_check_on_languages, spell_check_on_word
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:ui' as ui;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:aiaprtd_member/firebase_options.dart';
 import 'package:aiaprtd_member/core/services/notification_service.dart';
@@ -41,9 +42,11 @@ import 'package:aiaprtd_member/features/income/income_page.dart';
 
 import 'package:aiaprtd_member/features/home/global_chat_button.dart';
 import 'package:aiaprtd_member/core/providers/ads_provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
 
   // Override debugPrint to suppress console output and improve performance
   debugPrint = (String? message, {int? wrapWidth}) {};
@@ -70,26 +73,31 @@ void main() async {
   }
 
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ProfileProvider()),
-        ChangeNotifierProvider(create: (_) => KYCProvider()),
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => VehicleProvider()),
-        ChangeNotifierProvider(create: (_) => PaymentProvider()),
-        ChangeNotifierProvider(
-            create: (_) =>
-                BookingProvider()), // Added BookingProvider to MultiProvider
-        ChangeNotifierProvider(create: (_) => MeterProvider()),
-        ChangeNotifierProvider(create: (_) => AdsProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => EarningsProvider()),
-        ChangeNotifierProvider(create: (_) => FinanceProvider()),
-        ChangeNotifierProvider(create: (_) => SettingsProvider()),
-        ChangeNotifierProvider(create: (_) => SosProvider()),
-        ChangeNotifierProvider(create: (_) => CommunityAssistanceProvider()),
-      ],
-      child: const MyApp(),
+    EasyLocalization(
+      supportedLocales: const [Locale('en', 'US'), Locale('si', 'LK'), Locale('ta', 'LK')],
+      path: 'assets/translations',
+      fallbackLocale: const Locale('en', 'US'),
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => ProfileProvider()),
+          ChangeNotifierProvider(create: (_) => KYCProvider()),
+          ChangeNotifierProvider(create: (_) => AuthProvider()),
+          ChangeNotifierProvider(create: (_) => VehicleProvider()),
+          ChangeNotifierProvider(create: (_) => PaymentProvider()),
+          ChangeNotifierProvider(
+              create: (_) =>
+                  BookingProvider()), // Added BookingProvider to MultiProvider
+          ChangeNotifierProvider(create: (_) => MeterProvider()),
+          ChangeNotifierProvider(create: (_) => AdsProvider()),
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ChangeNotifierProvider(create: (_) => EarningsProvider()),
+          ChangeNotifierProvider(create: (_) => FinanceProvider()),
+          ChangeNotifierProvider(create: (_) => SettingsProvider()),
+          ChangeNotifierProvider(create: (_) => SosProvider()),
+          ChangeNotifierProvider(create: (_) => CommunityAssistanceProvider()),
+        ],
+        child: const MyApp(),
+      ),
     ),
   );
 }
@@ -104,6 +112,9 @@ class MyApp extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
+          localizationsDelegates: context.localizationDelegates,
+          supportedLocales: context.supportedLocales,
+          locale: context.locale,
           navigatorKey: navigatorKey,
           debugShowCheckedModeBanner: false,
           title: 'AIAPRTD Member',
@@ -113,7 +124,7 @@ class MyApp extends StatelessWidget {
           darkTheme: AppTheme.darkTheme,
           builder: (context, child) {
             return Directionality(
-              textDirection: TextDirection.ltr,
+              textDirection: ui.TextDirection.ltr,
               child: Stack(
                 children: [
                   if (child != null) child,

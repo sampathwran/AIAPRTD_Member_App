@@ -1,5 +1,6 @@
 // ignore_for_file: spell_check_on_languages
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:aiaprtd_member/core/providers/vehicle_provider.dart'; // 💡 🎯 Imported the new Provider we created earlier
 import 'package:aiaprtd_member/features/vehicle_info/vehicle_overview_section.dart';
@@ -39,7 +40,7 @@ class _VehicleInfoPageState extends State<VehicleInfoPage> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        title: const Text("Request New Vehicle"),
+        title: Text('profile.request_new_vehicle'.tr()),
         content: ChangeVehicleSection(
           onSubmit: (data) {
             provider.requestAddVehicle(
@@ -69,7 +70,7 @@ class _VehicleInfoPageState extends State<VehicleInfoPage> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Vehicle Profile"),
+        title: Text('profile.vehicle_profile'.tr()),
         centerTitle: true,
         actions: [
           Consumer<VehicleProvider>(
@@ -77,7 +78,7 @@ class _VehicleInfoPageState extends State<VehicleInfoPage> {
               return TextButton.icon(
                 onPressed: () => _showAddVehicleDialog(provider),
                 icon: const Icon(Icons.add_circle_outline, size: 18),
-                label: const Text("Add New"),
+                label: Text('profile.add_new'.tr()),
               );
             },
           ),
@@ -86,7 +87,7 @@ class _VehicleInfoPageState extends State<VehicleInfoPage> {
       body: Consumer<VehicleProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(),
             );
           }
@@ -94,7 +95,7 @@ class _VehicleInfoPageState extends State<VehicleInfoPage> {
           final data = provider.vehicleData;
 
           if (data == null) {
-            return const Center(
+            return Center(
               child: Padding(
                 padding: EdgeInsets.all(20.0),
                 child:

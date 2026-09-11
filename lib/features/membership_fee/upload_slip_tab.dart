@@ -1,6 +1,7 @@
 // ignore_for_file: spell_check_on_languages
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -226,7 +227,7 @@ class _UploadSlipTabState extends State<UploadSlipTab> {
           // ========================================================
           // DATE SELECTION
           // ========================================================
-          Text("Payment Date",
+          Text('finance.payment_date'.tr(),
               style: TextStyle(
                   fontWeight: FontWeight.bold, color: textColor, fontSize: 15)),
           const SizedBox(height: 12),
@@ -275,7 +276,7 @@ class _UploadSlipTabState extends State<UploadSlipTab> {
           // ========================================================
           // IMAGE SELECTION
           // ========================================================
-          Text("Slip Image",
+          Text('finance.slip_image'.tr(),
               style: TextStyle(
                   fontWeight: FontWeight.bold, color: textColor, fontSize: 15)),
           const SizedBox(height: 12),
@@ -370,7 +371,7 @@ class _UploadSlipTabState extends State<UploadSlipTab> {
                       width: 24,
                       child: CircularProgressIndicator(
                           color: Colors.white, strokeWidth: 3))
-                  : const Text("Submit Payment Slip",
+                  : Text('finance.submit_payment_slip'.tr(),
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,

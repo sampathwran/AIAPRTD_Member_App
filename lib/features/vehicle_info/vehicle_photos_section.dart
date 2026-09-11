@@ -29,7 +29,7 @@ class VehiclePhotosSection extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text("Upload $label Photo",
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        content: const Text("Select image source from below:"),
+        content: Text("Select image source from below:"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, ImageSource.camera),
@@ -232,7 +232,7 @@ class VehiclePhotosSection extends StatelessWidget {
                                     width: double.infinity,
                                     height: double.infinity,
                                     fit: BoxFit.cover,
-                                    placeholder: (context, url) => const Center(
+                                    placeholder: (context, url) => Center(
                                       child: SizedBox(
                                         width: 20,
                                         height: 20,
@@ -241,7 +241,7 @@ class VehiclePhotosSection extends StatelessWidget {
                                       ),
                                     ),
                                     errorWidget: (context, url, error) =>
-                                        const Center(
+                                        Center(
                                       child: Icon(Icons.broken_image_rounded,
                                           color: Colors.red),
                                     ),
@@ -266,7 +266,7 @@ class VehiclePhotosSection extends StatelessWidget {
                                     color: Colors.black.withValues(alpha: 0.4),
                                     borderRadius: BorderRadius.circular(14),
                                   ),
-                                  child: const Center(
+                                  child: Center(
                                     child: Icon(
                                         Icons.access_time_filled_rounded,
                                         color: Colors.white,

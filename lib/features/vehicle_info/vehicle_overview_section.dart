@@ -1,5 +1,6 @@
 // ignore_for_file: spell_check_on_languages
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class VehicleOverviewSection extends StatelessWidget {
   final Map data;
@@ -66,8 +67,8 @@ class VehicleOverviewSection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Vehicle Overview",
+                Text(
+                  'profile.vehicle_overview'.tr(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -80,7 +81,7 @@ class VehicleOverviewSection extends StatelessWidget {
                 _infoCard(
                   context,
                   Icons.directions_car,
-                  "Vehicle Brand & Model",
+                  'profile.vehicle_brand_model'.tr(),
                   vehicleName,
                   isDark,
                 ),
@@ -94,7 +95,7 @@ class VehicleOverviewSection extends StatelessWidget {
                       child: _infoCard(
                         context,
                         Icons.pin,
-                        "Plate Number",
+                        'profile.plate_number'.tr(),
                         plateNumber,
                         isDark,
                       ),
@@ -104,7 +105,7 @@ class VehicleOverviewSection extends StatelessWidget {
                       child: _infoCard(
                         context,
                         Icons.category,
-                        "Category",
+                        'profile.category'.tr(),
                         category,
                         isDark,
                       ),

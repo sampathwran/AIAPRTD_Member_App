@@ -1,5 +1,6 @@
 // ignore_for_file: spell_check_on_languages
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 
 import 'package:aiaprtd_member/core/providers/profile_provider.dart';
@@ -173,7 +174,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               const SizedBox(height: 4),
               Text(
-                "Membership ID: ${data['membershipNo'] ?? 'N/A'}",
+                "${'Membership ID:'.tr()} ${data['membershipNo'] ?? 'N/A'}",
                 style: TextStyle(
                   fontSize: 13,
                   color: Theme.of(context).brightness == Brightness.dark

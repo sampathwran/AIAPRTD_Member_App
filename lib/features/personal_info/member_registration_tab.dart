@@ -3,6 +3,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -177,7 +178,7 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
+      builder: (_) => Center(
         child: CircularProgressIndicator(color: Color(0xFF1E3A8A)),
       ),
     );
@@ -225,18 +226,18 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text(
+        title: Text(
           "Confirm Details",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        content: const Text(
+        content: Text(
           "These details will be sent for admin approval. They will not be permanently saved until admin approves them.",
           style: TextStyle(height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancel"),
+            child: Text("Cancel"),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -244,7 +245,7 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text("Submit"),
+            child: Text("Submit"),
           ),
         ],
       ),
@@ -269,7 +270,7 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
         final data = profileProvider.memberData;
 
         if (data == null) {
-          return const Center(
+          return Center(
             child: CircularProgressIndicator(color: Color(0xFF1E3A8A)),
           );
         }
@@ -330,7 +331,7 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                   _buildCardSection([
                     _buildTextField(
                       controller: _fullNameController,
-                      label: "Full Name",
+                      label: 'profile.full_name'.tr(),
                       icon: Icons.person_outline,
                       validatorText: "Enter your full name",
                       isDark: isDark,
@@ -338,7 +339,7 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                     _divider(isDark),
                     _buildTextField(
                       controller: _nicController,
-                      label: "NIC Number",
+                      label: 'profile.nic_number'.tr(),
                       icon: Icons.badge_outlined,
                       validatorText: "Enter your NIC number",
                       isDark: isDark,
@@ -374,7 +375,7 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                         color: isDark ? Colors.white : Colors.black87,
                       ),
                       decoration: _inputDecoration(
-                        "Date of Birth",
+                        'profile.date_of_birth'.tr(),
                         Icons.calendar_month_outlined,
                         isDark: isDark,
                         suffixIcon: Icons.touch_app_rounded,
@@ -479,7 +480,7 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                         documentId: documentId,
                       ),
                       icon: const Icon(Icons.verified_user_rounded),
-                      label: const Text(
+                      label: Text(
                         "Submit & Continue Face Scan",
                         style: TextStyle(
                           fontSize: 15,
@@ -526,7 +527,7 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
         ? "Profile Fully Verified"
         : isRejected
             ? "Verification Rejected"
-            : "Verification in Progress";
+            : 'profile.verification_in_progress'.tr();
 
     final String description = isFullyVerified
         ? "Your personal details and biometric scan are fully verified."
@@ -612,10 +613,10 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                   ),
                   const Divider(height: 1, indent: 65),
                   _statusTile(
-                    title: "Biometric Face Scan",
+                    title: 'profile.biometric_face_scan'.tr(),
                     subtitle: isFaceApproved
                         ? "Face scan verified"
-                        : "Face scan required / pending",
+                        : 'profile.face_scan_required'.tr(),
                     icon: Icons.face_retouching_natural_rounded,
                     color: isFaceApproved ? Colors.blue : Colors.orange,
                     completed: isFaceApproved,
@@ -639,8 +640,8 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                                 ),
                               );
                             },
-                            child: const Text(
-                              "Scan Now",
+                            child: Text(
+                              'profile.scan_now'.tr(),
                               style: TextStyle(fontSize: 11),
                             ),
                           )

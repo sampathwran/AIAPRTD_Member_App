@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart'; // For location
@@ -185,7 +186,7 @@ class _BookingDashboardPageState extends State<BookingDashboardPage> {
           return Scaffold(
             backgroundColor: theme.scaffoldBackgroundColor,
             appBar: AppBar(
-              title: Text("Hires Dashboard",
+              title: Text('profile.hires_dashboard'.tr(),
                   style: TextStyle(
                       fontWeight: FontWeight.w800,
                       color: isDarkMode ? Colors.white : Colors.black87)),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ScheduledButton extends StatelessWidget {
   final VoidCallback onTap;
@@ -17,7 +18,7 @@ class ScheduledButton extends StatelessWidget {
           child: Icon(Icons.calendar_month, color: colorScheme.primary),
         ),
         title: Text(
-          "Scheduled Bookings",
+          'home.scheduled_hires'.tr(),
           style: theme.textTheme.titleMedium
               ?.copyWith(fontWeight: FontWeight.bold),
           maxLines: 1, // Limit to one line
@@ -30,3 +31,4 @@ class ScheduledButton extends StatelessWidget {
     );
   }
 }
+

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -106,13 +107,13 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
           children: [
             Icon(Icons.calendar_month, size: 60, color: Colors.blue.shade100),
             const SizedBox(height: 16),
-            const Text("No Scheduled Bookings",
+            Text('profile.no_scheduled_bookings'.tr(),
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87)),
             const SizedBox(height: 8),
-            const Text("No upcoming bookings found in this radius.",
+            Text('profile.no_upcoming_bookings_radius'.tr(),
                 style: TextStyle(color: Colors.grey)),
           ],
         ),
@@ -272,13 +273,13 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Row(
                           children: [
                             Icon(Icons.verified, color: Colors.blue, size: 16),
                             SizedBox(width: 4),
                             Flexible(
-                                child: Text("Verified Member",
+                                child: Text('profile.verified_member'.tr(),
                                     style: TextStyle(
                                         color: Colors.blue,
                                         fontWeight: FontWeight.bold,
@@ -293,7 +294,7 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
                           Icon(Icons.visibility,
                               color: Colors.grey.shade600, size: 16),
                           const SizedBox(width: 4),
-                          Text("$viewCount views",
+                          Text("$viewCount ${'profile.views'.tr()}",
                               style: TextStyle(
                                   color: Colors.grey.shade700,
                                   fontWeight: FontWeight.bold,
@@ -423,7 +424,7 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
                               ],
                             )),
 
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
                         child: Divider(height: 1),
                       ),
@@ -469,11 +470,11 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
                                       showDialog(
                                           context: context,
                                           builder: (ctx) => AlertDialog(
-                                                  title: const Row(children: [
+                                                  title: Row(children: [
                                                     Icon(Icons.notes,
                                                         color: Colors.blue),
                                                     SizedBox(width: 8),
-                                                    Text("Booking Note"),
+                                                    Text('profile.booking_note'.tr()),
                                                   ]),
                                                   content: Text(data['note']),
                                                   actions: [
@@ -481,7 +482,7 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
                                                         onPressed: () =>
                                                             Navigator.pop(ctx),
                                                         child:
-                                                            const Text("Close"))
+                                                            Text('profile.close'.tr()))
                                                   ]));
                                     },
                                     child: Container(
@@ -493,13 +494,13 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
                                                 BorderRadius.circular(4),
                                             border: Border.all(
                                                 color: Colors.blue.shade200)),
-                                        child: const Row(
+                                        child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Icon(Icons.menu_book,
                                                   color: Colors.blue, size: 14),
                                               SizedBox(width: 4),
-                                              Text("Note",
+                                              Text('profile.note'.tr(),
                                                   style: TextStyle(
                                                       color: Colors.blue,
                                                       fontSize: 10,
@@ -514,7 +515,7 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
                           OutlinedButton.icon(
                             onPressed: () => _showMapPreview(context, data),
                             icon: const Icon(Icons.map, size: 14),
-                            label: const Text("Map",
+                            label: Text('profile.map'.tr(),
                                 style: TextStyle(fontSize: 12)),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.blue,
@@ -549,7 +550,7 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
                     const Icon(Icons.check_circle_outline,
                         color: Colors.greenAccent, size: 48),
                     const SizedBox(height: 8),
-                    const Text("Accepted by",
+                    Text('profile.accepted_by'.tr(),
                         style: TextStyle(color: Colors.white70, fontSize: 14)),
                     Text(acceptedDriverName,
                         style: const TextStyle(
@@ -603,7 +604,7 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
         dropLat == null ||
         dropLng == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Location coordinates not available")));
+          SnackBar(content: Text('profile.location_coordinates_not_available'.tr())));
       return;
     }
 
@@ -698,9 +699,9 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
                   borderRadius: BorderRadius.circular(5),
                 ),
               ),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Text("Route Preview",
+                child: Text('profile.route_preview'.tr(),
                     style:
                         TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ),

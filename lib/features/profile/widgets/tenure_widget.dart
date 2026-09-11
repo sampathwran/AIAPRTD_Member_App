@@ -1,5 +1,6 @@
 // ignore_for_file: spell_check_on_languages
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class TenureWidget extends StatelessWidget {
   final Map<String, dynamic> memberData; // FIXED: Accepts a Map
@@ -22,7 +23,7 @@ class TenureWidget extends StatelessWidget {
                 fontWeight: FontWeight.bold,
                 fontSize:
                     16)), // Reduced font size slightly to prevent overflow
-        const Text("Tenure",
+        Text('profile.tenure'.tr(),
             style: TextStyle(color: Colors.grey, fontSize: 12)),
       ],
     );

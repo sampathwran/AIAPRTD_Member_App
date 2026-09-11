@@ -1,5 +1,6 @@
 // ignore_for_file: spell_check_on_languages
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:aiaprtd_member/core/providers/profile_provider.dart'; // 💡 Changed to new ProfileProvider
 import 'package:aiaprtd_member/features/personal_info/personal_details_tab.dart';
@@ -20,14 +21,13 @@ class PersonalInfoPage extends StatelessWidget {
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          title: const Text("Personal Information"),
+          title: Text("Personal Information"),
           bottom: TabBar(
             labelColor: colorScheme.primary,
             unselectedLabelColor: isDark ? Colors.grey[400] : Colors.grey,
             indicatorColor: colorScheme.primary,
             indicatorWeight: 3,
-            tabs: const [
-              Tab(text: "Personal Details"),
+            tabs: [Tab(text: 'profile.personal_details'.tr()),
               Tab(text: "Bank Details"),
             ],
           ),
@@ -38,7 +38,7 @@ class PersonalInfoPage extends StatelessWidget {
             final data = profileProvider.memberData;
 
             if (data == null) {
-              return const Center(child: CircularProgressIndicator());
+              return Center(child: CircularProgressIndicator());
             }
 
             // 💡 NEW FIX: Even if a new user's Web status is active,

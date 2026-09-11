@@ -26,20 +26,20 @@ class NotificationPage extends StatelessWidget {
     }
   }
 
-  void _markAsRead(String docId, String memberId) {
+  void _markAsRead(String docId, String memberId, String memberNo) {
     FirebaseFirestore.instance.collection('notifications').doc(docId).update({
-      'readBy': FieldValue.arrayUnion([memberId])
+      'readBy': FieldValue.arrayUnion([memberId, memberNo])
     }).catchError((e) => debugPrint("Failed to mark as read: $e"));
   }
 
-  void _markAllAsRead(List<QueryDocumentSnapshot> docs, String memberId) {
+  void _markAllAsRead(List<QueryDocumentSnapshot> docs, String memberId, String memberNo) {
     final batch = FirebaseFirestore.instance.batch();
     for (var doc in docs) {
       final data = doc.data() as Map<String, dynamic>;
       final readBy = List<String>.from(data['readBy'] ?? []);
-      if (!readBy.contains(memberId)) {
+      if (!readBy.contains(memberId) && !readBy.contains(memberNo)) {
         batch.update(doc.reference, {
-          'readBy': FieldValue.arrayUnion([memberId])
+          'readBy': FieldValue.arrayUnion([memberId, memberNo])
         });
       }
     }
@@ -52,6 +52,7 @@ class NotificationPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final profileProv = context.watch<ProfileProvider>();
     final memberId = profileProv.documentId;
+    final memberNo = profileProv.memberNo;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -93,7 +94,7 @@ class NotificationPage extends StatelessWidget {
             // Check target
             final targetType = data['targetType'];
             final targetMembers = data['targetMembers'] as List<dynamic>? ?? [];
-            if (targetType != 'all' && !targetMembers.contains(memberId)) {
+            if (targetType != 'all' && !targetMembers.contains(memberId) && !targetMembers.contains(memberNo)) {
               return false;
             }
 
@@ -160,7 +161,7 @@ class NotificationPage extends StatelessWidget {
                   child: Align(
                     alignment: Alignment.centerRight,
                     child: TextButton.icon(
-                      onPressed: () => _markAllAsRead(docs, memberId),
+                      onPressed: () => _markAllAsRead(docs, memberId, memberNo),
                       icon: const Icon(Icons.done_all,
                           size: 18, color: Colors.blue),
                       label: const Text("Mark all as read",
@@ -187,7 +188,7 @@ class NotificationPage extends StatelessWidget {
 
                     return GestureDetector(
                       onTap: () {
-                        if (!isRead) _markAsRead(doc.id, memberId);
+                        if (!isRead) _markAsRead(doc.id, memberId, memberNo);
                       },
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 12),

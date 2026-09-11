@@ -1,5 +1,6 @@
-// ignore_for_file: spell_check_on_languages, spell_check_on_word
+﻿// ignore_for_file: spell_check_on_languages, spell_check_on_word
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 // Import the newly created AuthService
 import 'package:aiaprtd_member/features/auth/auth_service.dart';
@@ -35,11 +36,11 @@ class ProfileMenuWidget extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
       child: Column(
         children: [
-          _buildSection(context, "Personal Information", [
-            _buildTile(context, Icons.person_outline, "Personal Information",
+          _buildSection(context, 'profile.personal_details'.tr(), [
+            _buildTile(context, Icons.person_outline, 'profile.personal_details'.tr(),
                 () => _nav(context, const PersonalInfoPage())),
             _buildTile(
-                context, Icons.directions_car_outlined, "Vehicle Information",
+                context, Icons.directions_car_outlined, 'profile.vehicle_details'.tr(),
                 () {
               final String memberNo =
                   Provider.of<ProfileProvider>(context, listen: false).memberNo;
@@ -52,30 +53,30 @@ class ProfileMenuWidget extends StatelessWidget {
                           : memberNo));
             }),
           ]),
-          _buildSection(context, "My Finance", [
+          _buildSection(context, 'profile.my_finance'.tr(), [
             _buildTile(context, Icons.account_balance_wallet_outlined,
-                "Earning", () => _nav(context, const EarningsPage())),
+                'profile.earning'.tr(), () => _nav(context, const EarningsPage())),
             _buildTile(
                 context,
                 Icons.card_membership_outlined,
-                "Membership Fee",
+                'profile.membership_fee'.tr(),
                 () => _nav(context, const MembershipFeePage())),
-            _buildTile(context, Icons.receipt_long_outlined, "App Usage Charge",
+            _buildTile(context, Icons.receipt_long_outlined, 'profile.app_usage_charge'.tr(),
                 () => _nav(context, const AppUsagePage())),
-            _buildTile(context, Icons.savings_outlined, "Saving",
+            _buildTile(context, Icons.savings_outlined, 'profile.saving'.tr(),
                 () => _nav(context, const SavingPage())),
           ]),
-          _buildSection(context, "General", [
+          _buildSection(context, '', [
             // Newly added My Bookings Menu (above Ride History)
-            _buildTile(context, Icons.library_books_outlined, "My Bookings",
+            _buildTile(context, Icons.library_books_outlined, 'profile.my_bookings'.tr(),
                 () => _nav(context, const MyBookingPage())),
-            _buildTile(context, Icons.star_outline, "Member Benefits",
+            _buildTile(context, Icons.star_outline, 'profile.member_benefits'.tr(),
                 () => _nav(context, const MemberBenefitsPage())),
-            _buildTile(context, Icons.support_agent, "Support Tickets",
+            _buildTile(context, Icons.support_agent, 'profile.support_tickets'.tr(),
                 () => _nav(context, const SupportTicketsPage())),
-            _buildTile(context, Icons.how_to_vote, "Votes",
+            _buildTile(context, Icons.how_to_vote, 'profile.votes'.tr(),
                 () => _nav(context, const VotesPage())),
-            _buildTile(context, Icons.notifications_none, "Notification",
+            _buildTile(context, Icons.notifications_none, 'profile.notification'.tr(),
                 () => _nav(context, const NotificationPage())),
           ]),
           _buildSettingsSection(context),
@@ -95,7 +96,7 @@ class ProfileMenuWidget extends StatelessWidget {
         return AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          title: const Text('Confirm Logout',
+          title: Text('Confirm Logout',
               style: TextStyle(fontWeight: FontWeight.bold)),
           content: const Text(
               'Are you sure you want to log out? All active sessions will be closed.'),
@@ -132,7 +133,7 @@ class ProfileMenuWidget extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 25, bottom: 12, left: 10),
-          child: Text("ACCOUNT",
+          child: Text('profile.account'.tr(),
               style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 12,
@@ -153,7 +154,7 @@ class ProfileMenuWidget extends StatelessWidget {
             color: Colors.transparent,
             child: ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text("Logout",
+              title: Text('profile.log_out'.tr(),
                   style: TextStyle(
                       color: Colors.red, fontWeight: FontWeight.bold)),
               onTap: () => _showLogoutDialog(context),
@@ -245,7 +246,7 @@ class ProfileMenuWidget extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 25, bottom: 12, left: 10),
-          child: Text("APP SETTINGS",
+          child: Text('profile.app_settings'.tr(),
               style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 12,
@@ -280,26 +281,26 @@ class ProfileMenuWidget extends StatelessWidget {
                 child: Icon(Icons.settings_outlined,
                     color: isDarkMode ? Colors.white : Colors.black87),
               ),
-              title: const Text("App Configuration",
+              title: Text('profile.app_configuration'.tr(),
                   style: TextStyle(fontWeight: FontWeight.w600)),
               children: [
-                _buildTile(context, Icons.dark_mode_outlined, "Dark Mode",
+                _buildTile(context, Icons.dark_mode_outlined, 'profile.dark_mode'.tr(),
                     () => _nav(context, const DarkModePage())),
-                _buildTile(context, Icons.volume_up_outlined, "App Volume",
+                _buildTile(context, Icons.volume_up_outlined, 'profile.app_volume'.tr(),
                     () => _nav(context, const AppVolumePage())),
-                _buildTile(context, Icons.language, "Language",
+                _buildTile(context, Icons.language, 'profile.language'.tr(),
                     () => _nav(context, const LanguagePage())),
-                _buildTile(context, Icons.help_outline, "Help Center",
+                _buildTile(context, Icons.help_outline, 'profile.help_center'.tr(),
                     () => _nav(context, const HelpCenterPage())),
                 _buildTile(
                     context,
                     Icons.privacy_tip_outlined,
-                    "Privacy Policy",
+                    'profile.privacy_policy'.tr(),
                     () => _nav(context, const PrivacyPolicyPage())),
                 _buildTile(
                     context,
                     Icons.description_outlined,
-                    "Terms & Conditions",
+                    'profile.terms_conditions'.tr(),
                     () => _nav(context, const TermsConditionsPage())),
               ],
             ),
@@ -309,3 +310,6 @@ class ProfileMenuWidget extends StatelessWidget {
     );
   }
 }
+
+
+

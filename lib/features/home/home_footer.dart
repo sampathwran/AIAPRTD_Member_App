@@ -1,6 +1,7 @@
-// ignore_for_file: spell_check_on_languages, spell_check_on_word
+﻿// ignore_for_file: spell_check_on_languages, spell_check_on_word
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 // ignore: depend_on_referenced_packages
 import 'package:audioplayers/audioplayers.dart';
@@ -58,7 +59,7 @@ class _HomeFooterState extends State<HomeFooter> {
       try {
         await _audioPlayer.play(AssetSource('assets/sounds/off_sound.mp3'));
       } catch (e) {
-        debugPrint("❌ In-built Audio Player Error: $e");
+        debugPrint("âŒ In-built Audio Player Error: $e");
       }
     }
   }
@@ -225,7 +226,7 @@ class _HomeFooterState extends State<HomeFooter> {
                 const SizedBox(height: 20),
 
                 // ==========================================================
-                // 📊 STATISTICS SECTION
+                // ðŸ“Š STATISTICS SECTION
                 // ==========================================================
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -281,7 +282,7 @@ class _HomeFooterState extends State<HomeFooter> {
                   padding: const EdgeInsets.only(left: 20, bottom: 12),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text("Shortcuts",
+                    child: Text('home.shortcuts'.tr(),
                         style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -345,7 +346,7 @@ class _HomeFooterState extends State<HomeFooter> {
                                   scaffoldMessenger.showSnackBar(
                                     const SnackBar(
                                         content: Text(
-                                            "Failed to go offline. Try again! ❌"),
+                                            "Failed to go offline. Try again! âŒ"),
                                         behavior: SnackBarBehavior.floating),
                                   );
                                 }
@@ -398,3 +399,4 @@ class _HomeFooterState extends State<HomeFooter> {
     );
   }
 }
+
