@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
 
 import 'package:aiaprtd_member/core/providers/profile_provider.dart';
@@ -63,7 +64,6 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       // 1. STRICT CHECK: Must exist in `member` collection!
       String targetEmail = '';
-      String inputDocId = '';
 
       var memberSnapshot = await FirebaseFirestore.instance
           .collection('member')
@@ -81,7 +81,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (memberSnapshot.docs.isNotEmpty) {
         targetEmail = memberSnapshot.docs.first.data()['user_email'] ?? '';
-        inputDocId = memberSnapshot.docs.first.id;
       } else {
         // Not in member collection!
         // STRICT RULE: MUST GO TO FIRST TIME LOGIN
@@ -124,34 +123,66 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       if (!mounted) return;
-
       if (userCredential.user != null) {
-        final profileProvider =
-            Provider.of<ProfileProvider>(context, listen: false);
+        var data = memberSnapshot.docs.first.data();
+        
+        // --- DEVICE TOKEN CHECK (Skip OTP if same device) ---
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-        // Fetch data into Provider
-        bool dataLoaded = await profileProvider.fetchAndStoreMemberData();
-
-        // Update persistent device token
-        String deviceId = await authProvider.getPersistentDeviceId();
-        await authProvider.updateDeviceToken(
-          collectionSource: profileProvider.collectionSource,
-          documentId: profileProvider.documentId,
-          currentDeviceToken: deviceId,
-        );
-
-        if (!mounted) return;
-
-        if (dataLoaded) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const HomePage()),
-          );
-        } else {
-          _showSnackBar(
-              "Auth Success, but failed to sync Firestore data. Please contact Admin.");
-          await _auth.signOut();
+        String currentToken = await authProvider.getPersistentDeviceId();
+        String? savedToken = data['currentDeviceToken']?.toString();
+        
+        if (savedToken != null && currentToken == savedToken) {
+           _showSnackBar("Login Successful!");
+           Navigator.pushReplacementNamed(context, '/home');
+           return;
         }
+
+        // Password is correct, but it's a DIFFERENT device! 
+        // Let's sign out immediately to prevent bypassing OTP via app restart.
+        await _auth.signOut();
+        
+        // Extract phone number from memberSnapshot
+        String? rawMobile = data['mobile'] ?? 
+                            data['mobile_number'] ?? 
+                            data['whatsapp_number'] ?? 
+                            data['whatsapp'] ?? 
+                            data['phone'] ?? 
+                            data['contact_no'];
+                            
+        if (rawMobile == null || rawMobile.trim().isEmpty) {
+            _showSnackBar("Mobile number not found. Please contact Admin.");
+            setState(() => _isLoading = false);
+            return;
+        }
+        
+        String mobileNumber = rawMobile.trim();
+        if (mobileNumber.startsWith('0')) {
+            mobileNumber = '+94${mobileNumber.substring(1)}';
+        } else if (!mobileNumber.startsWith('+')) {
+            mobileNumber = '+$mobileNumber';
+        }
+        
+        _showSnackBar("Sending SMS to $mobileNumber...");
+
+        // Trigger Firebase Phone Auth
+        await FirebaseAuth.instance.verifyPhoneNumber(
+          phoneNumber: mobileNumber,
+          verificationCompleted: (PhoneAuthCredential credential) async {
+            // Auto-resolution
+            await FirebaseAuth.instance.signInWithCredential(credential);
+            setState(() => _isLoading = true);
+            await _finalizeLoginAfterOTP(targetEmail, password);
+          },
+          verificationFailed: (FirebaseAuthException e) {
+            _showSnackBar(e.message ?? 'Phone verification failed.');
+            setState(() => _isLoading = false);
+          },
+          codeSent: (String verificationId, int? resendToken) {
+            setState(() => _isLoading = false);
+            _showOTPDialog(verificationId, targetEmail, password);
+          },
+          codeAutoRetrievalTimeout: (String verificationId) {},
+        );
       }
     } on FirebaseAuthException catch (e) {
       String errorMsg = "Login Failed. Please try again.";
@@ -177,6 +208,136 @@ class _LoginScreenState extends State<LoginScreen> {
           content: Text(message),
           backgroundColor: Theme.of(context).colorScheme.error),
     );
+  }
+
+  void _showOTPDialog(String verificationId, String targetEmail, String password) {
+    final otpController = TextEditingController();
+    bool isVerifying = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('auth.enter_sms_code'.tr()),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('auth.enter_6_digit'.tr()),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: otpController,
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 8.0),
+                    decoration: const InputDecoration(
+                      hintText: "------",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isVerifying
+                      ? null
+                      : () {
+                          Navigator.of(dialogContext).pop();
+                          if (mounted) setState(() => _isLoading = false);
+                        },
+                  child: Text('general.cancel'.tr()),
+                ),
+                ElevatedButton(
+                  onPressed: isVerifying
+                      ? null
+                      : () async {
+                          if (otpController.text.trim().length != 6) {
+                            _showSnackBar('Please enter the 6-digit code');
+                            return;
+                          }
+                          setDialogState(() => isVerifying = true);
+                          try {
+                            PhoneAuthCredential credential = PhoneAuthProvider.credential(
+                              verificationId: verificationId,
+                              smsCode: otpController.text.trim(),
+                            );
+                            await FirebaseAuth.instance.signInWithCredential(credential);
+                            if (dialogContext.mounted) {
+                              Navigator.of(dialogContext).pop();
+                            }
+                            if (mounted) {
+                              setState(() => _isLoading = true);
+                            }
+                            await _finalizeLoginAfterOTP(targetEmail, password);
+                          } catch (e) {
+                            setDialogState(() => isVerifying = false);
+                            _showSnackBar('Invalid SMS Code. Please try again.');
+                          }
+                        },
+                  child: isVerifying
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : Text('auth.verify'.tr()),
+                ),
+              ],
+            );
+          }
+        );
+      },
+    );
+  }
+
+  Future<void> _finalizeLoginAfterOTP(String targetEmail, String password) async {
+    try {
+      // Sign out from Phone Auth session
+      await _auth.signOut();
+      
+      // Sign back in with Email and Password
+      await _auth.signInWithEmailAndPassword(email: targetEmail, password: password);
+      
+      if (!mounted) return;
+      
+      final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+      // Fetch data into Provider
+      bool dataLoaded = await profileProvider.fetchAndStoreMemberData();
+
+      // Get FCM Token
+      String? fcmToken;
+      try {
+        fcmToken = await FirebaseMessaging.instance.getToken();
+      } catch (e) {
+        debugPrint("Error fetching FCM token: $e");
+      }
+
+      // Update persistent device token
+      String deviceId = await authProvider.getPersistentDeviceId();
+      await authProvider.updateDeviceToken(
+        collectionSource: profileProvider.collectionSource,
+        documentId: profileProvider.documentId,
+        currentDeviceToken: deviceId,
+        fcmToken: fcmToken,
+      );
+
+      if (!mounted) return;
+
+      if (dataLoaded) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      } else {
+        _showSnackBar("Auth Success, but failed to sync Firestore data. Please contact Admin.");
+        await _auth.signOut();
+      }
+    } catch (e) {
+      _showSnackBar("Error finalizing login: $e");
+      setState(() => _isLoading = false);
+    }
   }
 
   @override

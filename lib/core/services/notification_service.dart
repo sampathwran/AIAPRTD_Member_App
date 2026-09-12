@@ -86,12 +86,14 @@ class NotificationService {
                 debugPrint(
                     "🔔 New Notification Detected: ${data['title']} (Time diff: ${now.difference(timeToCompare.toDate()).inMinutes}m)");
                 if (now.difference(timeToCompare.toDate()).inMinutes < 5) {
-                  debugPrint("🔔 Triggering Local Notification!");
-                  _showNotification(
+                  debugPrint("Triggering Local Notification skipped (Handled by FCM)");
+                  /*
+                  showNotification(
                     id: change.doc.id.hashCode,
                     title: data['title'] ?? 'New Notification',
                     body: data['body'] ?? '',
                   );
+                  */
                 } else {
                   debugPrint("🔕 Notification too old to pop up.");
                 }
@@ -103,7 +105,7 @@ class NotificationService {
     });
   }
 
-  Future<void> _showNotification(
+  Future<void> showNotification(
       {required int id, required String title, required String body}) async {
     if (kIsWeb)
       return; // local notifications don't work on web easily without service workers

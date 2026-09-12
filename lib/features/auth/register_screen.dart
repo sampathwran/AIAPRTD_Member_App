@@ -165,7 +165,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _signInAndRegisterWP(PhoneAuthCredential credential) async {
     try {
       // 1. Sign in to Firebase with the verified phone credential
-      await FirebaseAuth.instance.signInWithCredential(credential);
+      // If Auto-resolution already signed us in, skip this to avoid session-expired error
+      if (FirebaseAuth.instance.currentUser == null) {
+        try {
+          await FirebaseAuth.instance.signInWithCredential(credential);
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'session-expired') {
+            // Sometimes it throws session-expired but actually signed in
+            if (FirebaseAuth.instance.currentUser == null) {
+              rethrow;
+            }
+          } else {
+            rethrow;
+          }
+        }
+      }
 
       // 2. Call our WordPress API to create the user
       final response = await http.post(
@@ -176,6 +190,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           'first_name': _firstNameController.text.trim(),
           'last_name': _lastNameController.text.trim(),
           'whatsapp': _whatsappController.text.trim(),
+          'whatsapp_number': _whatsappController.text.trim(),
+          'mobile': _whatsappController.text.trim(),
+          'mobile_number': _whatsappController.text.trim(),
+          'phone': _whatsappController.text.trim(),
+          'contact_no': _whatsappController.text.trim(),
           'secure_token': 'AIA_SUPER_SECRET_2026', // Bypass WP OTP
         },
       );

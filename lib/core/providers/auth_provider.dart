@@ -124,6 +124,7 @@ class AuthProvider with ChangeNotifier {
     required String collectionSource,
     required String documentId,
     required String currentDeviceToken,
+    String? fcmToken,
   }) async {
     try {
       debugPrint(
@@ -140,6 +141,10 @@ class AuthProvider with ChangeNotifier {
           'currentDeviceToken':
               currentDeviceToken, // 👈 Insert new phone's ID into Firestore
         };
+        
+        if (fcmToken != null) {
+          updates['fcmToken'] = fcmToken;
+        }
 
         // If the token is different, it means they logged in from a new device!
         // We reset face verification so they can't go online until they verify again.

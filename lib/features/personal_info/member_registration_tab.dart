@@ -580,6 +580,28 @@ class _MemberRegistrationTabState extends State<MemberRegistrationTab> {
                 ),
               ),
             ],
+            if (isRejected) ...[
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange.shade700,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text(
+                  "Re-submit Application",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+                onPressed: () async {
+                  final kycProvider = Provider.of<KYCProvider>(context, listen: false);
+                  await kycProvider.resetKYCSubmission(documentId, membershipNo);
+                },
+              ),
+            ],
             const SizedBox(height: 30),
             Container(
               decoration: BoxDecoration(

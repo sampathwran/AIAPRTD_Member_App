@@ -8,8 +8,15 @@ class CancellationWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final int totalAccepted = memberData['totalAcceptedCount'] ?? 0;
-    final int totalCancelled = memberData['totalCancelledCount'] ?? 0;
+    int totalAccepted = 0;
+    int totalCancelled = 0;
+    
+    if (memberData['totalAcceptedCount'] != null) {
+      totalAccepted = int.tryParse(memberData['totalAcceptedCount'].toString()) ?? 0;
+    }
+    if (memberData['totalCancelledCount'] != null) {
+      totalCancelled = int.tryParse(memberData['totalCancelledCount'].toString()) ?? 0;
+    }
 
     double percent = 0.0;
     if (totalAccepted > 0) {

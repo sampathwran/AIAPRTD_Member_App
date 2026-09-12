@@ -44,6 +44,14 @@ import 'package:aiaprtd_member/features/home/global_chat_button.dart';
 import 'package:aiaprtd_member/core/providers/ads_provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  debugPrint("Handling a background message: ${message.messageId}");
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
@@ -58,6 +66,29 @@ void main() async {
         options: DefaultFirebaseOptions.currentPlatform,
       );
     }
+    
+    // Set FCM background handler
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    
+    // Request permission for push notifications
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    
+    // Listen to FCM messages when app is in foreground
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint("Foreground FCM received: ${message.notification?.title}");
+      if (message.notification != null) {
+        NotificationService().showNotification(
+          id: message.messageId.hashCode,
+          title: message.notification!.title ?? 'Notification',
+          body: message.notification!.body ?? '',
+        );
+      }
+    });
+    
   } catch (e) {
     debugPrint("Firebase initialization error: $e");
   }

@@ -686,57 +686,17 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
           return;
         }
 
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (dialogContext) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              title: const Row(
-                children: [
-                  Icon(
-                    Icons.warning_amber_rounded,
-                    color: Colors.redAccent,
-                  ),
-                  SizedBox(width: 10),
-                  Text(
-                    'Session Expired',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              content: const Text(
-                'You have been logged out because your account was logged into from another device.',
-                style: TextStyle(fontSize: 14),
-              ),
-              actions: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                  ),
-                  onPressed: () {
-                    Navigator.pop(dialogContext);
-
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/login',
-                      (route) => false,
-                    );
-                  },
-                  child: const Text(
-                    'OK',
-                    style: TextStyle(
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Logged in from another device. You have been logged out.'),
+            backgroundColor: Colors.redAccent,
+            duration: Duration(seconds: 8),
+          ),
+        );
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/login',
+          (route) => false,
         );
       },
       onError: (error) {

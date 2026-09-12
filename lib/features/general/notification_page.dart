@@ -186,11 +186,7 @@ class NotificationPage extends StatelessWidget {
                     final Timestamp? timeStamp =
                         data['scheduledAt'] ?? data['createdAt'];
 
-                    return GestureDetector(
-                      onTap: () {
-                        if (!isRead) _markAsRead(doc.id, memberId, memberNo);
-                      },
-                      child: Container(
+                    return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
                           color: isRead
@@ -208,58 +204,61 @@ class NotificationPage extends StatelessWidget {
                                       ? Colors.blue.shade800
                                       : Colors.blue.shade200)),
                         ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          leading: CircleAvatar(
-                            backgroundColor: isRead
-                                ? (isDark
-                                    ? Colors.grey.shade800
-                                    : Colors.grey.shade200)
-                                : (isDark
-                                    ? Colors.blue.shade800
-                                    : Colors.blue.shade100),
-                            child: Icon(
-                              isRead
-                                  ? Icons.notifications_none
-                                  : Icons.notifications_active,
-                              color: isRead
-                                  ? (isDark
-                                      ? Colors.grey.shade500
-                                      : Colors.grey)
-                                  : (isDark
-                                      ? Colors.blue.shade200
-                                      : Colors.blue),
+                        child: Theme(
+                          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                          child: ExpansionTile(
+                            tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            onExpansionChanged: (expanded) {
+                              if (expanded && !isRead) {
+                                _markAsRead(doc.id, memberId, memberNo);
+                              }
+                            },
+                            leading: CircleAvatar(
+                              backgroundColor: isRead
+                                  ? (isDark ? Colors.grey.shade800 : Colors.grey.shade200)
+                                  : (isDark ? Colors.blue.shade800 : Colors.blue.shade100),
+                              child: Icon(
+                                isRead ? Icons.notifications_none : Icons.notifications_active,
+                                color: isRead
+                                    ? (isDark ? Colors.grey.shade500 : Colors.grey)
+                                    : (isDark ? Colors.blue.shade200 : Colors.blue),
+                              ),
                             ),
-                          ),
-                          title: Text(
-                            title,
-                            style: TextStyle(
-                              fontWeight:
-                                  isRead ? FontWeight.w500 : FontWeight.bold,
-                              color: isDark ? Colors.white : Colors.black87,
+                            title: Text(
+                              title,
+                              style: TextStyle(
+                                fontWeight: isRead ? FontWeight.w500 : FontWeight.bold,
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
                             ),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            subtitle: Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: Text(
+                                _formatTime(timeStamp),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isDark ? Colors.grey.shade500 : Colors.blueGrey,
+                                ),
+                              ),
+                            ),
                             children: [
-                              const SizedBox(height: 4),
-                              Text(body,
-                                  style: TextStyle(
-                                      color: isDark
-                                          ? Colors.grey.shade300
-                                          : Colors.black87)),
-                              const SizedBox(height: 8),
-                              Text(_formatTime(timeStamp),
-                                  style: TextStyle(
-                                      fontSize: 11,
-                                      color: isDark
-                                          ? Colors.grey.shade500
-                                          : Colors.blueGrey)),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    body,
+                                    style: TextStyle(
+                                      color: isDark ? Colors.grey.shade300 : Colors.black87,
+                                      fontSize: 14,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                      ),
                     );
                   },
                 ),

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
+import 'package:provider/provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:aiaprtd_member/core/providers/auth_provider.dart';
 
 class FirstTimeLoginScreen extends StatefulWidget {
   const FirstTimeLoginScreen({super.key});
@@ -29,6 +32,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
   String? _sourceCollection;
   String? _verificationId;
   String? _mobileNumber;
+  Map<String, dynamic>? _memberData;
 
   @override
   void dispose() {
@@ -93,19 +97,39 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
       }
 
       // Record found! Extract details
+      _memberData = memberData;
       _targetEmail = memberData['user_email'] ?? memberData['email'];
       _targetUid = targetUid;
       _sourceCollection = sourceCollection;
       
-      String? rawMobile = memberData['mobile'] ?? memberData['whatsapp_number'] ?? memberData['whatsapp'];
+      String? rawMobile = memberData['mobile'] ?? 
+                          memberData['mobile_number'] ?? 
+                          memberData['whatsapp_number'] ?? 
+                          memberData['whatsapp'] ?? 
+                          memberData['phone'] ?? 
+                          memberData['contact_no'];
 
+      // Add a debug print and dialog to see EXACTLY what fields are in memberData!
+      debugPrint("🔍 memberData fields: ${memberData.keys.toList()}");
+      debugPrint("🔍 memberData values: $memberData");
+      
       if (_targetEmail == null || _targetEmail!.isEmpty) {
         _showSnackBar("Associated email not found in record. Contact Admin.", Colors.redAccent);
         setState(() => _isLoading = false);
         return;
       }
-      
+
       if (rawMobile == null || rawMobile.isEmpty) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text("Debug: Mobile Field Not Found"),
+            content: SingleChildScrollView(
+              child: Text("Available fields in Firestore:\n\n${memberData!.keys.join(', ')}\n\nValues:\n$memberData"),
+            ),
+            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text("OK"))]
+          )
+        );
         _showSnackBar("Associated Mobile Number not found in record. Contact Admin.", Colors.redAccent);
         setState(() => _isLoading = false);
         return;
@@ -259,16 +283,47 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
           'activatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
 
-        // Update member collection if it was the source
-        if (_sourceCollection == 'member' && _targetUid != null) {
+        // CRITICAL FIX: ALWAYS copy activated web_sync_members into the 'member' collection!
+        // This ensures they appear in the Admin Dashboard and can log in normally via login_screen.dart.
+        if (_targetUid != null) {
+            Map<String, dynamic> memberSyncData = {};
+            if (_memberData != null) {
+              memberSyncData = Map<String, dynamic>.from(_memberData!);
+            }
+            memberSyncData['auth_uid'] = user.uid;
+            memberSyncData['isProfileComplete'] = true;
+            memberSyncData['activatedAt'] = FieldValue.serverTimestamp();
+            
+            // Generate fullName if missing
+            if (!memberSyncData.containsKey('fullName') || memberSyncData['fullName'] == null || memberSyncData['fullName'].toString().trim().isEmpty) {
+               String fName = memberSyncData['firstName']?.toString() ?? memberSyncData['first_name']?.toString() ?? '';
+               String lName = memberSyncData['lastName']?.toString() ?? memberSyncData['last_name']?.toString() ?? '';
+               String combined = '$fName $lName'.trim();
+               if (combined.isNotEmpty) {
+                  memberSyncData['fullName'] = combined;
+               }
+            }
+            
+            // Set some default states for the Admin Dashboard
+            if (!memberSyncData.containsKey('status')) memberSyncData['status'] = 'active member';
+            if (!memberSyncData.containsKey('onlineStatus')) memberSyncData['onlineStatus'] = 'offline';
+            
+            // Set currentDeviceToken to avoid OTP on immediate login
+            if (mounted) {
+              final authProvider = Provider.of<AuthProvider>(context, listen: false);
+              memberSyncData['currentDeviceToken'] = await authProvider.getPersistentDeviceId();
+              
+              try {
+                memberSyncData['fcmToken'] = await FirebaseMessaging.instance.getToken();
+              } catch(e) {
+                debugPrint("Error fetching FCM token: $e");
+              }
+            }
+
             await FirebaseFirestore.instance
                 .collection('member')
                 .doc(_targetUid)
-                .set({
-              'auth_uid': user.uid,
-              'isProfileComplete': true,
-              'activatedAt': FieldValue.serverTimestamp(),
-            }, SetOptions(merge: true));
+                .set(memberSyncData, SetOptions(merge: true));
         }
 
         if (!mounted) return;

@@ -148,12 +148,20 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
                             );
 
                             try {
-                               await FirebaseAuth.instance.currentUser?.linkWithCredential(credential);
+                               // Update the user's phone number in Firebase Auth
+                               await FirebaseAuth.instance.currentUser?.updatePhoneNumber(credential);
                                isSuccess = true;
                             } on FirebaseAuthException catch (e) {
-                               if (e.code == 'credential-already-in-use' || e.code == 'provider-already-linked') {
-                                   isSuccess = true;
+                               if (e.code == 'credential-already-in-use') {
+                                   debugPrint("Phone number is already used by another account.");
+                                   isSuccess = false;
+                                   if (dialogContext.mounted) {
+                                      ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                        SnackBar(content: Text('This mobile number is already registered to another account.'), backgroundColor: Colors.red),
+                                      );
+                                   }
                                } else {
+                                   debugPrint("Failed to update phone number: ${e.message}");
                                    isSuccess = false;
                                }
                             }
@@ -745,3 +753,4 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
     );
   }
 }
+

@@ -94,6 +94,13 @@ class KYCProvider with ChangeNotifier {
       batch.set(
           memberRef,
           {
+            'fullName': fullName,
+            'mobile': mobile,
+            'nic': nic,
+            'address': address,
+            'dob': dob,
+            'religion': religion,
+            'gender': gender,
             'kycApprovalStatus': 'pending',
             'faceKycStatus': 'pending',
             'updatedAt': FieldValue.serverTimestamp(),
@@ -180,6 +187,7 @@ class KYCProvider with ChangeNotifier {
         {
           'kycApprovalStatus': 'approved',
           'faceKycStatus': 'approved',
+          'profileImageUrl': faceUrl,
           'updatedAt': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),
@@ -266,6 +274,45 @@ class KYCProvider with ChangeNotifier {
       _isLocalLoading = false;
       notifyListeners();
 
+      return false;
+    }
+  }
+
+  // ==========================================================
+  // ♻️ Reset KYC Submission (If Admin Rejected)
+  // ==========================================================
+  Future<bool> resetKYCSubmission(String documentId, String membershipNo) async {
+    _isLocalLoading = true;
+    notifyListeners();
+
+    try {
+      final WriteBatch batch = _firestore.batch();
+      
+      // Reset in web_sync_member
+      batch.update(_firestore.collection('web_sync_member').doc(documentId), {
+        'kycApprovalStatus': 'none',
+        'faceKycStatus': 'none',
+        'isDetailsSubmitted': false,
+        'kycRejectReason': FieldValue.delete(),
+      });
+      
+      // Reset in member collection
+      batch.update(_firestore.collection('member').doc(documentId), {
+        'kycApprovalStatus': 'none',
+        'faceKycStatus': 'none',
+        'isDetailsSubmitted': false,
+        'kycRejectReason': FieldValue.delete(),
+      });
+      
+      await batch.commit();
+
+      _isLocalLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint("❌ Error Resetting KYC: $e");
+      _isLocalLoading = false;
+      notifyListeners();
       return false;
     }
   }
