@@ -106,13 +106,10 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
                           memberData['mobile_number'] ?? 
                           memberData['whatsapp_number'] ?? 
                           memberData['whatsapp'] ?? 
+                          memberData['billing_phone'] ?? 
                           memberData['phone'] ?? 
                           memberData['contact_no'];
 
-      // Add a debug print and dialog to see EXACTLY what fields are in memberData!
-      debugPrint("🔍 memberData fields: ${memberData.keys.toList()}");
-      debugPrint("🔍 memberData values: $memberData");
-      
       if (_targetEmail == null || _targetEmail!.isEmpty) {
         _showSnackBar("Associated email not found in record. Contact Admin.", Colors.redAccent);
         setState(() => _isLoading = false);
@@ -120,17 +117,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
       }
 
       if (rawMobile == null || rawMobile.isEmpty) {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text("Debug: Mobile Field Not Found"),
-            content: SingleChildScrollView(
-              child: Text("Available fields in Firestore:\n\n${memberData!.keys.join(', ')}\n\nValues:\n$memberData"),
-            ),
-            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text("OK"))]
-          )
-        );
-        _showSnackBar("Associated Mobile Number not found in record. Contact Admin.", Colors.redAccent);
+        _showSnackBar("Associated Mobile Number not found in record. Contact Admin (07XXXXXXXX).", Colors.redAccent);
         setState(() => _isLoading = false);
         return;
       }
