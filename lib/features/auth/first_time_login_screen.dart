@@ -229,13 +229,30 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
       User? user = FirebaseAuth.instance.currentUser;
       
       if (user == null) {
-        // Fallback: If not signed in (e.g. timeout), just try to create normal account
-        UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: _targetEmail!,
-          password: _passwordController.text.trim(),
-        );
-        user = userCredential.user;
-      } else {
+          // Fallback: If not signed in (e.g. timeout), just try to create normal account
+          try {
+            UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+              email: _targetEmail!,
+              password: _passwordController.text.trim(),
+            );
+            user = userCredential.user;
+          } on FirebaseAuthException catch (createError) {
+             if (createError.code == 'email-already-in-use') {
+                 try {
+                   UserCredential existingUserCred = await FirebaseAuth.instance.signInWithEmailAndPassword(
+                     email: _targetEmail!,
+                     password: _passwordController.text.trim(),
+                   );
+                   user = existingUserCred.user;
+                 } catch (signInError) {
+                   _showSnackBar("Account exists but password incorrect. Please use the password you registered with.", Colors.orange);
+                   return;
+                 }
+             } else {
+                 rethrow;
+             }
+          }
+        } else {
         // Link the existing Phone Auth session to an Email & Password so they can log in via Password later!
         AuthCredential emailCred = EmailAuthProvider.credential(
           email: _targetEmail!,
@@ -245,12 +262,15 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
           await user.linkWithCredential(emailCred);
         } on FirebaseAuthException catch (linkError) {
           if (linkError.code == 'credential-already-in-use' || linkError.code == 'email-already-in-use') {
-             // If email already has an account, we might need to just update the password and sign in with email!
-             _showSnackBar("Email already registered. You might just need to log in.", Colors.orange);
-             // Sign out the phone auth so they can log in cleanly
-             await FirebaseAuth.instance.signOut();
-             Navigator.pushReplacementNamed(context, '/login');
-             return;
+             try {
+               // The account was likely created by the WP Auto-Sync Mega Plugin.
+               // Let's just sign into it with the password they provided!
+               UserCredential existingUserCred = await FirebaseAuth.instance.signInWithCredential(emailCred);
+               user = existingUserCred.user;
+             } catch (signInError) {
+               _showSnackBar("Account exists but password incorrect. Please use the password you registered with.", Colors.orange);
+               return;
+             }
           } else {
              rethrow;
           }
