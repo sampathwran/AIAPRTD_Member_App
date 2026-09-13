@@ -1,3 +1,4 @@
+import '../../core/utils/app_errors.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -35,29 +36,30 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     String? targetEmail;
 
     try {
-      // 1. Check if the user entered an email
-      if (inputText.contains('@')) {
-        targetEmail = inputText;
-      } else {
-        // 2. If it's a member number, find the corresponding Email from 'member' collection
-        final userQuery = await FirebaseFirestore.instance
-            .collection('member') // Set collection name to 'member'
-            .where('membership_no',
-                isEqualTo: inputText) // Membership number field in database
-            .limit(1)
-            .get();
+      // 1. Find the corresponding Email from 'member' collection
+      var userQuery = await FirebaseFirestore.instance
+          .collection('member')
+          .where('membershipNo', isEqualTo: inputText)
+          .limit(1)
+          .get();
+          
+      if (userQuery.docs.isEmpty) {
+          userQuery = await FirebaseFirestore.instance
+              .collection('web_sync_member')
+              .where('membershipNo', isEqualTo: inputText)
+              .limit(1)
+              .get();
+      }
 
-        if (userQuery.docs.isNotEmpty) {
-          targetEmail = userQuery.docs.first.get('email')
-              as String?; // Email field in database
-        } else {
-          _showErrorSnackbar(
-              'Membership number not found. Please check and try again.');
-          setState(() {
-            _isLoading = false;
-          });
-          return;
-        }
+      if (userQuery.docs.isNotEmpty) {
+        targetEmail = userQuery.docs.first.data()['user_email'] as String?;
+      } else {
+        _showErrorSnackbar(
+            'Membership number not found. Please check and try again.');
+        setState(() {
+          _isLoading = false;
+        });
+        return;
       }
 
       // 3. Actually send the link to the email via Firebase Auth
@@ -66,6 +68,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         _showSuccessSnackbar(
             'Password reset link sent successfully to $targetEmail!');
         _inputController.clear();
+      } else {
+          _showErrorSnackbar('No email found for this account.');
       }
     } on FirebaseAuthException catch (e) {
       String errorMsg = 'An error occurred. Please try again.';
@@ -183,7 +187,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10.0),
                   child: Text(
-                    'Enter your registered email address or Membership Number below to reset your password.',
+                    'Enter your Membership Number below to reset your password.',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       height: 1.5,
@@ -193,31 +197,22 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 const SizedBox(height: 35),
                 TextFormField(
                   controller: _inputController,
-                  keyboardType: TextInputType.emailAddress,
+                  keyboardType: TextInputType.text,
                   textInputAction: TextInputAction.done,
                   enabled: !_isLoading,
                   style: const TextStyle(fontSize: 15),
                   decoration: InputDecoration(
-                    labelText: 'Email or Membership Number',
-                    hintText: 'example@domain.com or MEM12345',
+                    labelText: 'Membership Number',
+                    hintText: 'e.g. AIAPRTD-26-xxxx',
                     prefixIcon: Icon(Icons.person_outline_rounded,
                         color: colorScheme.primary, size: 22),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your email or membership number';
+                      return 'Please enter your membership number';
                     }
-                    final input = value.trim();
-                    if (input.contains('@')) {
-                      final emailRegex =
-                          RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                      if (!emailRegex.hasMatch(input)) {
-                        return 'Please enter a valid email address';
-                      }
-                    } else {
-                      if (input.length < 4) {
-                        return 'Please enter a valid membership number';
-                      }
+                    if (value.trim().length < 4) {
+                      return 'Please enter a valid membership number';
                     }
                     return null;
                   },
@@ -247,3 +242,4 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 }
+

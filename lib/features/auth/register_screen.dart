@@ -1,3 +1,4 @@
+import '../../core/utils/app_errors.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
@@ -429,3 +430,4 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
+

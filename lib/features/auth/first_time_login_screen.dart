@@ -1,3 +1,4 @@
+import '../../core/utils/app_errors.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -47,12 +48,12 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
   Future<void> _checkMemberInFirestore() async {
     String input = _identifierController.text.trim();
     if (input.isEmpty) {
-      _showSnackBar("Please enter your Membership Number", Colors.redAccent);
+      _showSnackBar(AppErrors.emptyFields);
       return;
     }
 
     if (input.contains('@')) {
-      _showSnackBar("Please enter your Membership No (e.g. AIAPRTD-26-XXXX), not your Email.", Colors.redAccent);
+      _showSnackBar(AppErrors.memberNotFound);
       return;
     }
 
@@ -91,7 +92,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
       }
 
       if (memberData == null) {
-        _showSnackBar("No pre-registered account found with this Membership No.", Colors.redAccent);
+        _showSnackBar(AppErrors.memberNotFound);
         setState(() => _isLoading = false);
         return;
       }
@@ -102,22 +103,22 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
       _targetUid = targetUid;
       _sourceCollection = sourceCollection;
       
-      String? rawMobile = memberData['mobile'] ?? 
-                          memberData['mobile_number'] ?? 
-                          memberData['whatsapp_number'] ?? 
-                          memberData['whatsapp'] ?? 
-                          memberData['billing_phone'] ?? 
-                          memberData['phone'] ?? 
-                          memberData['contact_no'];
+      String? rawMobile = memberData['mobile']?.toString() ?? 
+                          memberData['mobile_number']?.toString() ?? 
+                          memberData['whatsapp_number']?.toString() ?? 
+                          memberData['whatsapp']?.toString() ?? 
+                          memberData['billing_phone']?.toString() ?? 
+                          memberData['phone']?.toString() ?? 
+                          memberData['contact_no']?.toString();
 
       if (_targetEmail == null || _targetEmail!.isEmpty) {
-        _showSnackBar("Associated email not found in record. Contact Admin.", Colors.redAccent);
+        _showSnackBar(AppErrors.memberNotFound);
         setState(() => _isLoading = false);
         return;
       }
 
       if (rawMobile == null || rawMobile.isEmpty) {
-        _showSnackBar("Associated Mobile Number not found in record. Contact Admin (07XXXXXXXX).", Colors.redAccent);
+        _showSnackBar(AppErrors.mobileNotFound);
         setState(() => _isLoading = false);
         return;
       }
@@ -154,7 +155,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
         verificationFailed: (FirebaseAuthException e) {
           if (mounted) {
             setState(() => _isLoading = false);
-            _showSnackBar(e.message ?? 'Phone verification failed.', Colors.redAccent);
+            _showSnackBar(AppErrors.genericError);
           }
         },
         codeSent: (String verificationId, int? resendToken) {
@@ -174,7 +175,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
 
     } catch (e) {
       debugPrint("❌ Error: $e");
-      _showSnackBar("Error checking record: ${e.toString()}", Colors.redAccent);
+      _showSnackBar(AppErrors.genericError);
       setState(() => _isLoading = false);
     }
   }
@@ -188,7 +189,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
     }
 
     if (_verificationId == null) {
-      _showSnackBar("Verification session expired. Please go back and try again.", Colors.redAccent);
+      _showSnackBar(AppErrors.sessionExpired);
       return;
     }
 
@@ -208,9 +209,9 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
       });
       _showSnackBar("Phone Verified!", Colors.green);
     } on FirebaseAuthException catch (e) {
-      _showSnackBar("Invalid SMS OTP: ${e.message}", Colors.redAccent);
+      _showSnackBar(AppErrors.invalidOtp);
     } catch (e) {
-      _showSnackBar("Error verifying OTP: $e", Colors.redAccent);
+      _showSnackBar(AppErrors.genericError);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -245,7 +246,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
                    );
                    user = existingUserCred.user;
                  } catch (signInError) {
-                   _showSnackBar("Account exists but password incorrect. Please use the password you registered with.", Colors.orange);
+                   _showSnackBar(AppErrors.incorrectPassword, Colors.orange);
                    return;
                  }
              } else {
@@ -268,7 +269,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
                UserCredential existingUserCred = await FirebaseAuth.instance.signInWithCredential(emailCred);
                user = existingUserCred.user;
              } catch (signInError) {
-               _showSnackBar("Account exists but password incorrect. Please use the password you registered with.", Colors.orange);
+               _showSnackBar(AppErrors.incorrectPassword, Colors.orange);
                return;
              }
           } else {
@@ -340,24 +341,28 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
     } on FirebaseAuthException catch (e) {
       debugPrint("🔥 FirebaseAuthException: ${e.code} - ${e.message}");
       if (!mounted) return;
-      String errorMsg = e.message ?? 'An error occurred';
+      String errorMsg = AppErrors.genericError;
       if (e.code == 'email-already-in-use') {
-        errorMsg = 'This account is already activated. Please log in normally.';
+        errorMsg = AppErrors.accountAlreadyActivated;
       } else if (e.code == 'weak-password') {
-        errorMsg = 'The password is too weak. Min 6 characters required.';
+        errorMsg = AppErrors.weakPassword;
       }
       _showSnackBar(errorMsg, Colors.redAccent);
     } catch (e) {
       if (!mounted) return;
-      _showSnackBar("Error: $e", Colors.redAccent);
+      _showSnackBar(AppErrors.genericError);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _showSnackBar(String message, Color backgroundColor) {
+  void _showSnackBar(String message, [Color backgroundColor = Colors.redAccent]) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: backgroundColor),
+      SnackBar(
+        content: Text(message, textAlign: TextAlign.center, style: const TextStyle(height: 1.4, fontSize: 13)), 
+        backgroundColor: backgroundColor, 
+        duration: const Duration(seconds: 5)
+      ),
     );
   }
 
@@ -563,3 +568,5 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
     );
   }
 }
+
+
