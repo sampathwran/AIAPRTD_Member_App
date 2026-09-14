@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:aiaprtd_member/core/providers/vehicle_provider.dart';
 import 'package:aiaprtd_member/core/providers/booking_provider.dart';
@@ -67,7 +67,7 @@ class _VehicleSelectionWidgetState extends State<VehicleSelectionWidget> {
           else if (lowerName.contains('mini van'))
             seatingCapacity = 6;
           else if (lowerName.contains('mini'))
-            seatingCapacity = 4;
+            seatingCapacity = 3;
           else if (lowerName.contains('sedan'))
             seatingCapacity = 4;
           else if (lowerName.contains('6 seater'))
@@ -178,3 +178,4 @@ class _VehicleSelectionWidgetState extends State<VehicleSelectionWidget> {
     return Icons.directions_car;
   }
 }
+

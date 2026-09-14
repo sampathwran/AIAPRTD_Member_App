@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
@@ -174,14 +174,6 @@ class FinanceProvider extends ChangeNotifier {
     if (memberQuery.docs.isNotEmpty) {
       return memberQuery.docs.first.reference;
     }
-    final webSyncQuery = await _firestore
-        .collection('web_sync_member')
-        .where('membershipNo', isEqualTo: membershipNo)
-        .limit(1)
-        .get();
-    if (webSyncQuery.docs.isNotEmpty) {
-      return webSyncQuery.docs.first.reference;
-    }
     return null;
   }
 
@@ -209,7 +201,7 @@ class FinanceProvider extends ChangeNotifier {
           isAppBooking ? await _getMemberRef(passengerId) : null;
 
       if (driverRef == null) {
-        debugPrint("❌ Driver reference not found for usage charge update.");
+        debugPrint("âŒ Driver reference not found for usage charge update.");
         return;
       }
 
@@ -347,3 +339,4 @@ class FinanceProvider extends ChangeNotifier {
     }
   }
 }
+

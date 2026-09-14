@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -70,8 +70,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       
       final String successMessage = 
           "A password reset link has been sent to your email address. Please check your Inbox and Spam folders.\n\n"
-          "මුරපදය යළි සැකසීමේ සබැඳිය (Link) ඔබගේ ලියාපදිංචි ඊමේල් ලිපිනයට යවා ඇත. කරුණාකර ඔබගේ ඊමේල් ගිණුමේ Inbox සහ Spam ෆෝල්ඩර පරීක්ෂා කරන්න.\n\n"
-          "கடவுச்சொல் மீட்டமைப்பு இணைப்பு உங்கள் பதிவுசெய்யப்பட்ட மின்னஞ்சல் முகவரிக்கு அனுப்பப்பட்டுள்ளது. தயவுசெய்து உங்கள் Inbox மற்றும் Spam கோப்புறைகளை சரிபார்க்கவும்.";
+          "à¶¸à·”à¶»à¶´à¶¯à¶º à¶ºà·…à·’ à·ƒà·à¶šà·ƒà·“à¶¸à·š à·ƒà¶¶à·à¶³à·’à¶º (Link) à¶”à¶¶à¶œà·š à¶½à·’à¶ºà·à¶´à¶¯à·’à¶‚à¶ à·’ à¶Šà¶¸à·šà¶½à·Š à¶½à·’à¶´à·’à¶±à¶ºà¶§ à¶ºà·€à· à¶‡à¶­. à¶šà¶»à·”à¶«à·à¶šà¶» à¶”à¶¶à¶œà·š à¶Šà¶¸à·šà¶½à·Š à¶œà·’à¶«à·”à¶¸à·š Inbox à·ƒà·„ Spam à·†à·à¶½à·Šà¶©à¶» à¶´à¶»à·“à¶šà·Šà·‚à· à¶šà¶»à¶±à·Šà¶±.\n\n"
+          "à®•à®Ÿà®µà¯à®šà¯à®šà¯Šà®²à¯ à®®à¯€à®Ÿà¯à®Ÿà®®à¯ˆà®ªà¯à®ªà¯ à®‡à®£à¯ˆà®ªà¯à®ªà¯ à®‰à®™à¯à®•à®³à¯ à®ªà®¤à®¿à®µà¯à®šà¯†à®¯à¯à®¯à®ªà¯à®ªà®Ÿà¯à®Ÿ à®®à®¿à®©à¯à®©à®žà¯à®šà®²à¯ à®®à¯à®•à®µà®°à®¿à®•à¯à®•à¯ à®…à®©à¯à®ªà¯à®ªà®ªà¯à®ªà®Ÿà¯à®Ÿà¯à®³à¯à®³à®¤à¯. à®¤à®¯à®µà¯à®šà¯†à®¯à¯à®¤à¯ à®‰à®™à¯à®•à®³à¯ Inbox à®®à®±à¯à®±à¯à®®à¯ Spam à®•à¯‹à®ªà¯à®ªà¯à®±à¯ˆà®•à®³à¯ˆ à®šà®°à®¿à®ªà®¾à®°à¯à®•à¯à®•à®µà¯à®®à¯.";
           
       _showSuccessSnackbar(successMessage);
       _inputController.clear();
@@ -246,5 +246,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 }
+
 
 

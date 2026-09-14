@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class AppIconsLibrary {
   static const Map<String, IconData> allIcons = {
@@ -965,15 +965,9 @@ class AppIconsLibrary {
       return allIcons[name]!;
     }
 
-    // Check if the user entered a hex code like e5f9 or 0xe5f9
-    String hexString = name.replaceAll('0x', '').trim();
-    if (hexString.isNotEmpty && RegExp(r'^[0-9a-fA-F]+$').hasMatch(hexString)) {
-      int? codePoint = int.tryParse(hexString, radix: 16);
-      if (codePoint != null) {
-        return IconData(codePoint, fontFamily: 'MaterialIcons');
-      }
-    }
-
+    // Dynamic IconData parsing is disabled to support tree shaking.
+    // If you need dynamic icons, they must be added to allIcons map above.
     return Icons.star_rounded;
   }
 }
+

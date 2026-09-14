@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+﻿<manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -22,6 +22,10 @@
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
     <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
+        </intent>
         <package android:name="com.whatsapp" />
         <package android:name="com.whatsapp.w4b" />
         <intent>
@@ -37,7 +41,7 @@
         android:allowBackup="true"
         android:supportsRtl="true">
 
-        <!-- 💡 NEW: Override dash_bubble service for Android 14+ compatibility -->
+        <!-- ðŸ’¡ NEW: Override dash_bubble service for Android 14+ compatibility -->
         <service
             android:name="dev.moaz.dash_bubble.src.BubbleService"
             android:foregroundServiceType="specialUse"
@@ -92,11 +96,4 @@
             android:value="AIzaSyD2ZaITIFYTcb1fThVzChQYJ-cHm0aZ2iE"/>
 
     </application>
-
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.PROCESS_TEXT"/>
-            <data android:mimeType="text/plain"/>
-        </intent>
-    </queries>
 </manifest>

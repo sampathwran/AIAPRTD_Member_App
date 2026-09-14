@@ -1,4 +1,4 @@
-// ignore_for_file: spell_check_on_languages, spell_check_on_word
+﻿// ignore_for_file: spell_check_on_languages, spell_check_on_word
 
 import 'dart:async';
 import 'dart:io';
@@ -13,7 +13,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 
 import 'package:aiaprtd_member/features/profile/member_status/profile_status_evaluator.dart';
 
-// 💡 NEW: Added `WidgetsBindingObserver` to check if the App is Minimized
+// ðŸ’¡ NEW: Added `WidgetsBindingObserver` to check if the App is Minimized
 class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -34,17 +34,17 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
       _sessionSubscription;
 
-  // 💡 NEW: Subscriptions for Rating Sync across multiple collections
+  // ðŸ’¡ NEW: Subscriptions for Rating Sync across multiple collections
   List<StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>>
       _ratingSyncSubscriptions = [];
 
-  // 💡 NEW: Start App Lifecycle Observer in Constructor
+  // ðŸ’¡ NEW: Start App Lifecycle Observer in Constructor
   ProfileProvider() {
     WidgetsBinding.instance.addObserver(this);
   }
 
   // ==========================================================
-  // 💡 NEW: Bubble Control when App is Minimized and Opened
+  // ðŸ’¡ NEW: Bubble Control when App is Minimized and Opened
   // ==========================================================
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -151,38 +151,20 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
         (querySnapshot) async {
           QueryDocumentSnapshot<Map<String, dynamic>>? memberDocument;
           String collectionSource = 'member';
-
           if (querySnapshot.docs.isEmpty) {
-            // Fallback to web_sync_member
-            Query<Map<String, dynamic>> webSyncQuery =
-                _firestore.collection('web_sync_member');
-            if (currentUser.email != null && currentUser.email!.isNotEmpty) {
-              webSyncQuery = webSyncQuery.where('user_email',
-                  isEqualTo: currentUser.email);
-            } else {
-              webSyncQuery =
-                  webSyncQuery.where('auth_uid', isEqualTo: currentUser.uid);
-            }
-            var webSyncSnapshot = await webSyncQuery.limit(1).get();
+            _memberData = null;
+            _isLoading = false;
+            notifyListeners();
 
-            if (webSyncSnapshot.docs.isEmpty) {
-              _memberData = null;
-              _isLoading = false;
-              notifyListeners();
-
-              if (!completer.isCompleted) {
-                completer.complete(false);
-              }
-              return;
+            if (!completer.isCompleted) {
+              completer.complete(false);
             }
-            memberDocument = webSyncSnapshot.docs.first;
-            collectionSource = 'web_sync_member';
-          } else {
-            memberDocument = querySnapshot.docs.first;
+            return;
           }
+          memberDocument = querySnapshot.docs.first;
 
           debugPrint(
-              "🟢 ProfileProvider: Successfully found in '$collectionSource' collection!");
+              "ðŸŸ¢ ProfileProvider: Successfully found in '$collectionSource' collection!");
 
           if (_memberData == null) {
             _memberData = Map<String, dynamic>.from(memberDocument.data());
@@ -216,8 +198,9 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
                 _memberData![key] = value;
               }
             });
-            // DO NOT call _evaluateAndSyncProfileStatus here!
-            // The member stream fires when WE write to it, causing an infinite loop.
+          // Safely evaluate and sync status. 
+          // The currentDbHash check inside prevents infinite loops!
+          await _evaluateAndSyncProfileStatus();
           }
 
           _isLoading = false;
@@ -250,8 +233,8 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  // 💡 NEW: Evaluates current status and syncs to Firebase if changed
-  // 🛡️ GUARDED: Prevents re-entrancy and duplicate writes
+  // ðŸ’¡ NEW: Evaluates current status and syncs to Firebase if changed
+  // ðŸ›¡ï¸ GUARDED: Prevents re-entrancy and duplicate writes
   Future<void> _evaluateAndSyncProfileStatus() async {
     if (_memberData == null || _isSyncing) return;
 
@@ -260,11 +243,16 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
     final List<String> reasons =
         List<String>.from(statusResult['reasons'] ?? []);
     final String newStatus = isActive ? 'active member' : 'inactive member';
-
-    // Build a hash to check if anything actually changed
+    // Check if the current database values already match the evaluated values
+    final String currentDbStatus = _memberData!['profile_status']?.toString() ?? '';
+    final List<String> currentDbReasons = List<String>.from(_memberData!['inactive_reasons'] ?? []);
+    
+    final String currentDbHash = '$currentDbStatus|${currentDbReasons.join(',')}';
     final String syncHash = '$newStatus|${reasons.join(',')}';
-    if (syncHash == _lastSyncHash) {
+
+    if (syncHash == _lastSyncHash || syncHash == currentDbHash) {
       // Nothing changed, skip write entirely
+      _lastSyncHash = syncHash; // Ensure memory is updated
       return;
     }
 
@@ -273,7 +261,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
         _memberData!['driver_status'] == 'online';
     if (!isActive && isOnline) {
       debugPrint(
-          '🔴 User became inactive while online! Auto-switching to OFFLINE.');
+          'ðŸ”´ User became inactive while online! Auto-switching to OFFLINE.');
       await toggleDriverStatus(false);
     }
 
@@ -291,7 +279,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
       _memberData!['status'] = newStatus;
       _memberData!['inactive_reasons'] = reasons;
 
-      debugPrint('✅ [PROFILE] Status synced: $newStatus, Reasons: $reasons');
+      debugPrint('âœ… [PROFILE] Status synced: $newStatus, Reasons: $reasons');
     } catch (e) {
       debugPrint("Error syncing profile_status: $e");
     } finally {
@@ -299,7 +287,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  // 💡 NEW: Expose method to manually trigger sync after updating profile data
+  // ðŸ’¡ NEW: Expose method to manually trigger sync after updating profile data
   Future<void> syncProfileStatus() async {
     await _evaluateAndSyncProfileStatus();
     notifyListeners();
@@ -337,11 +325,11 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
         final data = appDoc.data()!;
         List<dynamic> newHistory = List.from(initialHistory);
 
-        debugPrint('🔍 [ProfileProvider] Snapshot fired! Data: $data');
+        debugPrint('ðŸ” [ProfileProvider] Snapshot fired! Data: $data');
 
         if (data['payment_history'] != null) {
           debugPrint(
-              '🔍 [ProfileProvider] payment_history type: ${data['payment_history'].runtimeType}');
+              'ðŸ” [ProfileProvider] payment_history type: ${data['payment_history'].runtimeType}');
           if (data['payment_history'] is List) {
             newHistory.addAll(data['payment_history']);
           }
@@ -350,14 +338,14 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
         // Also read from pending_payments since Admin panel might update status to 'approved' without moving it
         if (data['pending_payments'] != null) {
           debugPrint(
-              '🔍 [ProfileProvider] pending_payments type: ${data['pending_payments'].runtimeType}');
+              'ðŸ” [ProfileProvider] pending_payments type: ${data['pending_payments'].runtimeType}');
           if (data['pending_payments'] is List) {
             newHistory.addAll(data['pending_payments']);
           }
         }
 
         debugPrint(
-            '🔍 [ProfileProvider] newHistory length: ${newHistory.length}');
+            'ðŸ” [ProfileProvider] newHistory length: ${newHistory.length}');
         _memberData!['payment_history'] = newHistory;
 
         // Re-evaluate profile status when fee updates
@@ -436,8 +424,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
       sub.cancel();
     }
     _ratingSyncSubscriptions.clear();
-
-    final List<String> collections = ['members', 'member', 'web_sync_member'];
+    final List<String> collections = ['members', 'member'];
 
     for (String col in collections) {
       final sub =
@@ -493,7 +480,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  // 💡 🎯 UPDATED: Added Timeout and Error Handling
+  // ðŸ’¡ ðŸŽ¯ UPDATED: Added Timeout and Error Handling
   Future<bool> toggleDriverStatus(
     bool isGoingOnline,
   ) async {
@@ -507,7 +494,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
 
     try {
-      // 💡 Added Timeout to strictly complete within 10 seconds
+      // ðŸ’¡ Added Timeout to strictly complete within 10 seconds
       await _firestore.collection('member').doc(documentId).set(
         {
           'isOnline': isGoingOnline,
@@ -528,7 +515,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       if (isGoingOnline) {
         FlutterBackgroundService().startService();
-        // 💡 NEW: Request Permission when going Online.
+        // ðŸ’¡ NEW: Request Permission when going Online.
         // (Request early because we cannot request permission when App is Minimized)
         bool hasPermission = await DashBubble.instance.hasOverlayPermission();
         if (!hasPermission) {
@@ -545,12 +532,12 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
       return true;
     } on TimeoutException catch (e) {
       debugPrint('Firebase status sync TIMEOUT: $e');
-      _isLocalLoading = false; // 💡 Strictly release button
+      _isLocalLoading = false; // ðŸ’¡ Strictly release button
       notifyListeners();
       return false;
     } catch (error) {
       debugPrint('Firebase status sync error: $error');
-      _isLocalLoading = false; // 💡 Strictly release button
+      _isLocalLoading = false; // ðŸ’¡ Strictly release button
       notifyListeners();
       return false;
     }
@@ -581,7 +568,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
             SetOptions(merge: true),
           )
           .timeout(const Duration(
-              seconds: 10)); // 💡 Added timeout to Location update as well
+              seconds: 10)); // ðŸ’¡ Added timeout to Location update as well
 
       _memberData!['latitude'] = latitude;
       _memberData!['longitude'] = longitude;
@@ -667,7 +654,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     _sessionSubscription = _firestore
         .collection(
-            collectionSource) // 👈 Use the actual collection the document is in!
+            collectionSource) // ðŸ‘ˆ Use the actual collection the document is in!
         .doc(documentId)
         .snapshots()
         .listen(
@@ -729,7 +716,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       await DashBubble.instance.startBubble(
         bubbleOptions: BubbleOptions(
-          bubbleIcon: 'my_bubble_icon', // 👈 Changed logo
+          bubbleIcon: 'my_bubble_icon', // ðŸ‘ˆ Changed logo
           enableClose: false,
           distanceToClose: 100,
           enableAnimateToEdge: true,
@@ -742,7 +729,7 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
         ),
         onTap: () {
           debugPrint('Floating bubble clicked - Opening App...');
-          // 💡 NEW: Brings App to Foreground when bubble is pressed.
+          // ðŸ’¡ NEW: Brings App to Foreground when bubble is pressed.
           // Then bubble will automatically Hide through didChangeAppLifecycleState above!
           AppToForeground.appToForeground();
         },
@@ -796,9 +783,11 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    // 💡 NEW: Remove Observer
+    // ðŸ’¡ NEW: Remove Observer
     WidgetsBinding.instance.removeObserver(this);
     clearProfileStreams();
     super.dispose();
   }
 }
+
+

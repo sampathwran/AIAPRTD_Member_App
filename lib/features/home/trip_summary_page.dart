@@ -42,7 +42,9 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
       // 1. Capture Map Snapshot
       Uint8List? mapSnapshot;
       if (_mapController != null) {
-        mapSnapshot = await _mapController!.takeSnapshot();
+        mapSnapshot = await _mapController!
+            .takeSnapshot()
+            .timeout(const Duration(seconds: 3), onTimeout: () => Uint8List(0));
       }
 
       // 2. Load Assets and Info
@@ -74,56 +76,57 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
           : 'Unknown';
 
       pdf.addPage(
-        pw.Page(
-          theme: pw.ThemeData.withFont(
-            base: font,
-            bold: boldFont,
-            fontFallback: [sinhalaFont, tamilFont],
-          ),
-          margin: const pw.EdgeInsets.all(32),
-          build: (pw.Context context) {
-            return pw.Stack(
-              alignment: pw.Alignment.center,
-              children: [
-                // Watermark Tiled
-                pw.Opacity(
+        pw.MultiPage(
+          pageTheme: pw.PageTheme(
+              pageFormat: PdfPageFormat.a4,
+              theme: pw.ThemeData.withFont(
+                base: font,
+                bold: boldFont,
+                fontFallback: [sinhalaFont, tamilFont],
+              ),
+              margin: const pw.EdgeInsets.all(32),
+              buildBackground: (pw.Context context) {
+                return pw.Opacity(
                   opacity: 0.06,
-                  child: pw.Transform.rotateBox(
-                    angle: 0.6,
-                    child: pw.Column(
-                      mainAxisAlignment: pw.MainAxisAlignment.center,
-                      children: List.generate(
-                          7,
-                          (index) => pw.Padding(
-                              padding:
-                                  const pw.EdgeInsets.symmetric(vertical: 40),
-                              child: pw.Row(
-                                  mainAxisAlignment:
-                                      pw.MainAxisAlignment.center,
-                                  children: [
-                                    pw.Text("AIAPRTD",
-                                        style: pw.TextStyle(
-                                            fontSize: 50,
-                                            fontWeight: pw.FontWeight.bold,
-                                            color: PdfColors.grey)),
-                                    pw.SizedBox(width: 60),
-                                    pw.Text("AIAPRTD",
-                                        style: pw.TextStyle(
-                                            fontSize: 50,
-                                            fontWeight: pw.FontWeight.bold,
-                                            color: PdfColors.grey)),
-                                    pw.SizedBox(width: 60),
-                                    pw.Text("AIAPRTD",
-                                        style: pw.TextStyle(
-                                            fontSize: 50,
-                                            fontWeight: pw.FontWeight.bold,
-                                            color: PdfColors.grey)),
-                                  ]))),
+                  child: pw.Center(
+                    child: pw.Transform.rotateBox(
+                      angle: 0.6,
+                      child: pw.Column(
+                        mainAxisAlignment: pw.MainAxisAlignment.center,
+                        children: List.generate(
+                            7,
+                            (index) => pw.Padding(
+                                padding:
+                                    const pw.EdgeInsets.symmetric(vertical: 40),
+                                child: pw.Row(
+                                    mainAxisAlignment:
+                                        pw.MainAxisAlignment.center,
+                                    children: [
+                                      pw.Text("AIAPRTD",
+                                          style: pw.TextStyle(
+                                              fontSize: 50,
+                                              fontWeight: pw.FontWeight.bold,
+                                              color: PdfColors.grey)),
+                                      pw.SizedBox(width: 60),
+                                      pw.Text("AIAPRTD",
+                                          style: pw.TextStyle(
+                                              fontSize: 50,
+                                              fontWeight: pw.FontWeight.bold,
+                                              color: PdfColors.grey)),
+                                      pw.SizedBox(width: 60),
+                                      pw.Text("AIAPRTD",
+                                          style: pw.TextStyle(
+                                              fontSize: 50,
+                                              fontWeight: pw.FontWeight.bold,
+                                              color: PdfColors.grey)),
+                                    ]))),
+                      ),
                     ),
                   ),
-                ),
-
-                // Content
+                );
+              }),
+          build: (pw.Context context) {
+            return [
                 pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
@@ -223,21 +226,19 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
                     pw.SizedBox(height: 20),
 
                     // Map Snapshot
-                    if (mapSnapshot != null)
-                      pw.Expanded(
-                        child: pw.Center(
-                          child: pw.ClipRRect(
-                            horizontalRadius: 10,
-                            verticalRadius: 10,
-                            child: pw.Image(pw.MemoryImage(mapSnapshot)),
-                          ),
+                    if (mapSnapshot != null && mapSnapshot.isNotEmpty)
+                      pw.Center(
+                        child: pw.ClipRRect(
+                          horizontalRadius: 10,
+                          verticalRadius: 10,
+                          child: pw.Image(pw.MemoryImage(mapSnapshot),
+                              height: 250, fit: pw.BoxFit.contain),
                         ),
                       ),
                   ],
                 ),
-              ],
-            );
-          },
+              ];
+            },
         ),
       );
 
@@ -506,19 +507,24 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
                 markers.add(Marker(
                     markerId: const MarkerId('start'),
                     position: polylineCoordinates.first,
-                    infoWindow: const InfoWindow(title: "Start")));
+                    icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+                    infoWindow: const InfoWindow(title: "Pickup")));
                 markers.add(Marker(
                     markerId: const MarkerId('end'),
                     position: polylineCoordinates.last,
-                    infoWindow: const InfoWindow(title: "End")));
+                    icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+                    infoWindow: const InfoWindow(title: "Drop")));
               }
 
               Set<Polyline> polylines = {};
               if (polylineCoordinates.isNotEmpty) {
                 polylines.add(Polyline(
                   polylineId: const PolylineId('route'),
-                  color: Colors.blue,
-                  width: 5,
+                  color: Colors.blueAccent,
+                  width: 6,
+                  jointType: JointType.round,
+                  startCap: Cap.roundCap,
+                  endCap: Cap.roundCap,
                   points: polylineCoordinates,
                 ));
               }
@@ -533,8 +539,30 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
                       child: GoogleMap(
                         initialCameraPosition:
                             CameraPosition(target: center, zoom: 14),
-                        onMapCreated: (controller) =>
-                            _mapController = controller,
+                        onMapCreated: (controller) {
+                          _mapController = controller;
+                          if (polylineCoordinates.isNotEmpty) {
+                            double minLat = polylineCoordinates.first.latitude;
+                            double minLng = polylineCoordinates.first.longitude;
+                            double maxLat = polylineCoordinates.first.latitude;
+                            double maxLng = polylineCoordinates.first.longitude;
+                            for (var p in polylineCoordinates) {
+                              if (p.latitude < minLat) minLat = p.latitude;
+                              if (p.latitude > maxLat) maxLat = p.latitude;
+                              if (p.longitude < minLng) minLng = p.longitude;
+                              if (p.longitude > maxLng) maxLng = p.longitude;
+                            }
+                            Future.delayed(const Duration(milliseconds: 300), () {
+                              controller.animateCamera(CameraUpdate.newLatLngBounds(
+                                LatLngBounds(
+                                  southwest: LatLng(minLat, minLng),
+                                  northeast: LatLng(maxLat, maxLng),
+                                ),
+                                50.0,
+                              ));
+                            });
+                          }
+                        },
                         markers: markers,
                         polylines: polylines,
                         myLocationEnabled: false,

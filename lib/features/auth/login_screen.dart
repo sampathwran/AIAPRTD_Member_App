@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:aiaprtd_member/core/providers/profile_provider.dart';
 import 'package:aiaprtd_member/core/providers/auth_provider.dart';
 import 'package:aiaprtd_member/features/auth/register_screen.dart';
+import 'package:aiaprtd_member/core/utils/app_errors.dart';
 import 'package:aiaprtd_member/features/auth/forgot_password_screen.dart';
 import 'package:aiaprtd_member/features/settings/privacy_policy_screen.dart';
 import 'package:aiaprtd_member/features/settings/terms_conditions_screen.dart';
@@ -107,8 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (e.code == 'user-not-found' ||
             e.code == 'invalid-credential' ||
             e.code == 'wrong-password') {
-          errorMsg =
-              "Invalid Login credentials. Please check your Email/ID and Password.";
+          errorMsg = AppErrors.invalidCredentials;
         } else if (e.code == 'too-many-requests') {
           errorMsg = "Too many attempts. Account temporarily locked.";
         }
@@ -169,8 +169,14 @@ class _LoginScreenState extends State<LoginScreen> {
             await _finalizeLoginAfterOTP(targetEmail, password);
           },
           verificationFailed: (FirebaseAuthException e) {
-            _showSnackBar(e.message ?? 'Phone verification failed.');
             setState(() => _isLoading = false);
+            String errorMsg = AppErrors.genericError;
+            if (e.code == 'too-many-requests' || e.message?.contains('39') == true || e.message?.contains('17499') == true) {
+              errorMsg = AppErrors.tooManyRequests;
+            } else if (e.code == 'invalid-phone-number') {
+              errorMsg = 'Invalid phone number format.';
+            }
+            _showSnackBar(errorMsg);
           },
           codeSent: (String verificationId, int? resendToken) {
             setState(() => _isLoading = false);
@@ -182,10 +188,9 @@ class _LoginScreenState extends State<LoginScreen> {
     } on FirebaseAuthException catch (e) {
       String errorMsg = "Login Failed. Please try again.";
       if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
-        errorMsg =
-            "Invalid Login credentials. Please check your Email/ID and Password.";
+        errorMsg = AppErrors.invalidCredentials;
       } else if (e.code == 'wrong-password') {
-        errorMsg = "Incorrect password. Please try again.";
+        errorMsg = AppErrors.invalidCredentials;
       } else if (e.code == 'too-many-requests') {
         errorMsg = "Too many attempts. Account temporarily locked.";
       }
@@ -519,6 +524,24 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
 
+                // First Time Login Link
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (context) => const FirstTimeLoginScreen()),
+                    );
+                  },
+                  child: Text(
+                    'login.first_time_login'.tr(),
+                    style: TextStyle(
+                        color: colorScheme.secondary,
+                        decoration: TextDecoration.underline,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(height: 10),
+
                 // Register Link
                 RichText(
                   text: TextSpan(
@@ -552,6 +575,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
+
+
+
+
+
 
 
 

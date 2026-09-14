@@ -30,10 +30,12 @@ class MainActivity: FlutterFragmentActivity() {
         // WhatsApp Share channel
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             if (call.method == "sharePdf") {
+                android.util.Log.d("WhatsAppShare", "Received sharePdf call")
                 val phone = call.argument<String>("phone")
                 val filePath = call.argument<String>("filePath")
                 if (phone != null && filePath != null) {
                     val file = File(filePath)
+                    android.util.Log.d("WhatsAppShare", "File path: $filePath")
                     if (!file.exists()) {
                         result.error("FILE_NOT_FOUND", "File does not exist: $filePath", null)
                         return@setMethodCallHandler
@@ -54,14 +56,32 @@ class MainActivity: FlutterFragmentActivity() {
                         formattedPhone = "94" + formattedPhone.substring(1) // Assuming Sri Lanka
                     }
                     intent.putExtra("jid", "$formattedPhone@s.whatsapp.net")
-                    intent.setPackage("com.whatsapp")
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                    var isSuccess = false
+                    android.util.Log.d("WhatsAppShare", "Starting activity with Intent...")
                     try {
+                        intent.setPackage("com.whatsapp")
                         startActivity(intent)
-                        result.success(true)
+                        isSuccess = true
                     } catch (e: Exception) {
-                        result.error("UNAVAILABLE", "WhatsApp not installed or error: ${e.message}", null)
+                        try {
+                            intent.setPackage("com.whatsapp.w4b")
+                            startActivity(intent)
+                            isSuccess = true
+                        } catch (e2: Exception) {
+                            // Try without package just in case
+                            try {
+                                intent.setPackage(null)
+                                startActivity(intent)
+                                isSuccess = true
+                            } catch (e3: Exception) {
+                                android.util.Log.e("WhatsAppShare", "All attempts failed", e3)
+                                result.error("UNAVAILABLE", "Failed to open WhatsApp: ${e3.message}", null)
+                            }
+                        }
+                    }
+                    if (isSuccess) {
+                        result.success(true)
                     }
                 } else {
                     result.error("INVALID_ARGS", "Phone or File Path is null", null)
@@ -72,3 +92,5 @@ class MainActivity: FlutterFragmentActivity() {
         }
     }
 }
+
+

@@ -15,7 +15,7 @@ class KYCProvider with ChangeNotifier {
   bool get isLocalLoading => _isLocalLoading;
 
   // ==========================================================
-  // ☁️ 🛠️ REAL FIREBASE STORAGE UPLOAD ENGINE
+  // â˜ï¸ ðŸ› ï¸ REAL FIREBASE STORAGE UPLOAD ENGINE
   // ==========================================================
   Future<String> _uploadToFirebaseStorage(File file, String path) async {
     try {
@@ -25,13 +25,13 @@ class KYCProvider with ChangeNotifier {
 
       return await snapshot.ref.getDownloadURL();
     } catch (e) {
-      debugPrint("❌ Firebase Storage Upload Internal Error: $e");
+      debugPrint("âŒ Firebase Storage Upload Internal Error: $e");
       rethrow;
     }
   }
 
   // ==========================================================
-  // 🚀 Step 1: Sending FORM and ID CARDS
+  // ðŸš€ Step 1: Sending FORM and ID CARDS
   // ==========================================================
   Future<bool> submitOneTimeRegistrationDetails({
     required String membershipNo,
@@ -127,7 +127,7 @@ class KYCProvider with ChangeNotifier {
 
       return true;
     } catch (e) {
-      debugPrint("❌ KYC Submission Error: $e");
+      debugPrint("âŒ KYC Submission Error: $e");
 
       _isLocalLoading = false;
       notifyListeners();
@@ -137,7 +137,7 @@ class KYCProvider with ChangeNotifier {
   }
 
   // ==========================================================
-  // 📸 🎯 Step 2: FACE UPLOAD (Send to Admin for Approval)
+  // ðŸ“¸ ðŸŽ¯ Step 2: FACE UPLOAD (Send to Admin for Approval)
   // ==========================================================
   Future<bool> saveFaceVerification(
     String membershipNo,
@@ -151,10 +151,10 @@ class KYCProvider with ChangeNotifier {
       final String path = 'kyc_selfies/$membershipNo.jpg';
       final String faceUrl = await _uploadToFirebaseStorage(faceFile, path);
 
-      // 💡 Fetch raw data from web_sync_member to include in the verify_kyc request
+      // Fetch raw data from member collection to include in the verify_kyc request
       final QuerySnapshot<Map<String, dynamic>> webSyncSnapshot =
           await _firestore
-              .collection('web_sync_member')
+              .collection('member')
               .where('membershipNo', isEqualTo: membershipNo)
               .limit(1)
               .get();
@@ -173,8 +173,8 @@ class KYCProvider with ChangeNotifier {
           ...rawData, // Include all the synced details for admin to review
           'membershipNo': membershipNo,
           'faceVerificationUrl': faceUrl,
-          'kycApprovalStatus': 'pending', // 🔴 Waiting for admin
-          'faceKycStatus': 'pending', // 🔴 Waiting for admin
+          'kycApprovalStatus': 'pending', // ðŸ”´ Waiting for admin
+          'faceKycStatus': 'pending', // ðŸ”´ Waiting for admin
           'submittedAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         },
@@ -212,7 +212,7 @@ class KYCProvider with ChangeNotifier {
 
       return true;
     } catch (e) {
-      debugPrint("❌ Face Verification Save Error: $e");
+      debugPrint("âŒ Face Verification Save Error: $e");
 
       _isLocalLoading = false;
       notifyListeners();
@@ -222,7 +222,7 @@ class KYCProvider with ChangeNotifier {
   }
 
   // ==========================================================
-  // 🖼️ PROFILE IMAGE REQUEST MANAGER
+  // ðŸ–¼ï¸ PROFILE IMAGE REQUEST MANAGER
   // ==========================================================
   Future<bool> submitProfileImageRequest(
     String memNo,
@@ -269,7 +269,7 @@ class KYCProvider with ChangeNotifier {
 
       return true;
     } catch (e) {
-      debugPrint("❌ Profile Request Error: $e");
+      debugPrint("âŒ Profile Request Error: $e");
 
       _isLocalLoading = false;
       notifyListeners();
@@ -279,7 +279,7 @@ class KYCProvider with ChangeNotifier {
   }
 
   // ==========================================================
-  // ♻️ Reset KYC Submission (If Admin Rejected)
+  // â™»ï¸ Reset KYC Submission (If Admin Rejected)
   // ==========================================================
   Future<bool> resetKYCSubmission(String documentId, String membershipNo) async {
     _isLocalLoading = true;
@@ -287,14 +287,6 @@ class KYCProvider with ChangeNotifier {
 
     try {
       final WriteBatch batch = _firestore.batch();
-      
-      // Reset in web_sync_member
-      batch.update(_firestore.collection('web_sync_member').doc(documentId), {
-        'kycApprovalStatus': 'none',
-        'faceKycStatus': 'none',
-        'isDetailsSubmitted': false,
-        'kycRejectReason': FieldValue.delete(),
-      });
       
       // Reset in member collection
       batch.update(_firestore.collection('member').doc(documentId), {
@@ -310,10 +302,13 @@ class KYCProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      debugPrint("❌ Error Resetting KYC: $e");
+      debugPrint("âŒ Error Resetting KYC: $e");
       _isLocalLoading = false;
       notifyListeners();
       return false;
     }
   }
 }
+
+
+

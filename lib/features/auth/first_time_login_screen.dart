@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:aiaprtd_member/core/utils/app_errors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -17,7 +17,7 @@ class FirstTimeLoginScreen extends StatefulWidget {
 class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // âœï¸ Text field controllers
+  // Ã¢Å“ÂÃ¯Â¸Â Text field controllers
   final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -58,7 +58,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
     }
 
     setState(() => _isLoading = true);
-    debugPrint("ðŸ” Checking Firestore for: $input");
+    debugPrint("Ã°Å¸â€Â Checking Firestore for: $input");
 
     try {
       // 1. Check 'member' collection first
@@ -76,19 +76,6 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
         memberData = querySnapshot.docs.first.data() as Map<String, dynamic>;
         targetUid = querySnapshot.docs.first.id;
         sourceCollection = 'member';
-      } else {
-        // 2. Fallback to 'web_sync_member' collection
-        QuerySnapshot webSyncSnapshot = await FirebaseFirestore.instance
-            .collection('web_sync_member')
-            .where('membershipNo', isEqualTo: input)
-            .limit(1)
-            .get();
-
-        if (webSyncSnapshot.docs.isNotEmpty) {
-          memberData = webSyncSnapshot.docs.first.data() as Map<String, dynamic>;
-          targetUid = webSyncSnapshot.docs.first.id;
-          sourceCollection = 'web_sync_member';
-        }
       }
 
       if (memberData == null) {
@@ -131,7 +118,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
         _mobileNumber = '+$_mobileNumber';
       }
 
-      debugPrint("âœ… Admin Record Found! Sending SMS to: $_mobileNumber");
+      debugPrint("Ã¢Å“â€¦ Admin Record Found! Sending SMS to: $_mobileNumber");
       _showSnackBar("Sending SMS to $_mobileNumber...", Colors.green);
 
       // Trigger Firebase Phone Auth
@@ -180,7 +167,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
       );
 
     } catch (e) {
-      debugPrint("âŒ Error: $e");
+      debugPrint("Ã¢ÂÅ’ Error: $e");
       _showSnackBar(AppErrors.genericError, Colors.redAccent);
       setState(() => _isLoading = false);
     }
@@ -285,20 +272,9 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
       }
 
       if (user != null) {
-        debugPrint("âœ… Auth User Created/Linked! UID: ${user.uid}");
+        debugPrint("Ã¢Å“â€¦ Auth User Created/Linked! UID: ${user.uid}");
 
-        // ðŸ—„ï¸ B. Firestore Update
-        await FirebaseFirestore.instance
-            .collection('web_sync_member')
-            .doc(_targetUid)
-            .set({
-          'auth_uid': user.uid,
-          'isProfileComplete': true,
-          'activatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-
-        // CRITICAL FIX: ALWAYS copy activated web_sync_members into the 'member' collection!
-        // This ensures they appear in the Admin Dashboard and can log in normally via login_screen.dart.
+        // Ã°Å¸â€”â€žÃ¯Â¸Â B. Firestore Update
         if (_targetUid != null) {
             Map<String, dynamic> memberSyncData = {};
             if (_memberData != null) {
@@ -345,7 +321,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
         Navigator.pushReplacementNamed(context, '/home');
       }
     } on FirebaseAuthException catch (e) {
-      debugPrint("💥 FirebaseAuthException: ${e.code} - ${e.message}");
+      debugPrint("ðŸ’¥ FirebaseAuthException: ${e.code} - ${e.message}");
       if (!mounted) return;
       String errorMsg = AppErrors.genericError;
       if (e.code == 'email-already-in-use' || e.code == 'provider-already-linked') {
@@ -572,3 +548,4 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
     );
   }
 }
+
