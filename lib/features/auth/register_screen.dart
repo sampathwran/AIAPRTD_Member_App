@@ -1,6 +1,8 @@
-import '../../core/utils/app_errors.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:aiaprtd_member/core/utils/app_errors.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -57,8 +59,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
           await _signInAndRegisterWP(credential);
         },
         verificationFailed: (FirebaseAuthException e) {
+          debugPrint('======================================');
+          debugPrint('🔥 FIREBASE AUTH VERIFICATION FAILED 🔥');
+          debugPrint('Error Code: ${e.code}');
+          debugPrint('Error Message: ${e.message}');
+          debugPrint('======================================');
           setState(() => _isLoading = false);
-          _showSnackBar(e.message ?? 'Phone verification failed.');
+          String errorMsg = AppErrors.genericError;
+          if (e.code == 'too-many-requests' || e.message?.contains('39') == true || e.message?.contains('17499') == true) {
+            errorMsg = AppErrors.tooManyRequests;
+          } else if (e.code == 'invalid-phone-number') {
+            errorMsg = 'Invalid phone number format.';
+          }
+          _showSnackBar(errorMsg);
         },
         codeSent: (String verificationId, int? resendToken) {
           setState(() {
@@ -73,8 +86,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         },
       );
     } catch (e) {
+      debugPrint('======================================');
+      debugPrint('💥 UNEXPECTED REGISTRATION ERROR 💥');
+      debugPrint('Error: $e');
+      debugPrint('======================================');
       setState(() => _isLoading = false);
-      _showSnackBar('Error sending SMS: $e');
+      _showSnackBar(AppErrors.genericError);
     }
   }
 
@@ -142,7 +159,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             await _signInAndRegisterWP(credential);
                           } catch (e) {
                             setDialogState(() => _isVerifying = false);
-                            _showSnackBar('Invalid SMS Code. Please try again.');
+                            _showSnackBar(AppErrors.invalidOtp);
                           }
                         },
                   child: _isVerifying
@@ -161,55 +178,124 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   // ==========================================
-  // 3. REGISTER USER TO WORDPRESS AFTER FIREBASE VERIFICATION
+  // 3. REGISTER USER TO FIREBASE (NO WORDPRESS)
   // ==========================================
   Future<void> _signInAndRegisterWP(PhoneAuthCredential credential) async {
     try {
-      // 1. Sign in to Firebase with the verified phone credential
-      // If Auto-resolution already signed us in, skip this to avoid session-expired error
-      if (FirebaseAuth.instance.currentUser == null) {
-        try {
-          await FirebaseAuth.instance.signInWithCredential(credential);
-        } on FirebaseAuthException catch (e) {
-          if (e.code == 'session-expired') {
-            // Sometimes it throws session-expired but actually signed in
-            if (FirebaseAuth.instance.currentUser == null) {
-              rethrow;
+      // 1. Sign in or Link Firebase Phone Auth
+      User? user = FirebaseAuth.instance.currentUser;
+      
+      if (user == null) {
+         try {
+           UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+           user = userCredential.user;
+         } on FirebaseAuthException catch (e) {
+            if (e.code == 'session-expired' && FirebaseAuth.instance.currentUser != null) {
+                user = FirebaseAuth.instance.currentUser;
+            } else {
+                rethrow;
             }
-          } else {
-            rethrow;
+         }
+      }
+      
+      // 2. Link Email & Password to the authenticated phone session
+      if (user != null) {
+          AuthCredential emailCred = EmailAuthProvider.credential(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
+          try {
+             await user.linkWithCredential(emailCred);
+          } on FirebaseAuthException catch (e) {
+             if (e.code == 'credential-already-in-use' || e.code == 'email-already-in-use') {
+                 try {
+                     UserCredential existingUser = await FirebaseAuth.instance.signInWithCredential(emailCred);
+                     user = existingUser.user;
+                 } catch (signInErr) {
+                     _showSnackBar(AppErrors.genericError);
+                     return;
+                 }
+             } else {
+                 rethrow;
+             }
+          }
+      }
+
+      if (user == null) {
+          _showSnackBar(AppErrors.genericError);
+          return;
+      }
+
+      // 3. Generate a new Membership Number locally from Firestore
+      final currentYear = DateTime.now().year.toString().substring(2);
+      String prefix = currentYear;
+      final qs = await FirebaseFirestore.instance.collection('member')
+          .where('membershipNo', isGreaterThanOrEqualTo: 'AIAPRTD-$prefix-')
+          .where('membershipNo', isLessThan: 'AIAPRTD-$prefix-\uf8ff')
+          .get();
+
+      List<int> existingNumbers = [];
+      for (var doc in qs.docs) {
+        String memNo = doc.id; 
+        List<String> parts = memNo.split('-');
+        if (parts.length >= 3) {
+          int? number = int.tryParse(parts[2]);
+          if (number != null) {
+            existingNumbers.add(number);
           }
         }
       }
 
-      // 2. Call our WordPress API to create the user
-      final response = await http.post(
-        Uri.parse('$_baseUrl/register'),
-        body: {
-          'email': _emailController.text.trim(),
-          'password': _passwordController.text,
+      int nextNumber = 1;
+      if (existingNumbers.isNotEmpty) {
+        nextNumber = existingNumbers.reduce((a, b) => a > b ? a : b) + 1;
+      }
+      
+      String newMembershipNo = 'AIAPRTD-$prefix-${nextNumber.toString().padLeft(4, '0')}';
+
+      // 4. Save to Firestore
+      String email = _emailController.text.trim();
+      String phone = _whatsappController.text.trim();
+      String fcmToken = '';
+      try {
+         fcmToken = await FirebaseMessaging.instance.getToken() ?? '';
+      } catch(e) {}
+
+      Map<String, dynamic> memberData = {
+          'id': newMembershipNo,
+          'membershipNo': newMembershipNo,
           'first_name': _firstNameController.text.trim(),
           'last_name': _lastNameController.text.trim(),
-          'whatsapp': _whatsappController.text.trim(),
-          'whatsapp_number': _whatsappController.text.trim(),
-          'mobile': _whatsappController.text.trim(),
-          'mobile_number': _whatsappController.text.trim(),
-          'phone': _whatsappController.text.trim(),
-          'contact_no': _whatsappController.text.trim(),
-          'secure_token': 'AIA_SUPER_SECRET_2026', // Bypass WP OTP
-        },
-      );
+          'firstName': _firstNameController.text.trim(),
+          'lastName': _lastNameController.text.trim(),
+          'user_email': email,
+          'email': email,
+          'whatsapp': phone,
+          'whatsapp_number': phone,
+          'mobile': phone,
+          'mobile_number': phone,
+          'phone': phone,
+          'contact_no': phone,
+          'status': 'Active', 
+          'platform': 'AIAPRTD',
+          'firebaseUid': user.uid,
+          'fcmToken': fcmToken,
+          'registeredAt': FieldValue.serverTimestamp(),
+      };
 
-      final data = json.decode(response.body);
+      await FirebaseFirestore.instance
+          .collection('member')
+          .doc(newMembershipNo)
+          .set(memberData, SetOptions(merge: true));
 
-      if (data['status'] == 'success') {
-        String memberId = data['membership_no'] ?? '';
-        _showSuccessDialog(memberId);
-      } else {
-        _showSnackBar(data['message'] ?? 'Registration failed.');
-      }
+      _showSuccessDialog(newMembershipNo);
+
     } catch (e) {
-      _showSnackBar('Failed to complete registration: $e');
+      debugPrint('======================================');
+      debugPrint('💥 FIREBASE REGISTRATION FAILED 💥');
+      debugPrint('Error: $e');
+      debugPrint('======================================');
+      _showSnackBar(AppErrors.genericError);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -223,7 +309,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          title: Text('🎉 Success!',
+          title: Text('ðŸŽ‰ Success!',
               style: TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.bold),
               textAlign: TextAlign.center),
           content: Column(
@@ -314,7 +400,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: theme.textTheme.bodyMedium),
                 const SizedBox(height: 25),
 
-                // 👤 1. First Name Input
+                // ðŸ‘¤ 1. First Name Input
                 TextFormField(
                   controller: _firstNameController,
                   decoration: InputDecoration(
@@ -325,7 +411,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 15),
 
-                // 👤 2. Last Name Input
+                // ðŸ‘¤ 2. Last Name Input
                 TextFormField(
                   controller: _lastNameController,
                   decoration: InputDecoration(
@@ -336,7 +422,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 15),
 
-                // ✉️ 3. Email Input Field
+                // âœ‰ï¸ 3. Email Input Field
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -352,7 +438,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 15),
 
-                // 💬 4. WhatsApp Number Input
+                // ðŸ’¬ 4. WhatsApp Number Input
                 TextFormField(
                   controller: _whatsappController,
                   keyboardType: TextInputType.phone,
@@ -368,7 +454,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 15),
 
-                // 🔑 5. Password Input
+                // ðŸ”‘ 5. Password Input
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
@@ -385,7 +471,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 15),
 
-                // 🔒 6. Confirm Password Input
+                // ðŸ”’ 6. Confirm Password Input
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
@@ -406,7 +492,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 35),
 
-                // 🚀 REGISTER Button
+                // ðŸš€ REGISTER Button
                 SizedBox(
                   width: double.infinity,
                   height: 55,
@@ -430,4 +516,3 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
-

@@ -1,16 +1,22 @@
-import 'package:flutter/material.dart';
+﻿// ==========================================
+// 1. IMPORTS SECTION
+// ==========================================
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/utils/app_errors.dart';
-import '../../core/providers/auth_provider.dart' as app_auth;
-import 'register_screen.dart';
-import '../settings/privacy_policy_screen.dart';
-import '../settings/terms_conditions_screen.dart';
+import 'package:aiaprtd_member/core/providers/profile_provider.dart';
+import 'package:aiaprtd_member/core/providers/auth_provider.dart';
+import 'package:aiaprtd_member/features/auth/register_screen.dart';
+import 'package:aiaprtd_member/features/auth/forgot_password_screen.dart';
+import 'package:aiaprtd_member/features/settings/privacy_policy_screen.dart';
+import 'package:aiaprtd_member/features/settings/terms_conditions_screen.dart';
+import 'package:aiaprtd_member/features/auth/first_time_login_screen.dart';
+import 'package:aiaprtd_member/features/home/home_page.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,247 +26,357 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _identifierController = TextEditingController();
-  final TextEditingController _otpController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
-  bool _isLoading = false;
+  bool _obscurePassword = true;
   bool _acceptTerms = false;
-  
-  bool _otpSent = false;
-  String? _verificationId;
-  String? _targetUid;
-  String? _targetMobile;
-  Map<String, dynamic>? _memberData;
+  bool _isLoading = false;
 
-  void _showSnackBar(String message, [Color color = Colors.red]) {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // ==========================================
+  // 2. SMART FIREBASE LOGIN LOGIC
+  // ==========================================
+  void _handleLogin() async {
+    String input = _emailController.text.trim();
+    String password = _passwordController.text.trim();
+
+    if (input.isEmpty || password.isEmpty) {
+      _showSnackBar("Please fill in all fields");
+      return;
+    }
+
+    // NEW STRICT CHECK: Prevent email login
+    if (input.contains('@')) {
+      _showSnackBar("Please login using your Membership Number (e.g. AIAPRTD-24-XXXX), not your email address.");
+      return;
+    }
+
+    if (!_acceptTerms) {
+      _showSnackBar(
+          "You must accept the Privacy Policy and Terms & Conditions");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 1. STRICT CHECK: Must exist in `member` collection!
+      String targetEmail = '';
+
+      var memberSnapshot = await FirebaseFirestore.instance
+          .collection('member')
+          .where('user_email', isEqualTo: input)
+          .limit(1)
+          .get();
+
+      if (memberSnapshot.docs.isEmpty) {
+        memberSnapshot = await FirebaseFirestore.instance
+            .collection('member')
+            .where('membershipNo', isEqualTo: input)
+            .limit(1)
+            .get();
+      }
+
+      if (memberSnapshot.docs.isNotEmpty) {
+        targetEmail = memberSnapshot.docs.first.data()['user_email'] ?? '';
+      } else {
+        // Not in member collection!
+        _showSnackBar("Membership number not found. Please Register to create an account.");
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      if (targetEmail.isEmpty) {
+        _showSnackBar(
+            "Could not find a valid email associated with this account.");
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Firebase Login
+      UserCredential userCredential;
+      try {
+        userCredential = await _auth.signInWithEmailAndPassword(
+          email: targetEmail,
+          password: password,
+        );
+      } on FirebaseAuthException catch (e) {
+        String errorMsg = "Login Failed. Please try again.";
+        if (e.code == 'user-not-found' ||
+            e.code == 'invalid-credential' ||
+            e.code == 'wrong-password') {
+          errorMsg =
+              "Invalid Login credentials. Please check your Email/ID and Password.";
+        } else if (e.code == 'too-many-requests') {
+          errorMsg = "Too many attempts. Account temporarily locked.";
+        }
+        _showSnackBar("$errorMsg (${e.code})");
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      if (!mounted) return;
+      if (userCredential.user != null) {
+        var data = memberSnapshot.docs.first.data();
+        
+        // --- DEVICE TOKEN CHECK (Skip OTP if same device) ---
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        String currentToken = await authProvider.getPersistentDeviceId();
+        String? savedToken = data['currentDeviceToken']?.toString();
+        
+        if (savedToken != null && currentToken == savedToken) {
+           _showSnackBar("Login Successful!");
+           Navigator.pushReplacementNamed(context, '/home');
+           return;
+        }
+
+        // Password is correct, but it's a DIFFERENT device! 
+        // Let's sign out immediately to prevent bypassing OTP via app restart.
+        await _auth.signOut();
+        
+        // Extract phone number from memberSnapshot
+        String? rawMobile = data['mobile'] ?? 
+                            data['mobile_number'] ?? 
+                            data['whatsapp_number'] ?? 
+                            data['whatsapp'] ?? 
+                            data['phone'] ?? 
+                            data['contact_no'];
+                            
+        if (rawMobile == null || rawMobile.trim().isEmpty) {
+            _showSnackBar("Mobile number not found. Please contact Admin.");
+            setState(() => _isLoading = false);
+            return;
+        }
+        
+        String mobileNumber = rawMobile.trim();
+        if (mobileNumber.startsWith('0')) {
+            mobileNumber = '+94${mobileNumber.substring(1)}';
+        } else if (!mobileNumber.startsWith('+')) {
+            mobileNumber = '+$mobileNumber';
+        }
+        
+        _showSnackBar("Sending SMS to $mobileNumber...");
+
+        // Trigger Firebase Phone Auth
+        await FirebaseAuth.instance.verifyPhoneNumber(
+          phoneNumber: mobileNumber,
+          verificationCompleted: (PhoneAuthCredential credential) async {
+            // Auto-resolution
+            await FirebaseAuth.instance.signInWithCredential(credential);
+            setState(() => _isLoading = true);
+            await _finalizeLoginAfterOTP(targetEmail, password);
+          },
+          verificationFailed: (FirebaseAuthException e) {
+            _showSnackBar(e.message ?? 'Phone verification failed.');
+            setState(() => _isLoading = false);
+          },
+          codeSent: (String verificationId, int? resendToken) {
+            setState(() => _isLoading = false);
+            _showOTPDialog(verificationId, targetEmail, password);
+          },
+          codeAutoRetrievalTimeout: (String verificationId) {},
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      String errorMsg = "Login Failed. Please try again.";
+      if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
+        errorMsg =
+            "Invalid Login credentials. Please check your Email/ID and Password.";
+      } else if (e.code == 'wrong-password') {
+        errorMsg = "Incorrect password. Please try again.";
+      } else if (e.code == 'too-many-requests') {
+        errorMsg = "Too many attempts. Account temporarily locked.";
+      }
+      _showSnackBar("$errorMsg (${e.code})");
+    } catch (e) {
+      _showSnackBar("Error: ${e.toString()}");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: color,
-        duration: const Duration(seconds: 4),
-      ),
+          content: Text(message),
+          backgroundColor: Theme.of(context).colorScheme.error),
     );
   }
 
-  Future<void> _handleSendOTP() async {
-    if (!_acceptTerms) {
-      _showSnackBar('Please accept the Privacy Policy and Terms & Conditions.');
-      return;
-    }
+  void _showOTPDialog(String verificationId, String targetEmail, String password) {
+    final otpController = TextEditingController();
+    bool isVerifying = false;
 
-    String input = _identifierController.text.trim();
-    if (input.isEmpty) {
-      _showSnackBar('Please enter your Membership Number or Mobile Number.');
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      DocumentSnapshot? memberDoc;
-      QuerySnapshot qs;
-
-      // 1. Try Membership No
-      if (input.toUpperCase().startsWith('AIAPRTD')) {
-        memberDoc = await FirebaseFirestore.instance.collection('member').doc(input.toUpperCase()).get();
-        if (!memberDoc.exists) memberDoc = null;
-      }
-
-      // 2. Try Exact Document ID match (fallback)
-      if (memberDoc == null) {
-        memberDoc = await FirebaseFirestore.instance.collection('member').doc(input).get();
-        if (!memberDoc.exists) memberDoc = null;
-      }
-
-      // 3. Try Mobile Number Search
-      if (memberDoc == null) {
-        qs = await FirebaseFirestore.instance.collection('member').where('mobile', isEqualTo: input).limit(1).get();
-        if (qs.docs.isNotEmpty) memberDoc = qs.docs.first;
-      }
-      if (memberDoc == null) {
-        qs = await FirebaseFirestore.instance.collection('member').where('mobile_number', isEqualTo: input).limit(1).get();
-        if (qs.docs.isNotEmpty) memberDoc = qs.docs.first;
-      }
-      if (memberDoc == null) {
-        // Try int search just in case
-        int? intInput = int.tryParse(input);
-        if (intInput != null) {
-          qs = await FirebaseFirestore.instance.collection('member').where('mobile', isEqualTo: intInput).limit(1).get();
-          if (qs.docs.isNotEmpty) memberDoc = qs.docs.first;
-        }
-      }
-
-      if (memberDoc == null) {
-        _showSnackBar(AppErrors.invalidIdentifier, Colors.redAccent);
-        setState(() => _isLoading = false);
-        return;
-      }
-
-      _memberData = memberDoc.data() as Map<String, dynamic>? ?? {};
-      _targetUid = memberDoc.id;
-
-      // Check Account Status
-      String profileStatus = _memberData!['profile_status']?.toString().toUpperCase() ?? '';
-      if (profileStatus == 'DRIVER SUSPEND') {
-        _showSnackBar(AppErrors.accountSuspended, Colors.redAccent);
-        setState(() => _isLoading = false);
-        return;
-      }
-
-      // Find Mobile
-      String? rawMobile = _memberData!['mobile']?.toString() ?? _memberData!['mobile_number']?.toString();
-      if (rawMobile == null || rawMobile.trim().isEmpty) {
-        _showSnackBar(AppErrors.invalidPhoneFormat, Colors.orange);
-        setState(() => _isLoading = false);
-        return;
-      }
-
-      // Format Mobile Number to E.164 (+94)
-      _targetMobile = rawMobile.trim();
-      if (_targetMobile!.startsWith('0')) {
-        _targetMobile = '+94${_targetMobile!.substring(1)}';
-      } else if (!_targetMobile!.startsWith('+')) {
-        _targetMobile = '+$_targetMobile';
-      }
-
-      _showSnackBar("Sending SMS to $_targetMobile...", Colors.green);
-
-      await FirebaseAuth.instance.verifyPhoneNumber(
-        phoneNumber: _targetMobile!,
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          try {
-            await FirebaseAuth.instance.signInWithCredential(credential);
-            if (mounted) _completeLogin();
-          } catch (e) {
-            debugPrint("Auto-verification sign-in failed: $e");
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('auth.enter_sms_code'.tr()),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('auth.enter_6_digit'.tr()),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: otpController,
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 8.0),
+                    decoration: const InputDecoration(
+                      hintText: "------",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isVerifying
+                      ? null
+                      : () {
+                          Navigator.of(dialogContext).pop();
+                          if (mounted) setState(() => _isLoading = false);
+                        },
+                  child: Text('general.cancel'.tr()),
+                ),
+                ElevatedButton(
+                  onPressed: isVerifying
+                      ? null
+                      : () async {
+                          if (otpController.text.trim().length != 6) {
+                            _showSnackBar('Please enter the 6-digit code');
+                            return;
+                          }
+                          setDialogState(() => isVerifying = true);
+                          try {
+                            PhoneAuthCredential credential = PhoneAuthProvider.credential(
+                              verificationId: verificationId,
+                              smsCode: otpController.text.trim(),
+                            );
+                            await FirebaseAuth.instance.signInWithCredential(credential);
+                            if (dialogContext.mounted) {
+                              Navigator.of(dialogContext).pop();
+                            }
+                            if (mounted) {
+                              setState(() => _isLoading = true);
+                            }
+                            await _finalizeLoginAfterOTP(targetEmail, password);
+                          } catch (e) {
+                            setDialogState(() => isVerifying = false);
+                            _showSnackBar('Invalid SMS Code. Please try again.');
+                          }
+                        },
+                  child: isVerifying
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : Text('auth.verify'.tr()),
+                ),
+              ],
+            );
           }
-        },
-        verificationFailed: (FirebaseAuthException e) {
-          if (mounted) {
-            setState(() => _isLoading = false);
-            if (e.code == 'too-many-requests') {
-              _showSnackBar(AppErrors.tooManyRequests);
-            } else {
-              _showSnackBar(AppErrors.genericError);
-            }
-          }
-        },
-        codeSent: (String verificationId, int? resendToken) {
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-              _otpSent = true;
-              _verificationId = verificationId;
-            });
-            _showSnackBar("OTP sent! Please check your messages.", Colors.green);
-          }
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {
-          _verificationId = verificationId;
-        },
-      );
-
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        _showSnackBar(AppErrors.genericError);
-      }
-    }
+        );
+      },
+    );
   }
 
-  Future<void> _handleVerifyOTP() async {
-    String otp = _otpController.text.trim();
-    if (otp.isEmpty) {
-      _showSnackBar("Please enter the OTP.");
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
+  Future<void> _finalizeLoginAfterOTP(String targetEmail, String password) async {
     try {
-      PhoneAuthCredential credential = PhoneAuthProvider.credential(
-        verificationId: _verificationId!,
-        smsCode: otp,
-      );
-
-      await FirebaseAuth.instance.signInWithCredential(credential);
-      await _completeLogin();
-
-    } on FirebaseAuthException catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        if (e.code == 'invalid-verification-code') {
-          _showSnackBar("Incorrect OTP Code. Please try again.");
-        } else {
-          _showSnackBar(AppErrors.genericError);
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        _showSnackBar(AppErrors.genericError);
-      }
-    }
-  }
-
-  Future<void> _completeLogin() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user != null && _targetUid != null) {
+      // Sign out from Phone Auth session
+      await _auth.signOut();
       
-      // Update the user's document with new device token & auth UID
-      Map<String, dynamic> updateData = {
-        'auth_uid': user.uid,
-        'isProfileComplete': true,
-      };
+      // Sign back in with Email and Password
+      await _auth.signInWithEmailAndPassword(email: targetEmail, password: password);
+      
+      if (!mounted) return;
+      
+      final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
+      // Fetch data into Provider
+      bool dataLoaded = await profileProvider.fetchAndStoreMemberData();
+
+      // Get FCM Token
+      String? fcmToken;
       try {
-        final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
-        updateData['currentDeviceToken'] = await authProvider.getPersistentDeviceId();
-        updateData['fcmToken'] = await FirebaseMessaging.instance.getToken();
+        fcmToken = await FirebaseMessaging.instance.getToken();
       } catch (e) {
-        debugPrint("Error fetching tokens: $e");
+        debugPrint("Error fetching FCM token: $e");
       }
 
-      await FirebaseFirestore.instance.collection('member').doc(_targetUid).set(updateData, SetOptions(merge: true));
+      // Update persistent device token
+      String deviceId = await authProvider.getPersistentDeviceId();
+      await authProvider.updateDeviceToken(
+        collectionSource: profileProvider.collectionSource,
+        documentId: profileProvider.documentId,
+        currentDeviceToken: deviceId,
+        fcmToken: fcmToken,
+      );
 
-      if (mounted) {
-        _showSnackBar('Login Successful!', Colors.green);
-        Navigator.pushReplacementNamed(context, '/home');
+      if (!mounted) return;
+
+      if (dataLoaded) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      } else {
+        _showSnackBar("Auth Success, but failed to sync Firestore data. Please contact Admin.");
+        await _auth.signOut();
       }
+    } catch (e) {
+      _showSnackBar("Error finalizing login: $e");
+      setState(() => _isLoading = false);
     }
   }
 
   @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  // ==========================================
+  // 3. UI DESIGN SECTION
+  // ==========================================
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final size = MediaQuery.of(context).size;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            padding: EdgeInsets.symmetric(
+                horizontal: size.width > 600 ? size.width * 0.2 : 30.0,
+                vertical: 20.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // Logo
                 Image.asset(
                   'assets/images/logo.png',
                   width: 140,
                   height: 140,
                   errorBuilder: (context, error, stackTrace) {
-                    return Icon(Icons.local_taxi_rounded, size: 90, color: colorScheme.primary);
+                    return Icon(Icons.local_taxi_rounded,
+                        size: 90, color: colorScheme.primary);
                   },
                 ),
                 const SizedBox(height: 15),
 
                 Text(
-                  'Welcome to AIAPRTD',
+                  'login.title'.tr(),
                   style: theme.textTheme.titleLarge?.copyWith(
                     color: colorScheme.primary,
                     letterSpacing: 1.5,
@@ -269,130 +385,161 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 5),
 
                 Text(
-                  'Secure OTP Login',
+                  'login.subtitle'.tr(),
                   style: theme.textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 40),
 
-                if (!_otpSent) ...[
-                  TextField(
-                    controller: _identifierController,
-                    keyboardType: TextInputType.text,
-                    style: TextStyle(color: colorScheme.onSurface),
-                    decoration: InputDecoration(
-                      labelText: 'Membership No. or Mobile',
-                      hintText: 'e.g. AIAPRTD-26-XXXX or 077XXXXXXX',
-                      prefixIcon: Icon(Icons.person_outline, color: colorScheme.primary),
+                // Username/Email Field
+                TextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.text,
+                  style: TextStyle(color: colorScheme.onSurface),
+                  decoration: InputDecoration(
+                    labelText: 'login.email_hint'.tr(),
+                    prefixIcon:
+                        Icon(Icons.person_outline, color: colorScheme.primary),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Password Field
+                TextField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  style: TextStyle(color: colorScheme.onSurface),
+                  decoration: InputDecoration(
+                    labelText: 'login.password_label'.tr(),
+                    prefixIcon: Icon(Icons.lock_open_outlined,
+                        color: colorScheme.primary),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: theme.iconTheme.color),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
                     ),
                   ),
-                  const SizedBox(height: 20),
+                ),
+                const SizedBox(height: 10),
 
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: _acceptTerms,
-                        activeColor: colorScheme.primary,
-                        onChanged: (bool? value) {
-                          setState(() {
-                            _acceptTerms = value ?? false;
-                          });
-                        },
-                      ),
-                      Expanded(
-                        child: RichText(
-                          text: TextSpan(
-                            style: theme.textTheme.bodyMedium,
-                            children: [
-                              const TextSpan(text: 'I accept the '),
-                              TextSpan(
-                                text: 'Privacy Policy',
-                                style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold),
-                                recognizer: TapGestureRecognizer()..onTap = () {
-                                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()));
+                // Forgot Password
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (context) => const ForgotPasswordScreen()),
+                      );
+                    },
+                    child: Text(
+                      'login.forgot_password'.tr(),
+                      style: TextStyle(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+
+                // Terms & Conditions Checkbox
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _acceptTerms,
+                      activeColor: colorScheme.primary,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _acceptTerms = value ?? false;
+                        });
+                      },
+                    ),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          style: theme.textTheme.bodyMedium,
+                          children: [
+                            const TextSpan(text: 'I accept the '),
+                            TextSpan(
+                              text: 'Privacy Policy',
+                              style: TextStyle(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.bold),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const PrivacyPolicyScreen()),
+                                  );
                                 },
-                              ),
-                              const TextSpan(text: ' and '),
-                              TextSpan(
-                                text: 'Terms & Conditions',
-                                style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold),
-                                recognizer: TapGestureRecognizer()..onTap = () {
-                                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => const TermsConditionsScreen()));
+                            ),
+                            const TextSpan(text: ' and '),
+                            TextSpan(
+                              text: 'Terms & Conditions',
+                              style: TextStyle(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.bold),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const TermsConditionsScreen()),
+                                  );
                                 },
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 25),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 25),
 
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _handleSendOTP,
-                      child: _isLoading
-                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : const Text('Send SMS OTP'),
-                    ),
+                // LOGIN BUTTON
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _handleLogin,
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2),
+                          )
+                        : Text('login.login_button'.tr()),
                   ),
-                ] else ...[
-                  Text(
-                    'OTP sent to $_targetMobile',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: _otpController,
-                    keyboardType: TextInputType.number,
-                    maxLength: 6,
-                    style: TextStyle(color: colorScheme.onSurface, letterSpacing: 5, fontSize: 24, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                    decoration: InputDecoration(
-                      labelText: 'Enter OTP Code',
-                      prefixIcon: Icon(Icons.message, color: colorScheme.primary),
-                    ),
-                  ),
-                  const SizedBox(height: 25),
-
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _handleVerifyOTP,
-                      child: _isLoading
-                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : const Text('Verify & Login'),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextButton(
-                    onPressed: _isLoading ? null : () {
-                      setState(() {
-                        _otpSent = false;
-                        _otpController.clear();
-                      });
-                    },
-                    child: const Text('Change Phone Number'),
-                  )
-                ],
-                const SizedBox(height: 30),
+                ),
+                const SizedBox(height: 20),
 
                 // Register Link
                 RichText(
                   text: TextSpan(
-                    style: theme.textTheme.bodyMedium,
-                    children: [
-                      const TextSpan(text: "Don't have an account? "),
-                      TextSpan(
-                        text: "Register",
-                        style: TextStyle(
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.underline,
-                        ),
-                        recognizer: TapGestureRecognizer()..onTap = () {
-                          Navigator.of(context).push(MaterialPageRoute(builder: (context) => const RegisterScreen()));
-                        },
+                    style: theme.textTheme.bodyMedium?.copyWith(fontSize: 16),
+                      children: [
+                        const TextSpan(text: "Don't have an account? "),
+                        TextSpan(
+                          text: "Register",
+                          style: TextStyle(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            decoration: TextDecoration.underline,
+                          ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                  builder: (context) => const RegisterScreen()),
+                            );
+                          },
                       ),
                     ],
                   ),
@@ -405,4 +552,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
+
 

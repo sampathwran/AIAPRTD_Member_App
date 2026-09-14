@@ -261,7 +261,7 @@ class _PersonalDetailsTabState extends State<PersonalDetailsTab> {
 
         final String documentId = profileProvider.documentId;
 
-        final String fullName = data['fullName']?.toString() ?? 'No Name';
+        final String fullName = profileProvider.memberFullName;
         final String email = data['user_email']?.toString() ?? 'No Email';
         final String mobile = data['mobile']?.toString() ?? 'No Mobile';
         final String address = data['address']?.toString() ?? 'No Address';

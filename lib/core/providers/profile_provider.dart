@@ -90,7 +90,20 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
         "Your account is currently inactive. Please contact the Union Administrator for more details.";
   }
 
-  String get memberFullName => _memberData?['fullName']?.toString() ?? 'Member';
+  String get memberFullName {
+    if (_memberData == null) return 'Member';
+    String fullName = _memberData!['fullName']?.toString().trim() ?? '';
+    if (fullName.isNotEmpty) return fullName;
+    
+    String fName = _memberData!['first_name']?.toString().trim() ?? _memberData!['firstName']?.toString().trim() ?? '';
+    String lName = _memberData!['last_name']?.toString().trim() ?? _memberData!['lastName']?.toString().trim() ?? '';
+    
+    if (fName.isNotEmpty || lName.isNotEmpty) {
+      return '$fName $lName'.trim();
+    }
+    
+    return 'Member';
+  }
 
   String get memberNo => _memberData?['membershipNo']?.toString() ?? 'N/A';
 

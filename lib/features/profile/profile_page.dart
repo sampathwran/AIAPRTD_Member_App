@@ -161,7 +161,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               const SizedBox(height: 12),
               Text(
-                data['fullName'] ?? "No Name",
+                provider.memberFullName,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,

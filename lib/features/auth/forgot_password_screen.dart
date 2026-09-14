@@ -1,8 +1,8 @@
-import '../../core/utils/app_errors.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../core/utils/app_errors.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -22,7 +22,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  // How to send Reset Link via Firebase Auth + Firestore
   Future<void> _handleResetPassword() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -36,52 +35,57 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     String? targetEmail;
 
     try {
-      // 1. Find the corresponding Email from 'member' collection
-      var userQuery = await FirebaseFirestore.instance
-          .collection('member')
-          .where('membershipNo', isEqualTo: inputText)
-          .limit(1)
-          .get();
-          
-      if (userQuery.docs.isEmpty) {
-          userQuery = await FirebaseFirestore.instance
-              .collection('web_sync_member')
-              .where('membershipNo', isEqualTo: inputText)
-              .limit(1)
-              .get();
+      // Find the corresponding Email from member collection using Document ID
+      final userDoc = await FirebaseFirestore.instance.collection('member').doc(inputText).get();
+
+      if (userDoc.exists) {
+        final data = userDoc.data();
+        targetEmail = (data?['email'] as String?) ?? (data?['user_email'] as String?);
+      } 
+      
+      // Fallback query just in case the ID case doesn't match perfectly
+      if (targetEmail == null || targetEmail.isEmpty) {
+        final userQuery = await FirebaseFirestore.instance
+            .collection('member')
+            .where('membershipNo', isEqualTo: inputText)
+            .limit(1)
+            .get();
+
+        if (userQuery.docs.isNotEmpty) {
+          final data = userQuery.docs.first.data();
+          targetEmail = (data['email'] as String?) ?? (data['user_email'] as String?);
+        }
       }
 
-      if (userQuery.docs.isNotEmpty) {
-        targetEmail = userQuery.docs.first.data()['user_email'] as String?;
-      } else {
-        _showErrorSnackbar(
-            'Membership number not found. Please check and try again.');
+      if (targetEmail == null || targetEmail.isEmpty) {
+        _showErrorSnackbar("Membership number not found. Please check and try again.");
         setState(() {
           _isLoading = false;
         });
         return;
       }
 
-      // 3. Actually send the link to the email via Firebase Auth
-      if (targetEmail != null && targetEmail.isNotEmpty) {
-        await FirebaseAuth.instance.sendPasswordResetEmail(email: targetEmail);
-        _showSuccessSnackbar(
-            'Password reset link sent successfully to $targetEmail!');
-        _inputController.clear();
-      } else {
-          _showErrorSnackbar('No email found for this account.');
-      }
+      // Actually send the link to the email via Firebase Auth
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: targetEmail);
+      
+      final String successMessage = 
+          "A password reset link has been sent to your email address. Please check your Inbox and Spam folders.\n\n"
+          "මුරපදය යළි සැකසීමේ සබැඳිය (Link) ඔබගේ ලියාපදිංචි ඊමේල් ලිපිනයට යවා ඇත. කරුණාකර ඔබගේ ඊමේල් ගිණුමේ Inbox සහ Spam ෆෝල්ඩර පරීක්ෂා කරන්න.\n\n"
+          "கடவுச்சொல் மீட்டமைப்பு இணைப்பு உங்கள் பதிவுசெய்யப்பட்ட மின்னஞ்சல் முகவரிக்கு அனுப்பப்பட்டுள்ளது. தயவுசெய்து உங்கள் Inbox மற்றும் Spam கோப்புறைகளை சரிபார்க்கவும்.";
+          
+      _showSuccessSnackbar(successMessage);
+      _inputController.clear();
+      
     } on FirebaseAuthException catch (e) {
-      String errorMsg = 'An error occurred. Please try again.';
+      String errorMsg = "An error occurred. Please try again.";
       if (e.code == 'user-not-found') {
-        errorMsg = 'This email address is not registered in our system.';
-      } else if (e.code == 'invalid-email') {
-        errorMsg = 'The email address format is invalid.';
+        errorMsg = "Account not found.";
+      } else if (e.code == 'too-many-requests') {
+        errorMsg = "Too many attempts. Please try again later.";
       }
       _showErrorSnackbar(errorMsg);
     } catch (e) {
-      _showErrorSnackbar(
-          'Something went wrong. Check your internet connection.');
+      _showErrorSnackbar("An error occurred. Please try again.");
     }
 
     if (!mounted) return;
@@ -202,8 +206,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   enabled: !_isLoading,
                   style: const TextStyle(fontSize: 15),
                   decoration: InputDecoration(
-                    labelText: 'Membership Number',
-                    hintText: 'e.g. AIAPRTD-26-xxxx',
+                    labelText: 'Membership No',
+                    hintText: 'e.g. AIAPRTD-25-xxxx',
                     prefixIcon: Icon(Icons.person_outline_rounded,
                         color: colorScheme.primary, size: 22),
                   ),
@@ -242,4 +246,5 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 }
+
 

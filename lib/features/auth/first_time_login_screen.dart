@@ -1,6 +1,6 @@
-import '../../core/utils/app_errors.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:aiaprtd_member/core/utils/app_errors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:provider/provider.dart';
@@ -17,7 +17,7 @@ class FirstTimeLoginScreen extends StatefulWidget {
 class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // ✍️ Text field controllers
+  // âœï¸ Text field controllers
   final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -48,17 +48,17 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
   Future<void> _checkMemberInFirestore() async {
     String input = _identifierController.text.trim();
     if (input.isEmpty) {
-      _showSnackBar(AppErrors.emptyFields);
+      _showSnackBar("Please enter your Membership Number", Colors.redAccent);
       return;
     }
 
     if (input.contains('@')) {
-      _showSnackBar(AppErrors.memberNotFound);
+      _showSnackBar("Please enter your Membership No (e.g. AIAPRTD-26-XXXX), not your Email.", Colors.redAccent);
       return;
     }
 
     setState(() => _isLoading = true);
-    debugPrint("🔍 Checking Firestore for: $input");
+    debugPrint("ðŸ” Checking Firestore for: $input");
 
     try {
       // 1. Check 'member' collection first
@@ -92,7 +92,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
       }
 
       if (memberData == null) {
-        _showSnackBar(AppErrors.memberNotFound);
+        _showSnackBar("No pre-registered account found with this Membership No.", Colors.redAccent);
         setState(() => _isLoading = false);
         return;
       }
@@ -103,22 +103,22 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
       _targetUid = targetUid;
       _sourceCollection = sourceCollection;
       
-      String? rawMobile = memberData['mobile']?.toString() ?? 
-                          memberData['mobile_number']?.toString() ?? 
-                          memberData['whatsapp_number']?.toString() ?? 
-                          memberData['whatsapp']?.toString() ?? 
-                          memberData['billing_phone']?.toString() ?? 
-                          memberData['phone']?.toString() ?? 
-                          memberData['contact_no']?.toString();
+      String? rawMobile = memberData['mobile'] ?? 
+                          memberData['mobile_number'] ?? 
+                          memberData['whatsapp_number'] ?? 
+                          memberData['whatsapp'] ?? 
+                          memberData['billing_phone'] ?? 
+                          memberData['phone'] ?? 
+                          memberData['contact_no'];
 
       if (_targetEmail == null || _targetEmail!.isEmpty) {
-        _showSnackBar(AppErrors.memberNotFound);
+        _showSnackBar("Associated email not found in record. Contact Admin.", Colors.redAccent);
         setState(() => _isLoading = false);
         return;
       }
 
       if (rawMobile == null || rawMobile.isEmpty) {
-        _showSnackBar(AppErrors.mobileNotFound);
+        _showSnackBar("Associated Mobile Number not found in record. Contact Admin (07XXXXXXXX).", Colors.redAccent);
         setState(() => _isLoading = false);
         return;
       }
@@ -131,7 +131,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
         _mobileNumber = '+$_mobileNumber';
       }
 
-      debugPrint("✅ Admin Record Found! Sending SMS to: $_mobileNumber");
+      debugPrint("âœ… Admin Record Found! Sending SMS to: $_mobileNumber");
       _showSnackBar("Sending SMS to $_mobileNumber...", Colors.green);
 
       // Trigger Firebase Phone Auth
@@ -155,7 +155,13 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
         verificationFailed: (FirebaseAuthException e) {
           if (mounted) {
             setState(() => _isLoading = false);
-            _showSnackBar(AppErrors.genericError);
+            String errorMsg = AppErrors.genericError;
+            if (e.code == 'too-many-requests' || e.message?.contains('39') == true || e.message?.contains('17499') == true) {
+              errorMsg = AppErrors.tooManyRequests;
+            } else if (e.code == 'invalid-phone-number') {
+              errorMsg = 'Invalid phone number format.';
+            }
+            _showSnackBar(errorMsg, Colors.redAccent);
           }
         },
         codeSent: (String verificationId, int? resendToken) {
@@ -174,8 +180,8 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
       );
 
     } catch (e) {
-      debugPrint("❌ Error: $e");
-      _showSnackBar(AppErrors.genericError);
+      debugPrint("âŒ Error: $e");
+      _showSnackBar(AppErrors.genericError, Colors.redAccent);
       setState(() => _isLoading = false);
     }
   }
@@ -189,7 +195,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
     }
 
     if (_verificationId == null) {
-      _showSnackBar(AppErrors.sessionExpired);
+      _showSnackBar("Verification session expired. Please go back and try again.", Colors.redAccent);
       return;
     }
 
@@ -209,9 +215,9 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
       });
       _showSnackBar("Phone Verified!", Colors.green);
     } on FirebaseAuthException catch (e) {
-      _showSnackBar(AppErrors.invalidOtp);
+      _showSnackBar(AppErrors.invalidOtp, Colors.redAccent);
     } catch (e) {
-      _showSnackBar(AppErrors.genericError);
+      _showSnackBar(AppErrors.genericError, Colors.redAccent);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -246,7 +252,7 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
                    );
                    user = existingUserCred.user;
                  } catch (signInError) {
-                   _showSnackBar(AppErrors.incorrectPassword, Colors.orange);
+                   _showSnackBar(AppErrors.invalidCredentials, Colors.orange);
                    return;
                  }
              } else {
@@ -262,14 +268,14 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
         try {
           await user.linkWithCredential(emailCred);
         } on FirebaseAuthException catch (linkError) {
-          if (linkError.code == 'credential-already-in-use' || linkError.code == 'email-already-in-use') {
+          if (linkError.code == 'credential-already-in-use' || linkError.code == 'email-already-in-use' || linkError.code == 'provider-already-linked') {
              try {
                // The account was likely created by the WP Auto-Sync Mega Plugin.
                // Let's just sign into it with the password they provided!
                UserCredential existingUserCred = await FirebaseAuth.instance.signInWithCredential(emailCred);
                user = existingUserCred.user;
              } catch (signInError) {
-               _showSnackBar(AppErrors.incorrectPassword, Colors.orange);
+               _showSnackBar(AppErrors.invalidCredentials, Colors.orange);
                return;
              }
           } else {
@@ -279,9 +285,9 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
       }
 
       if (user != null) {
-        debugPrint("✅ Auth User Created/Linked! UID: ${user.uid}");
+        debugPrint("âœ… Auth User Created/Linked! UID: ${user.uid}");
 
-        // 🗄️ B. Firestore Update
+        // ðŸ—„ï¸ B. Firestore Update
         await FirebaseFirestore.instance
             .collection('web_sync_member')
             .doc(_targetUid)
@@ -339,30 +345,28 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
         Navigator.pushReplacementNamed(context, '/home');
       }
     } on FirebaseAuthException catch (e) {
-      debugPrint("🔥 FirebaseAuthException: ${e.code} - ${e.message}");
+      debugPrint("💥 FirebaseAuthException: ${e.code} - ${e.message}");
       if (!mounted) return;
       String errorMsg = AppErrors.genericError;
-      if (e.code == 'email-already-in-use') {
-        errorMsg = AppErrors.accountAlreadyActivated;
+      if (e.code == 'email-already-in-use' || e.code == 'provider-already-linked') {
+        errorMsg = AppErrors.emailInUse;
       } else if (e.code == 'weak-password') {
-        errorMsg = AppErrors.weakPassword;
+        errorMsg = 'The password is too weak. Min 6 characters required.';
+      } else if (e.code == 'too-many-requests' || e.message?.contains('39') == true || e.message?.contains('17499') == true) {
+        errorMsg = AppErrors.tooManyRequests;
       }
       _showSnackBar(errorMsg, Colors.redAccent);
     } catch (e) {
       if (!mounted) return;
-      _showSnackBar(AppErrors.genericError);
+      _showSnackBar(AppErrors.genericError, Colors.redAccent);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _showSnackBar(String message, [Color backgroundColor = Colors.redAccent]) {
+  void _showSnackBar(String message, Color backgroundColor) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, textAlign: TextAlign.center, style: const TextStyle(height: 1.4, fontSize: 13)), 
-        backgroundColor: backgroundColor, 
-        duration: const Duration(seconds: 5)
-      ),
+      SnackBar(content: Text(message), backgroundColor: backgroundColor),
     );
   }
 
@@ -568,5 +572,3 @@ class _FirstTimeLoginScreenState extends State<FirstTimeLoginScreen> {
     );
   }
 }
-
-
