@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:aiaprtd_member/core/providers/profile_provider.dart';
+import 'package:aiaprtd_member/core/providers/finance_provider.dart';
 import 'package:aiaprtd_member/features/home/swipe_to_accept_button.dart';
 import 'package:aiaprtd_member/features/home/active_booking_page.dart';
 import 'package:aiaprtd_member/features/home/online_status_controller.dart';
@@ -591,6 +592,17 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
                           _showInactiveWarning(context, inactiveReason);
                         },
                         onAccept: () async {
+                          final financeProvider = Provider.of<FinanceProvider>(context, listen: false);
+                          if (financeProvider.myAppUsageChargeBalance > financeProvider.appUsageLimit) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Cannot accept hire! Outstanding balance (${financeProvider.myAppUsageChargeBalance.toStringAsFixed(2)}) exceeds limit (${financeProvider.appUsageLimit.toStringAsFixed(2)})."),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                            return false;
+                          }
+
                           final navigator = Navigator.of(context);
                           final scaffoldMessenger =
                               ScaffoldMessenger.of(context);

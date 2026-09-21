@@ -15,7 +15,7 @@ class FinanceProvider extends ChangeNotifier {
   double _monthlyMembershipFee = 500.0;
   double get monthlyMembershipFee => _monthlyMembershipFee;
 
-  double _appUsageLimit = 1000.0;
+  double _appUsageLimit = 500.0;
   double get appUsageLimit => _appUsageLimit;
 
   Map<String, dynamic> _unionBankDetails = {};
@@ -55,7 +55,7 @@ class FinanceProvider extends ChangeNotifier {
             (data['memberSavingsPercentage'] ?? 7.0).toDouble();
         _monthlyMembershipFee =
             (data['monthlyMembershipFee'] ?? 500.0).toDouble();
-        _appUsageLimit = (data['appUsageLimit'] ?? 1000.0).toDouble();
+        _appUsageLimit = (data['appUsageLimit'] ?? 500.0).toDouble();
 
         _unionBankDetails = {
           'bankName': data['unionBankName'] ?? '',
