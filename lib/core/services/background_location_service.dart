@@ -104,13 +104,27 @@ void onStart(ServiceInstance service) async {
             desiredAccuracy: LocationAccuracy.high,
           );
 
+          User? currentUser = FirebaseAuth.instance.currentUser;
+
+          if (position.isMocked) {
+            if (currentUser != null) {
+              await FirebaseFirestore.instance.collection('members').doc(currentUser.uid).set(
+                {
+                  'isOnline': false,
+                  'status': 'offline',
+                },
+                SetOptions(merge: true),
+              );
+            }
+            return;
+          }
+
           service.setForegroundNotificationInfo(
             title: "AIAPRTD Driver",
             content: "Tracking Location Active",
           );
 
           // Update Firebase
-          User? currentUser = FirebaseAuth.instance.currentUser;
           if (currentUser != null) {
             String uid = currentUser.uid;
 

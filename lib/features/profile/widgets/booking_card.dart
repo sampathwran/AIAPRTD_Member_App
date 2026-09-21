@@ -12,7 +12,7 @@ class BookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
-    String tripId = data['tripId'] ?? data['bookingId'] ?? 'N/A';
+    String tripId = data['bookingId'] ?? data['tripId'] ?? 'N/A';
     String tripType = data['tripType'] ?? 'One way';
     String status = data['status'] ?? 'Unknown';
     String startAddress = data['startAddress'] ??

@@ -60,7 +60,7 @@ class TransactionHistoryList extends StatelessWidget {
                 : (data['unionUsageCharge'] ?? 0.0).toDouble();
             final date =
                 (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
-            final tripId = data['tripId'] as String? ?? 'N/A';
+            final tripId = data['bookingId'] as String? ?? data['tripId'] as String? ?? 'N/A';
             final totalFare = (data['totalFare'] ?? 0.0).toDouble();
 
             final isAppBooking = type == 'app_booking_commission_split';

@@ -636,8 +636,17 @@ class _PassengerOngoingTripPageState extends State<PassengerOngoingTripPage> {
                                       ? NetworkImage(driverImage)
                                       : null,
                                   child: driverImage.isEmpty
-                                      ? const Icon(Icons.person,
-                                          color: Colors.blue, size: 30)
+                                      ? ClipOval(
+                                          child: Opacity(
+                                            opacity: 0.4,
+                                            child: Image.asset(
+                                              'assets/images/profile_sample_image.png',
+                                              fit: BoxFit.cover,
+                                              width: 60,
+                                              height: 60,
+                                            ),
+                                          ),
+                                        )
                                       : null,
                                 ),
                                 const SizedBox(width: 16),

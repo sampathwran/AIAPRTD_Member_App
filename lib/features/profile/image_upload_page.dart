@@ -176,8 +176,17 @@ class _ImageUploadPageState extends State<ImageUploadPage> {
                                 ? FileImage(_selectedImage!)
                                 : null,
                             child: _selectedImage == null
-                                ? const Icon(Icons.person,
-                                    size: 100, color: Color(0xFF1E3A8A))
+                                ? ClipOval(
+                                    child: Opacity(
+                                      opacity: 0.4,
+                                      child: Image.asset(
+                                        'assets/images/profile_sample_image.png',
+                                        fit: BoxFit.cover,
+                                        width: 200,
+                                        height: 200,
+                                      ),
+                                    ),
+                                  )
                                 : null,
                           ),
                         ),

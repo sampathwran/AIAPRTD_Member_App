@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 
 class MeterMetricsRow extends StatelessWidget {
-  final double distanceKm;
+  final String distanceLabel;
+  final String distanceText;
   final int waitTimeSeconds;
   final double speedKmh;
 
-  const MeterMetricsRow(
-      {super.key,
-      required this.distanceKm,
-      required this.waitTimeSeconds,
-      required this.speedKmh});
+  const MeterMetricsRow({
+    super.key,
+    this.distanceLabel = "DIST",
+    required this.distanceText,
+    required this.waitTimeSeconds,
+    required this.speedKmh,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +20,7 @@ class MeterMetricsRow extends StatelessWidget {
       children: [
         Expanded(
             child: _buildMetricCard(
-                "DIST", "${distanceKm.toStringAsFixed(1)} km", Icons.route)),
+                distanceLabel, distanceText, Icons.route)),
         const SizedBox(width: 8),
         Expanded(
             child: _buildMetricCard(

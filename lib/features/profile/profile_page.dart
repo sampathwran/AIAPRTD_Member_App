@@ -35,27 +35,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // Logic to calculate 5-level Rank based on criteria
   String determineRank(Map<String, dynamic> data) {
-    final String joinDateStr =
-        data['joinDate'] ?? DateTime.now().toString().split(' ')[0];
-    final double rating =
-        (data['rating'] is num) ? (data['rating'] as num).toDouble() : 0.0;
-    final int trips = int.tryParse(data['tripCount']?.toString() ?? '0') ?? 0;
-
-    int monthsJoined = 0;
-    try {
-      DateTime joinDate = DateTime.parse(joinDateStr);
-      DateTime now = DateTime.now();
-      monthsJoined = now.difference(joinDate).inDays ~/ 30;
-    } catch (e) {
-      monthsJoined = 0;
-    }
-
-    if (monthsJoined >= 24 && rating >= 4.8) return "Diamond";
-    if (monthsJoined >= 12 && rating >= 4.7) return "Platinum";
-    if (monthsJoined >= 6 && rating >= 4.5 && trips >= 200) return "Gold";
-    if (monthsJoined >= 3 && rating >= 4.0 && trips >= 50) return "Silver";
-
-    return "Bronze"; // Default Rank
+    return data['rank']?.toString() ?? "Bronze";
   }
 
   @override
@@ -130,34 +110,85 @@ class _ProfilePageState extends State<ProfilePage> {
           offset: const Offset(0, -50),
           child: Column(
             children: [
-              GestureDetector(
-                onTap: () async {
-                  final String memNo = data['membershipNo'] ?? 'N/A';
-                  await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              ImageUploadPage(membershipNo: memNo)));
+              Builder(
+                builder: (context) {
+                  final bool isLocked = data['isProfileImageLocked'] == true;
+                  
+                  return GestureDetector(
+                    onTap: () async {
+                      if (isLocked) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('ඔබගේ ප්‍රොෆයිල් පින්තූරය ඇඩ්මින් විසින් ලොක් කර ඇත.'),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                        return;
+                      }
+                      
+                      final String memNo = data['membershipNo'] ?? 'N/A';
+                      await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  ImageUploadPage(membershipNo: memNo)));
 
-                  if (!context.mounted) return;
+                      if (!context.mounted) return;
 
-                  Provider.of<ProfileProvider>(context, listen: false)
-                      .fetchAndStoreMemberData();
-                },
-                child: CircleAvatar(
-                  radius: 48,
-                  backgroundColor: Colors.white,
-                  child: CircleAvatar(
-                    radius: 44,
-                    backgroundColor: Colors.grey.shade200,
-                    backgroundImage: provider.profileImageUrl.isNotEmpty
-                        ? NetworkImage(provider.profileImageUrl)
-                        : null,
-                    child: provider.profileImageUrl.isEmpty
-                        ? const Icon(Icons.person, size: 45, color: Colors.blue)
-                        : null,
-                  ),
-                ),
+                      Provider.of<ProfileProvider>(context, listen: false)
+                          .fetchAndStoreMemberData();
+                    },
+                    child: Stack(
+                      alignment: Alignment.bottomRight,
+                      children: [
+                        CircleAvatar(
+                          radius: 48,
+                          backgroundColor: Colors.white,
+                          child: CircleAvatar(
+                            radius: 44,
+                            backgroundColor: Colors.grey.shade200,
+                            backgroundImage: provider.profileImageUrl.isNotEmpty
+                                ? NetworkImage(provider.profileImageUrl)
+                                : null,
+                            child: provider.profileImageUrl.isEmpty
+                                ? ClipOval(
+                                    child: Opacity(
+                                      opacity: 0.4,
+                                      child: Image.asset(
+                                        'assets/images/profile_sample_image.png',
+                                        fit: BoxFit.cover,
+                                        width: 88,
+                                        height: 88,
+                                      ),
+                                    ),
+                                  )
+                                : null,
+                          ),
+                        ),
+                        if (isLocked)
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.orange,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: const Icon(Icons.lock_rounded, size: 12, color: Colors.white),
+                          )
+                        else
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E3A8A),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
+                          ),
+                      ],
+                    ),
+                  );
+                }
               ),
               const SizedBox(height: 12),
               Text(

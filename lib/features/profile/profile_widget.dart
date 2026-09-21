@@ -11,7 +11,19 @@ class ProfileWidget extends StatelessWidget {
       radius: 25,
       backgroundImage:
           user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
-      child: user?.photoURL == null ? const Icon(Icons.person, size: 30) : null,
+      child: user?.photoURL == null
+          ? ClipOval(
+              child: Opacity(
+                opacity: 0.4,
+                child: Image.asset(
+                  'assets/images/profile_sample_image.png',
+                  fit: BoxFit.cover,
+                  width: 50,
+                  height: 50,
+                ),
+              ),
+            )
+          : null,
     );
   }
 }

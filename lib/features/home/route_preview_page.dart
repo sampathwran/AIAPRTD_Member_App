@@ -91,6 +91,29 @@ class _RoutePreviewPageState extends State<RoutePreviewPage> {
                         color: Colors.grey.shade300,
                         borderRadius: BorderRadius.circular(10)),
                   ),
+                  
+                  if (provider.tripType == 'Flat Rate')
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              "දැනට කිලෝමීටර් ගණන ${provider.totalDistanceKm.toStringAsFixed(1)}KM වේ. මීට වඩා වැඩිපුර ගමන් කරොත් අමතර කිලෝමීටර් සඳහා අමතර ගාස්තුවක් එකතු වේ.",
+                              style: const TextStyle(fontSize: 11, color: Colors.blue, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
                   // Vehicle Categories List (Horizontal)
                   const VehicleSelectionWidget(),

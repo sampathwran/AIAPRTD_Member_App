@@ -260,7 +260,7 @@ class _ActiveBookingPageState extends State<ActiveBookingPage> {
         String category = widget.bookingData['vehicle_category'] ??
             widget.bookingData['vehicleCategory'] ??
             'Mini';
-        await meter.stopMeter(membershipNo, category, tripType: 'App Booking');
+        await meter.stopMeter(membershipNo, category, tripType: 'App Booking', existingTripId: widget.bookingId);
       }
       updates['status'] = 'completed';
     }
@@ -427,9 +427,22 @@ class _ActiveBookingPageState extends State<ActiveBookingPage> {
     String vehicleCategory = widget.bookingData['vehicle_category'] ??
         widget.bookingData['vehicleCategory'] ??
         'Mini';
+        
+    bool isFlatRate = widget.bookingData['isFlatRate'] ?? false;
+    double flatPassengerPrice = (widget.bookingData['flatPassengerPrice'] ?? 0.0).toDouble();
+    double flatDriverPrice = (widget.bookingData['flatDriverPrice'] ?? 0.0).toDouble();
+    double minAdminRate = (widget.bookingData['minAdminRate'] ?? 0.0).toDouble();
+    double distanceKm = (widget.bookingData['distanceKm'] ?? 0.0).toDouble();
+
     if (mounted) {
-      Provider.of<MeterProvider>(context, listen: false)
-          .startMeter(vehicleCategory);
+      Provider.of<MeterProvider>(context, listen: false).startMeter(
+        vehicleCategory,
+        isFlatRate: isFlatRate,
+        flatPassengerPrice: flatPassengerPrice,
+        flatDriverPrice: flatDriverPrice,
+        initialDistanceKm: distanceKm,
+        minAdminRate: minAdminRate,
+      );
 
       // Play Seatbelt Audio if enabled
       final settings = Provider.of<SettingsProvider>(context, listen: false);
@@ -1263,7 +1276,10 @@ class _ActiveBookingPageState extends State<ActiveBookingPage> {
                                             ),
                                             const SizedBox(height: 16),
                                             MeterMetricsRow(
-                                              distanceKm: meter.totalDistanceKm,
+                                              distanceLabel: meter.isFlatRate ? "LEFT" : "DIST",
+                                              distanceText: meter.isFlatRate
+                                                  ? "${(meter.initialDistanceKm - meter.totalDistanceKm).clamp(0.0, double.infinity).toStringAsFixed(1)} km"
+                                                  : "${meter.totalDistanceKm.toStringAsFixed(1)} km",
                                               waitTimeSeconds:
                                                   meter.waitingTimeSeconds,
                                               speedKmh: meter.currentSpeedKmh,
@@ -1463,17 +1479,20 @@ class _ActiveBookingPageState extends State<ActiveBookingPage> {
                                 widget.bookingData['vehicleCategory'] ??
                                 'Mini'),
                         const SizedBox(height: 16),
-                        GestureDetector(
-                          onLongPress: _triggerSecretSos,
-                          child: MeterFareDisplay(totalFare: meter.totalFare),
-                        ),
+                          GestureDetector(
+                            onLongPress: _triggerSecretSos,
+                            child: MeterFareDisplay(totalFare: meter.totalFare),
+                          ),
                         const SizedBox(height: 12),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Expanded(
                               child: MeterMetricsRow(
-                                distanceKm: meter.totalDistanceKm,
+                                distanceLabel: meter.isFlatRate ? "LEFT" : "DIST",
+                                distanceText: meter.isFlatRate
+                                    ? "${(meter.initialDistanceKm - meter.totalDistanceKm).clamp(0.0, double.infinity).toStringAsFixed(1)} km"
+                                    : "${meter.totalDistanceKm.toStringAsFixed(1)} km",
                                 waitTimeSeconds: meter.waitingTimeSeconds,
                                 speedKmh: meter.currentSpeedKmh,
                               ),

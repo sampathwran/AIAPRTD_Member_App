@@ -202,8 +202,18 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
         data['startAddress'] ?? pickupMap?['address'] ?? 'Unknown Pickup';
     String drop = data['endAddress'] ?? dropMap?['address'] ?? 'Unknown Drop';
     List<dynamic> additionalDrops = data['additionalDrops'] ?? [];
+    
+    bool isFlatRate = data['isFlatRate'] ?? false;
     double fare = (data['totalFare'] ?? data['estimateFare'] ?? 0.0).toDouble();
+    if (isFlatRate && data['flatDriverPrice'] != null) {
+      fare = (data['flatDriverPrice']).toDouble();
+    }
     String price = fare.toStringAsFixed(2);
+    
+    String displayTripType = data['actualTripType'] ?? data['tripType'] ?? 'Immediate Booking';
+    if (isFlatRate) {
+      displayTripType = 'Flat Rate Hire';
+    }
 
     // Date and time extracting from pickupTime
     String date = 'Today';
@@ -297,7 +307,7 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
+                    color: isFlatRate ? Colors.orange.shade100 : Colors.orange.shade50,
                     borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(14),
                         topRight: Radius.circular(14)),
@@ -305,15 +315,15 @@ class _LiveBookingsTabState extends State<LiveBookingsTab> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Row(
                           children: [
-                            Icon(Icons.verified, color: Colors.blue, size: 16),
-                            SizedBox(width: 4),
+                            Icon(isFlatRate ? Icons.sell : Icons.verified, color: isFlatRate ? Colors.orange.shade800 : Colors.blue, size: 16),
+                            const SizedBox(width: 4),
                             Flexible(
-                                child: Text("Verified Member",
+                                child: Text(isFlatRate ? displayTripType : "Verified Member",
                                     style: TextStyle(
-                                        color: Colors.blue,
+                                        color: isFlatRate ? Colors.orange.shade800 : Colors.blue,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 12),
                                     overflow: TextOverflow.ellipsis)),

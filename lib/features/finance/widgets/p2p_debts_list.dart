@@ -85,7 +85,7 @@ class P2PDebtsList extends StatelessWidget {
                                   color: Colors.green.shade900),
                             ),
                             Text(
-                                "Trip: ${debt['tripId']} • Rs ${amount.toStringAsFixed(2)}",
+                                "Trip: ${debt['bookingId'] ?? debt['tripId']} • Rs ${amount.toStringAsFixed(2)}",
                                 style: TextStyle(
                                     fontSize: 11,
                                     color: Colors.green.shade700)),
@@ -137,7 +137,7 @@ class P2PDebtsList extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 2),
-                        Text("Trip: ${debt['tripId']}",
+                        Text("Trip: ${debt['bookingId'] ?? debt['tripId']}",
                             style: TextStyle(
                                 fontSize: 11, color: Colors.grey.shade600)),
                         Text(date,
@@ -414,7 +414,7 @@ class P2PDebtsList extends StatelessWidget {
     final debtorId = debt['debtorId'];
     final creditorId = debt['creditorId'];
     final amount = debt['amount']?.toString() ?? '0.00';
-    final tripId = debt['tripId'] ?? '';
+    final tripId = debt['bookingId'] ?? debt['tripId'] ?? '';
 
     try {
       // Get bank details first
@@ -468,7 +468,7 @@ class P2PDebtsList extends StatelessWidget {
     final debtId = debt['debtId'];
     final debtorId = debt['debtorId'];
     final amount = debt['amount']?.toString() ?? '0.00';
-    final tripId = debt['tripId'] ?? '';
+    final tripId = debt['bookingId'] ?? debt['tripId'] ?? '';
 
     try {
       await financeProv.updatePaymentMethod(debtId, 'union');

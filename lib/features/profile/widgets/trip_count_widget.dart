@@ -9,8 +9,8 @@ class TripCountWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Ensure 'tripCount' matches your database field name
-    final String trips = memberData['tripCount']?.toString() ?? "0";
+    // Ensure 'totalAcceptedCount' matches your database field name
+    final String trips = memberData['totalAcceptedCount']?.toString() ?? "0";
 
     return Column(
       children: [

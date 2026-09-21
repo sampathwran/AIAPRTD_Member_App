@@ -185,25 +185,62 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
                     pw.SizedBox(height: 10),
 
                     // Fare Breakdown
-                    pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
-                          pw.Text("Distance:",
-                              style: const pw.TextStyle(fontSize: 12)),
-                          pw.Text(
-                              "${meter.totalDistanceKm.toStringAsFixed(2)} km",
-                              style: const pw.TextStyle(fontSize: 12)),
-                        ]),
-                    pw.SizedBox(height: 4),
-                    pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
-                          pw.Text("Wait Time:",
-                              style: const pw.TextStyle(fontSize: 12)),
-                          pw.Text(
-                              "${(meter.waitingTimeSeconds / 60).floor()}m ${(meter.waitingTimeSeconds % 60)}s",
-                              style: const pw.TextStyle(fontSize: 12)),
-                        ]),
+                    if (meter.isFlatRate) ...[
+                      pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Text("Total Distance Traveled:", style: const pw.TextStyle(fontSize: 12)),
+                            pw.Text("${meter.totalDistanceKm.toStringAsFixed(2)} km", style: const pw.TextStyle(fontSize: 12)),
+                          ]),
+                      pw.SizedBox(height: 4),
+                      pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Text("Base Passenger Fare:", style: const pw.TextStyle(fontSize: 12)),
+                            pw.Text("LKR ${meter.flatPassengerPrice.toStringAsFixed(2)}", style: const pw.TextStyle(fontSize: 12)),
+                          ]),
+                      if (meter.totalDistanceKm > meter.initialDistanceKm) ...[
+                        pw.SizedBox(height: 4),
+                        pw.Row(
+                            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                            children: [
+                              pw.Text("Extra Distance (${(meter.totalDistanceKm - meter.initialDistanceKm).toStringAsFixed(2)} km):", style: const pw.TextStyle(fontSize: 12)),
+                              pw.Text("LKR ${((meter.totalFare - meter.flatPassengerPrice)).toStringAsFixed(2)}", style: const pw.TextStyle(fontSize: 12)),
+                            ]),
+                      ],
+                      pw.SizedBox(height: 10),
+                      pw.Divider(color: PdfColors.grey300),
+                      pw.SizedBox(height: 10),
+                      pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Text("Driver Earnings:", style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.blue800)),
+                            pw.Text("LKR ${meter.driverTotalFare.toStringAsFixed(2)}", style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.blue800)),
+                          ]),
+                      pw.SizedBox(height: 6),
+                      pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Text("Commission:", style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.orange800)),
+                            pw.Text("LKR ${(meter.flatPassengerPrice - meter.flatDriverPrice).clamp(0.0, double.infinity).toStringAsFixed(2)}", style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.orange800)),
+                          ]),
+                      pw.SizedBox(height: 10),
+                    ] else ...[
+                      pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Text("Distance:", style: const pw.TextStyle(fontSize: 12)),
+                            pw.Text("${meter.totalDistanceKm.toStringAsFixed(2)} km", style: const pw.TextStyle(fontSize: 12)),
+                          ]),
+                      pw.SizedBox(height: 4),
+                      pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Text("Wait Time:", style: const pw.TextStyle(fontSize: 12)),
+                            pw.Text("${(meter.waitingTimeSeconds / 60).floor()}m ${(meter.waitingTimeSeconds % 60)}s", style: const pw.TextStyle(fontSize: 12)),
+                          ]),
+                    ],
+                    
                     pw.SizedBox(height: 10),
                     pw.Container(
                         padding: const pw.EdgeInsets.all(8),
@@ -212,7 +249,7 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
                             mainAxisAlignment:
                                 pw.MainAxisAlignment.spaceBetween,
                             children: [
-                              pw.Text("TOTAL FARE:",
+                              pw.Text("TOTAL TO COLLECT:",
                                   style: pw.TextStyle(
                                       fontSize: 16,
                                       fontWeight: pw.FontWeight.bold)),
@@ -221,7 +258,7 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
                                   style: pw.TextStyle(
                                       fontSize: 16,
                                       fontWeight: pw.FontWeight.bold,
-                                      color: PdfColors.blue900)),
+                                      color: PdfColors.green900)),
                             ])),
                     pw.SizedBox(height: 20),
 
@@ -325,18 +362,22 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
       }
 
       // Process Trip Commission (10% Split for App Booking, 3% for Road Pickup)
-      try {
-        final financeProv =
-            Provider.of<FinanceProvider>(context, listen: false);
-        await financeProv.processTripCommission(
-          tripId: meter.tripId,
-          totalFare: meter.totalFare,
-          driverId: driverMembershipNo,
-          passengerId: passengerId,
-        );
-      } catch (e) {
-        debugPrint("Error processing finance commission: $e");
-      }
+        try {
+          final financeProv =
+              Provider.of<FinanceProvider>(context, listen: false);
+          await financeProv.processTripCommission(
+            tripId: meter.tripId,
+            totalFare: meter.totalFare,
+            driverId: driverMembershipNo,
+            passengerId: passengerId,
+            isFlatRate: meter.isFlatRate,
+            driverTotalFare: meter.driverTotalFare,
+            flatPassengerPrice: meter.flatPassengerPrice,
+            flatDriverPrice: meter.flatDriverPrice,
+          );
+        } catch (e) {
+          debugPrint("Error processing finance commission: $e");
+        }
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);
@@ -590,6 +631,25 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
                                       fontSize: 16,
                                       color: Colors.indigo))),
                           const Divider(height: 30, thickness: 1),
+                          
+                          // Passenger Total & Commission (for Flat Rates)
+                          if (meter.isFlatRate) ...[
+                            Center(
+                              child: Column(
+                                children: [
+                                  const Text("COLLECT FROM PASSENGER",
+                                      style: TextStyle(color: Colors.green, fontSize: 14, fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 4),
+                                  Text("LKR ${meter.totalFare.toStringAsFixed(2)}",
+                                      style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.black)),
+                                  const SizedBox(height: 8),
+                                  Text("Commission: LKR ${(meter.flatPassengerPrice - meter.flatDriverPrice).clamp(0.0, double.infinity).toStringAsFixed(2)}",
+                                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.orange)),
+                                ],
+                              ),
+                            ),
+                            const Divider(height: 30, thickness: 1),
+                          ],
 
                           // Metrics
                           Row(
@@ -600,10 +660,11 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
                               Expanded(
                                   child: _buildSmallMetric("Wait Time",
                                       "${(meter.waitingTimeSeconds / 60).floor()}m")),
-                              Expanded(
-                                  child: _buildSmallMetric("Fare",
-                                      "LKR ${meter.totalFare.toStringAsFixed(2)}",
-                                      isBold: true)),
+                              if (!meter.isFlatRate)
+                                Expanded(
+                                    child: _buildSmallMetric("Fare",
+                                        "LKR ${meter.totalFare.toStringAsFixed(2)}",
+                                        isBold: true)),
                             ],
                           ),
 

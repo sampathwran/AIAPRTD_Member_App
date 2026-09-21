@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
@@ -184,6 +184,10 @@ class FinanceProvider extends ChangeNotifier {
     required String driverId,
     required String
         passengerId, // Booking Member (Requester), empty if Road Pickup
+    bool isFlatRate = false,
+    double driverTotalFare = 0.0,
+    double flatPassengerPrice = 0.0,
+    double flatDriverPrice = 0.0,
   }) async {
     if (totalFare <= 0 || driverId.isEmpty) return;
 
@@ -192,9 +196,21 @@ class FinanceProvider extends ChangeNotifier {
       await _fetchAdminFinanceSettings();
 
       final bool isAppBooking = passengerId.isNotEmpty;
-      final double unionUsageCharge = totalFare * (_appUsageChargeRate / 100);
-      final double requesterCommission =
-          totalFare * (_memberSavingsRate / 100); // 7%
+      
+      // Calculate unionUsageCharge
+      double usageChargeBase = isFlatRate && driverTotalFare > 0 ? driverTotalFare : totalFare;
+      final double unionUsageCharge = usageChargeBase * (_appUsageChargeRate / 100);
+      
+      // Calculate requesterCommission
+      double requesterCommission = 0.0;
+      if (isAppBooking) {
+        if (isFlatRate) {
+          // Flat rate difference is the commission, extra KM fare belongs purely to driver
+          requesterCommission = (flatPassengerPrice - flatDriverPrice).clamp(0.0, double.infinity);
+        } else {
+          requesterCommission = totalFare * (_memberSavingsRate / 100); // 7%
+        }
+      }
 
       final DocumentReference? driverRef = await _getMemberRef(driverId);
       final DocumentReference? passengerRef =
@@ -241,7 +257,9 @@ class FinanceProvider extends ChangeNotifier {
 
       // Add 7% P2P Debt if it's an app booking
       if (isAppBooking && passengerRef != null && driverId != passengerId) {
-        DocumentReference p2pRef = _firestore.collection('p2p_debts').doc();
+        String p2pDateStr = DateFormat('yyyyMMdd').format(DateTime.now());
+        String customP2PId = 'P2P-$driverId-$p2pDateStr-$tripId';
+        DocumentReference p2pRef = _firestore.collection('p2p_debts').doc(customP2PId);
         batch.set(p2pRef, {
           'debtId': p2pRef.id,
           'debtorId': driverId, // The driver owes the money

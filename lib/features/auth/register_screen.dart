@@ -230,13 +230,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final currentYear = DateTime.now().year.toString().substring(2);
       String prefix = currentYear;
       final qs = await FirebaseFirestore.instance.collection('member')
-          .where('membershipNo', isGreaterThanOrEqualTo: 'AIAPRTD-$prefix-')
-          .where('membershipNo', isLessThan: 'AIAPRTD-$prefix-\uf8ff')
+          .where('membershipNo', isGreaterThanOrEqualTo: 'AIAPRTD-')
+          .where('membershipNo', isLessThan: 'AIAPRTD-\uf8ff')
           .get();
 
       List<int> existingNumbers = [];
       for (var doc in qs.docs) {
-        String memNo = doc.id; 
+        String memNo = (doc.data() as Map<String, dynamic>)['membershipNo']?.toString() ?? doc.id; 
         List<String> parts = memNo.split('-');
         if (parts.length >= 3) {
           int? number = int.tryParse(parts[2]);

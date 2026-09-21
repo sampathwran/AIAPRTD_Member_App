@@ -122,7 +122,7 @@ class _RoadPickupPageState extends State<RoadPickupPage> {
                               MeterFareDisplay(totalFare: meter.totalFare),
                               const SizedBox(height: 16),
                               MeterMetricsRow(
-                                  distanceKm: meter.totalDistanceKm,
+                                  distanceText: "${meter.totalDistanceKm.toStringAsFixed(1)} km",
                                   waitTimeSeconds: meter.waitingTimeSeconds,
                                   speedKmh: meter.currentSpeedKmh),
                               const SizedBox(height: 20),

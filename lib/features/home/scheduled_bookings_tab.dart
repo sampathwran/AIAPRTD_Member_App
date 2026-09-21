@@ -187,9 +187,20 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
             : null) ??
         'Unknown Drop';
     List<dynamic> additionalDrops = data['additionalDrops'] ?? [];
+    
+    bool isFlatRate = data['isFlatRate'] ?? false;
     double fare = (data['totalFare'] ?? data['estimateFare'] ?? 0.0).toDouble();
+    if (isFlatRate && data['flatDriverPrice'] != null) {
+      fare = (data['flatDriverPrice']).toDouble();
+    }
+    
     String price = fare.toStringAsFixed(2);
     String paymentMethod = data['paymentMethod'] ?? 'Cash';
+    
+    String displayTripType = data['actualTripType'] ?? data['tripType'] ?? 'Scheduled Booking';
+    if (isFlatRate) {
+      displayTripType = 'Flat Rate Hire';
+    }
 
     DateTime? pickupTime;
     if (data['pickupTime'] != null) {
@@ -265,7 +276,7 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
+                    color: isFlatRate ? Colors.orange.shade50 : Colors.blue.shade50,
                     borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(14),
                         topRight: Radius.circular(14)),
@@ -276,12 +287,13 @@ class _ScheduledBookingsTabState extends State<ScheduledBookingsTab> {
                       Expanded(
                         child: Row(
                           children: [
-                            Icon(Icons.verified, color: Colors.blue, size: 16),
-                            SizedBox(width: 4),
+                            Icon(isFlatRate ? Icons.sell : Icons.verified, 
+                                 color: isFlatRate ? Colors.orange : Colors.blue, size: 16),
+                            const SizedBox(width: 4),
                             Flexible(
-                                child: Text('profile.verified_member'.tr(),
+                                child: Text(isFlatRate ? displayTripType : 'profile.verified_member'.tr(),
                                     style: TextStyle(
-                                        color: Colors.blue,
+                                        color: isFlatRate ? Colors.orange : Colors.blue,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 12),
                                     overflow: TextOverflow.ellipsis)),

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geolocator/geolocator.dart';
 
 import 'package:aiaprtd_member/core/providers/profile_provider.dart';
 import 'package:aiaprtd_member/core/providers/vehicle_provider.dart';
@@ -122,6 +123,11 @@ class OnlineStatusController {
 
     // If all documents are at least uploaded, check if any are waiting for admin approval
     for (var entry in requiredDocs.entries) {
+      // Allow going online immediately after submitting face verification
+      if (entry.key == 'face_verification' && data[entry.key] == 'pending') {
+        continue;
+      }
+      
       if (data[entry.key] != 'approved') {
         return 'Pending Admin Approval for ${entry.value}';
       }
@@ -164,7 +170,38 @@ class OnlineStatusController {
       return;
     }
 
-    // --- 2. Check status when going ONLINE ---
+    // --- 2. Fake Location Check ---
+    if (currentPosition != null && currentPosition is Position) {
+      if (currentPosition.isMocked) {
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Icon(Icons.location_off, color: Colors.red, size: 60),
+              content: const Text(
+                "Fake Location Detected!\n\nPlease disable Mock Location to go online.",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              actions: [
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                    child: const Text("OK", style: TextStyle(color: Colors.white, fontSize: 16)),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    // --- 3. Check status when going ONLINE ---
     final String membershipNo = data['membershipNo']?.toString() ?? '';
     if (membershipNo.isEmpty) return;
 

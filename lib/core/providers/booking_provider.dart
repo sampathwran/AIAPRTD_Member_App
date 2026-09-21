@@ -12,6 +12,10 @@ class BookingProvider extends ChangeNotifier {
 
   final TextEditingController pickupController = TextEditingController();
   final List<TextEditingController> dropControllers = [TextEditingController()];
+  
+  // Flat Rate Fields
+  final TextEditingController flatPassengerPriceController = TextEditingController();
+  final TextEditingController flatDriverPriceController = TextEditingController();
 
   final Set<Marker> _markers = {};
   Set<Marker> get markers => _markers;
@@ -547,8 +551,18 @@ class BookingProvider extends ChangeNotifier {
     required double estimateFare,
     required String paymentMethod,
     String? note,
+    double? minAdminRate,
   }) async {
     String tripId = await _generateTripId();
+
+    bool isFlatRate = tripType == 'Flat Rate';
+    double? passengerPrice;
+    double? driverPrice;
+
+    if (isFlatRate) {
+      passengerPrice = double.tryParse(flatPassengerPriceController.text.trim());
+      driverPrice = double.tryParse(flatDriverPriceController.text.trim());
+    }
 
     Map<String, dynamic> bookingData = {
       'bookingId': tripId,
@@ -557,6 +571,11 @@ class BookingProvider extends ChangeNotifier {
       'memberName': memberName,
       'status': 'Pending',
       'tripType': 'Scheduled Booking',
+      'actualTripType': tripType, // Store original type
+      'isFlatRate': isFlatRate,
+      'flatPassengerPrice': passengerPrice,
+      'flatDriverPrice': driverPrice,
+      'minAdminRate': minAdminRate,
       'note': note,
       'pickupTime': pickupTime.toIso8601String(),
       'pickupLocation': {

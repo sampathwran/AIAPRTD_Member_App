@@ -275,7 +275,7 @@ class EarningsProvider with ChangeNotifier {
                   data['timestamp'] ?? data['startTime'] ?? data['pickupTime']);
 
               dailyTrips.add(TripModel(
-                id: data['tripId'] ?? doc.id,
+                id: data['bookingId'] ?? data['tripId'] ?? doc.id,
                 type: 'road_pickup',
                 date: tripDate,
                 fare: double.tryParse(data['totalFare'].toString()) ?? 0,

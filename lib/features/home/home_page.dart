@@ -613,6 +613,35 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     ).listen((Position position) {
       if (!mounted) return;
 
+      if (position.isMocked) {
+        final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+        if (profileProvider.isOnline) {
+          profileProvider.toggleDriverStatus(false);
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Icon(Icons.location_off, color: Colors.red, size: 60),
+              content: const Text(
+                "Fake Location Detected!\n\nPlease disable Mock Location apps to continue using the driver app.",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              actions: [
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                    child: const Text("OK", style: TextStyle(color: Colors.white, fontSize: 16)),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+      }
+
       setState(() {
         _currentPosition = position;
         _isLoading = false;

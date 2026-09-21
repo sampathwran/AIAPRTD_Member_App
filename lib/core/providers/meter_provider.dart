@@ -21,6 +21,7 @@ class MeterProvider with ChangeNotifier {
   double _currentSpeedKmh = 0.0;
 
   double _totalFare = 0.0;
+  double _driverTotalFare = 0.0;
   String? _vehicleCategory; // For reloading rates after restart
 
   // Rate Info
@@ -34,6 +35,14 @@ class MeterProvider with ChangeNotifier {
   Position? _lastPosition;
   StreamSubscription<Position>? _positionStream;
   Timer? _waitingTimer;
+
+  // Flat Rate Fields
+  bool _isFlatRate = false;
+  double _flatPassengerPrice = 0.0;
+  double _flatDriverPrice = 0.0;
+  double _initialDistanceKm = 0.0;
+  double _minAdminRate = 0.0;
+  double _extraDistanceKm = 0.0;
 
   // Trip Summary Data
   final List<Position> _routePoints = [];
@@ -54,10 +63,16 @@ class MeterProvider with ChangeNotifier {
   int get waitingTimeSeconds => _waitingTimeSeconds;
   double get currentSpeedKmh => _currentSpeedKmh;
   double get totalFare => _totalFare;
+  double get driverTotalFare => _driverTotalFare;
   bool get ratesLoaded => _ratesLoaded;
   List<Position> get routePoints => _routePoints;
   String get startAddress => _startAddress;
   String get endAddress => _endAddress;
+  bool get isFlatRate => _isFlatRate;
+  double get flatPassengerPrice => _flatPassengerPrice;
+  double get flatDriverPrice => _flatDriverPrice;
+  double get initialDistanceKm => _initialDistanceKm;
+  double get extraDistanceKm => _extraDistanceKm;
   String get tripId => _tripId;
   DateTime? get startTime => _startTime;
   DateTime? get endTime => _endTime;
@@ -72,9 +87,18 @@ class MeterProvider with ChangeNotifier {
       await prefs.setDouble('meter_totalDistanceKm', _totalDistanceKm);
       await prefs.setInt('meter_waitingTimeSeconds', _waitingTimeSeconds);
       await prefs.setDouble('meter_totalFare', _totalFare);
+      await prefs.setDouble('meter_driverTotalFare', _driverTotalFare);
       await prefs.setString('meter_tripId', _tripId);
       await prefs.setString('meter_startAddress', _startAddress);
       await prefs.setString('meter_endAddress', _endAddress);
+      
+      // Flat rate fields
+      await prefs.setBool('meter_isFlatRate', _isFlatRate);
+      await prefs.setDouble('meter_flatPassengerPrice', _flatPassengerPrice);
+      await prefs.setDouble('meter_flatDriverPrice', _flatDriverPrice);
+      await prefs.setDouble('meter_initialDistanceKm', _initialDistanceKm);
+      await prefs.setDouble('meter_minAdminRate', _minAdminRate);
+
       if (_vehicleCategory != null) {
         await prefs.setString('meter_vehicleCategory', _vehicleCategory!);
       }
@@ -116,10 +140,18 @@ class MeterProvider with ChangeNotifier {
       _totalDistanceKm = prefs.getDouble('meter_totalDistanceKm') ?? 0.0;
       _waitingTimeSeconds = prefs.getInt('meter_waitingTimeSeconds') ?? 0;
       _totalFare = prefs.getDouble('meter_totalFare') ?? 0.0;
+      _driverTotalFare = prefs.getDouble('meter_driverTotalFare') ?? 0.0;
       _tripId = prefs.getString('meter_tripId') ?? "";
       _startAddress = prefs.getString('meter_startAddress') ?? "Fetching...";
       _endAddress = prefs.getString('meter_endAddress') ?? "Fetching...";
       _vehicleCategory = prefs.getString('meter_vehicleCategory');
+      
+      // Flat rate fields
+      _isFlatRate = prefs.getBool('meter_isFlatRate') ?? false;
+      _flatPassengerPrice = prefs.getDouble('meter_flatPassengerPrice') ?? 0.0;
+      _flatDriverPrice = prefs.getDouble('meter_flatDriverPrice') ?? 0.0;
+      _initialDistanceKm = prefs.getDouble('meter_initialDistanceKm') ?? 0.0;
+      _minAdminRate = prefs.getDouble('meter_minAdminRate') ?? 0.0;
 
       String? st = prefs.getString('meter_startTime');
       if (st != null) _startTime = DateTime.parse(st);
@@ -220,7 +252,7 @@ class MeterProvider with ChangeNotifier {
 
       final doc = await _firestore.collection('rates').doc(docId).get();
       if (doc.exists) {
-        final data = doc.data()!;
+        final data = doc.data() as Map<String, dynamic>;
         _baseFare = (data['baseFare'] ?? 0.0).toDouble();
         _baseDistance = (data['baseDistance'] ?? 0.0).toDouble();
         _perKm = (data['perKm'] ?? 0.0).toDouble();
@@ -251,7 +283,13 @@ class MeterProvider with ChangeNotifier {
     return true;
   }
 
-  Future<void> startMeter(String vehicleCategory) async {
+  Future<void> startMeter(String vehicleCategory, {
+    bool isFlatRate = false,
+    double flatPassengerPrice = 0.0,
+    double flatDriverPrice = 0.0,
+    double initialDistanceKm = 0.0,
+    double minAdminRate = 0.0,
+  }) async {
     if (_isRunning) return;
 
     bool hasPermission = await requestPermissions();
@@ -278,6 +316,14 @@ class MeterProvider with ChangeNotifier {
     _startTime = DateTime.now();
     _endTime = null;
     _vehicleCategory = vehicleCategory;
+
+    _isFlatRate = isFlatRate;
+    _flatPassengerPrice = flatPassengerPrice;
+    _flatDriverPrice = flatDriverPrice;
+    _initialDistanceKm = initialDistanceKm;
+    _minAdminRate = minAdminRate;
+    _extraDistanceKm = 0.0;
+    _driverTotalFare = 0.0;
 
     _calculateFare();
     _saveState();
@@ -318,8 +364,8 @@ class MeterProvider with ChangeNotifier {
 
     _lastTimerTick = DateTime.now();
     _waitingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      DateTime now = DateTime.now();
-      int elapsedSecs = now.difference(_lastTimerTick).inSeconds;
+      final now = DateTime.now();
+      final elapsedSecs = now.difference(_lastTimerTick).inSeconds;
 
       if (elapsedSecs > 0) {
         if (_isRunning && _isWaiting && !_isWaitingPaused) {
@@ -372,6 +418,19 @@ class MeterProvider with ChangeNotifier {
   }
 
   void _calculateFare() {
+    if (_isFlatRate) {
+      if (_totalDistanceKm > _initialDistanceKm) {
+        _extraDistanceKm = _totalDistanceKm - _initialDistanceKm;
+        _totalFare = _flatPassengerPrice + (_extraDistanceKm * _minAdminRate);
+        _driverTotalFare = _flatDriverPrice + (_extraDistanceKm * _minAdminRate);
+      } else {
+        _extraDistanceKm = 0.0;
+        _totalFare = _flatPassengerPrice;
+        _driverTotalFare = _flatDriverPrice;
+      }
+      return;
+    }
+
     if (!_ratesLoaded) return;
 
     double distanceFare = 0.0;
@@ -382,6 +441,7 @@ class MeterProvider with ChangeNotifier {
     double waitingFare = (_waitingTimeSeconds / 60.0) * _perMinute;
 
     _totalFare = _baseFare + distanceFare + waitingFare;
+    _driverTotalFare = _totalFare; // For normal trips, they are the same
   }
 
   String _incrementPrefix(String prefix) {

@@ -1,4 +1,4 @@
-﻿// ignore_for_file: spell_check_on_languages, spell_check_on_word
+// ignore_for_file: spell_check_on_languages, spell_check_on_word
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 
@@ -23,6 +23,7 @@ import 'package:aiaprtd_member/features/settings/dark_mode_page.dart';
 import 'package:aiaprtd_member/features/settings/app_volume_page.dart';
 import 'package:aiaprtd_member/features/settings/language_page.dart';
 import 'package:aiaprtd_member/features/settings/help_center_page.dart';
+import 'package:aiaprtd_member/features/profile/app_guides_page.dart';
 import 'package:aiaprtd_member/features/settings/privacy_policy_page.dart';
 import 'package:aiaprtd_member/features/settings/terms_conditions_page.dart';
 
@@ -65,9 +66,6 @@ class ProfileMenuWidget extends StatelessWidget {
                 () => _nav(context, const AppUsagePage())),
             _buildTile(context, Icons.savings_outlined, 'profile.saving'.tr(),
                 () => _nav(context, const SavingPage())),
-          ]),
-          _buildSection(context, '', [
-            // Newly added My Bookings Menu (above Ride History)
             _buildTile(context, Icons.library_books_outlined, 'profile.my_bookings'.tr(),
                 () => _nav(context, const MyBookingPage())),
             _buildTile(context, Icons.star_outline, 'profile.member_benefits'.tr(),
@@ -78,6 +76,10 @@ class ProfileMenuWidget extends StatelessWidget {
                 () => _nav(context, const VotesPage())),
             _buildTile(context, Icons.notifications_none, 'profile.notification'.tr(),
                 () => _nav(context, const NotificationPage())),
+          ]),
+          _buildSection(context, 'profile.app_guides'.tr(), [
+            _buildTile(context, Icons.ondemand_video_rounded, 'profile.app_guides'.tr(),
+                () => _nav(context, const AppGuidesPage())),
           ]),
           _buildSettingsSection(context),
 

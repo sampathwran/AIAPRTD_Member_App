@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:aiaprtd_member/core/providers/vehicle_provider.dart';
 import 'package:aiaprtd_member/core/providers/booking_provider.dart';
@@ -43,7 +43,7 @@ class _VehicleSelectionWidgetState extends State<VehicleSelectionWidget> {
     final isDark = theme.brightness == Brightness.dark;
 
     return SizedBox(
-      height: 160,
+      height: 125,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         scrollDirection: Axis.horizontal,
@@ -83,7 +83,7 @@ class _VehicleSelectionWidgetState extends State<VehicleSelectionWidget> {
             onTap: () => vehicleProvider.selectVehicle(index),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              margin: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
+              margin: const EdgeInsets.only(right: 12, top: 4, bottom: 4),
               width: 130,
               decoration: BoxDecoration(
                 color: isSelected
@@ -101,23 +101,23 @@ class _VehicleSelectionWidgetState extends State<VehicleSelectionWidget> {
               ),
               child: Padding(
                 padding:
-                    const EdgeInsets.symmetric(vertical: 16.0, horizontal: 4.0),
+                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // Load images from Assets folder by ID
                     Image.asset(
                       'assets/images/${vehicle['id']}.png',
-                      height: 40,
+                      height: 35,
                       width: 80,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) => Icon(
                           _getVehicleIcon(vehicle['name']),
-                          size: 44,
+                          size: 35,
                           color: Colors.black87),
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 6),
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -126,7 +126,7 @@ class _VehicleSelectionWidgetState extends State<VehicleSelectionWidget> {
                           displayName,
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
-                            fontSize: 14,
+                            fontSize: 13,
                             color: isDark
                                 ? Colors.grey.shade300
                                 : Colors.grey.shade800,
@@ -134,28 +134,43 @@ class _VehicleSelectionWidgetState extends State<VehicleSelectionWidget> {
                         ),
                         const SizedBox(width: 4),
                         Icon(Icons.person_outline,
-                            size: 14, color: Colors.grey.shade600),
+                            size: 13, color: Colors.grey.shade600),
                         const SizedBox(width: 2),
                         Text(
                           "$seatingCapacity",
                           style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 13,
                               fontWeight: FontWeight.w500,
                               color: Colors.grey.shade600),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
 
-                    Text(
-                      "LKR ${estimateFare.toStringAsFixed(2)}",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: theme.textTheme.bodyLarge?.color,
+                    if (bookingProvider.tripType == 'Flat Rate')
+                      Column(
+                        children: [
+                          const Text("Flat Rate", style: TextStyle(fontSize: 10, color: Colors.blue)),
+                          Text(
+                            "LKR ${bookingProvider.flatDriverPriceController.text}",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: theme.textTheme.bodyLarge?.color,
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      Text(
+                        "LKR ${estimateFare.toStringAsFixed(2)}",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: theme.textTheme.bodyLarge?.color,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),

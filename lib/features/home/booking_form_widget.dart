@@ -6,6 +6,7 @@ import 'package:aiaprtd_member/features/home/route_preview_page.dart';
 import 'package:aiaprtd_member/features/home/one_way_form_widget.dart';
 import 'package:aiaprtd_member/features/home/round_form_widget.dart';
 import 'package:aiaprtd_member/features/home/package_form_widget.dart';
+import 'package:aiaprtd_member/features/home/flat_rate_form_widget.dart';
 
 class BookingFormWidget extends StatelessWidget {
   const BookingFormWidget({super.key});
@@ -44,9 +45,11 @@ class BookingFormWidget extends StatelessWidget {
               children: [
                 _buildTab(context, provider, 'One way',
                     Icons.arrow_right_alt_rounded),
-                _buildTab(context, provider, 'Round', Icons.sync_alt_rounded),
+                _buildTab(context, provider, 'Tour', Icons.sync_alt_rounded),
                 _buildTab(
                     context, provider, 'Package', Icons.inventory_2_outlined),
+                _buildTab(
+                    context, provider, 'Flat Rate', Icons.price_check_rounded),
               ],
             ),
           ),
@@ -70,6 +73,16 @@ class BookingFormWidget extends StatelessWidget {
               height: 50,
               child: ElevatedButton(
                 onPressed: () {
+                  if (provider.tripType == 'Flat Rate') {
+                    if (provider.flatPassengerPriceController.text.trim().isEmpty ||
+                        provider.flatDriverPriceController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Please enter both Passenger and Driver prices for Flat Rate.")),
+                      );
+                      return;
+                    }
+                  }
+
                   if (provider.currentPickupLatLng != null &&
                       provider.dropLatLngs.isNotEmpty &&
                       provider.dropLatLngs[0] != null) {
@@ -113,10 +126,12 @@ class BookingFormWidget extends StatelessWidget {
     switch (tripType) {
       case 'One way':
         return const OneWayFormWidget();
-      case 'Round':
+      case 'Tour':
         return const RoundFormWidget();
       case 'Package':
         return const PackageFormWidget();
+      case 'Flat Rate':
+        return const FlatRateFormWidget();
       default:
         return const OneWayFormWidget();
     }
@@ -150,19 +165,22 @@ class BookingFormWidget extends StatelessWidget {
                   color: isActive
                       ? colorScheme.primary
                       : (isDark ? Colors.grey.shade500 : Colors.grey.shade400),
-                  size: 16,
+                  size: 14,
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: isActive
-                        ? (isDark ? Colors.white : Colors.black)
-                        : (isDark
-                            ? Colors.grey.shade400
-                            : Colors.grey.shade600),
-                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                    fontSize: 13,
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      color: isActive
+                          ? (isDark ? Colors.white : Colors.black)
+                          : (isDark
+                              ? Colors.grey.shade400
+                              : Colors.grey.shade600),
+                      fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 11, // Smaller font to fit 4 tabs
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

@@ -44,8 +44,8 @@ class _RankPageState extends State<RankPage> {
     currentRating =
         (data['rating'] is num) ? (data['rating'] as num).toDouble() : 0.0;
 
-    // Trip Count (Assumed 'tripCount' in DB)
-    currentRides = int.tryParse(data['tripCount']?.toString() ?? '0') ?? 0;
+    // Trip Count
+    currentRides = int.tryParse(data['totalAcceptedCount']?.toString() ?? '0') ?? 0;
   }
 
   // Calculate progress towards 100% for each criterion

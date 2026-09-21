@@ -33,8 +33,8 @@ class PersonalKYCChecker {
     final bool isAdminApproved = kycApproval == 'approved';
 
     // Face verification doesn't need admin approval.
-    // App/backend approval based on profile image match is enough.
-    final bool isFaceApproved = faceStatus == 'approved';
+    // If they have submitted it (pending), allow them to continue.
+    final bool isFaceApproved = faceStatus == 'approved' || faceStatus == 'pending';
 
     final bool isAdminRejected = kycApproval == 'rejected';
     final bool isFaceRejected = faceStatus == 'rejected';

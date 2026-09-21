@@ -2,8 +2,19 @@ import 'package:flutter/material.dart';
 
 class MeterFareDisplay extends StatelessWidget {
   final double totalFare;
+  final bool isFlatRate;
+  final double? driverFare;
+  final double? passengerFare;
+  final double? commission;
 
-  const MeterFareDisplay({super.key, required this.totalFare});
+  const MeterFareDisplay({
+    super.key,
+    required this.totalFare,
+    this.isFlatRate = false,
+    this.driverFare,
+    this.passengerFare,
+    this.commission,
+  });
 
   @override
   Widget build(BuildContext context) {

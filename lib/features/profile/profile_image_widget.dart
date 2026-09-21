@@ -58,14 +58,26 @@ class ProfileImageWidget extends StatelessWidget {
                     ),
 
                     // Icon shown on Network Error
-                    errorWidget: (context, url, error) => Icon(
-                        Icons.person_rounded,
-                        size: radius * 1.2,
-                        color: Colors.grey.shade400),
+                    errorWidget: (context, url, error) => Opacity(
+                      opacity: 0.4,
+                      child: Image.asset(
+                        'assets/images/profile_sample_image.png',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
                 )
-              : Icon(Icons.person_rounded,
-                  size: radius * 1.2, color: Colors.grey.shade400),
+              : ClipOval(
+                  child: Opacity(
+                    opacity: 0.4,
+                    child: Image.asset(
+                      'assets/images/profile_sample_image.png',
+                      fit: BoxFit.cover,
+                      width: radius * 2,
+                      height: radius * 2,
+                    ),
+                  ),
+                ),
         ),
 
         // 2️⃣ ⏳ 🎯 Pending Indicator Overlay

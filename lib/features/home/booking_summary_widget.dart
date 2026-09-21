@@ -5,6 +5,7 @@ import 'package:aiaprtd_member/core/providers/booking_provider.dart';
 import 'package:aiaprtd_member/core/providers/vehicle_provider.dart';
 import 'package:aiaprtd_member/core/providers/profile_provider.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class BookingSummaryWidget extends StatefulWidget {
   const BookingSummaryWidget({super.key});
@@ -288,6 +289,39 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
       final estimateFare = vehicleProvider.calculateEstimateFare(
           bookingProvider.totalDistanceKm,
           vehicleProvider.selectedVehicleIndex);
+          
+      double? minAdminRate;
+
+      if (bookingProvider.tripType == 'Flat Rate') {
+        final doc = await FirebaseFirestore.instance.collection('rates').doc('flat_rate_minimums').get();
+        if (doc.exists) {
+          final data = doc.data() as Map<String, dynamic>;
+          
+          String cat = selectedVehicle['name'].toString().toLowerCase();
+          String lookupKey = 'budget'; // Default
+          if (cat.contains('mini')) lookupKey = 'mini';
+          if (cat.contains('sedan') || cat.contains('car')) lookupKey = 'sedan';
+          if (cat.contains('6')) lookupKey = 'van_6';
+          if (cat.contains('9')) lookupKey = 'van_9';
+          if (cat.contains('14')) lookupKey = 'van_14';
+
+          double minPerKm = (data[lookupKey] ?? 0.0).toDouble();
+          minAdminRate = minPerKm;
+          
+          double minAllowedDriverPrice = bookingProvider.totalDistanceKm * minPerKm;
+          double enteredDriverPrice = double.tryParse(bookingProvider.flatDriverPriceController.text.trim()) ?? 0.0;
+          
+          if (enteredDriverPrice < minAllowedDriverPrice) {
+            setState(() => _isBooking = false);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Driver Price is too low! Minimum allowed is Rs. ${minAllowedDriverPrice.toStringAsFixed(0)}")),
+              );
+            }
+            return;
+          }
+        }
+      }
 
       await bookingProvider.scheduleBooking(
         memberId: memberId,
@@ -297,6 +331,7 @@ class _BookingSummaryWidgetState extends State<BookingSummaryWidget> {
         estimateFare: estimateFare,
         paymentMethod: _selectedPaymentMethod,
         note: _bookingNote,
+        minAdminRate: minAdminRate,
       );
 
       if (mounted) {

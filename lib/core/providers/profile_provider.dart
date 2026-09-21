@@ -1,4 +1,4 @@
-﻿// ignore_for_file: spell_check_on_languages, spell_check_on_word
+// ignore_for_file: spell_check_on_languages, spell_check_on_word
 
 import 'dart:async';
 import 'dart:io';
@@ -194,14 +194,17 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
                   key != 'vehicle_category' &&
                   key != 'selectedCategory' &&
                   key != 'profile_status' &&
-                  key != 'inactive_reasons') {
+                  key != 'inactive_reasons' &&
+                  key != 'rank') {
                 _memberData![key] = value;
               }
             });
-          // Safely evaluate and sync status. 
+          }
+
+          // Safely evaluate and sync status and rank. 
           // The currentDbHash check inside prevents infinite loops!
           await _evaluateAndSyncProfileStatus();
-          }
+          await _evaluateAndSyncRank();
 
           _isLoading = false;
           notifyListeners();
@@ -291,6 +294,59 @@ class ProfileProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> syncProfileStatus() async {
     await _evaluateAndSyncProfileStatus();
     notifyListeners();
+  }
+
+  Future<void> _evaluateAndSyncRank() async {
+    if (_memberData == null) return;
+
+    final String joinDateStr =
+        _memberData!['joinDate'] ?? DateTime.now().toString().split(' ')[0];
+    final double rating =
+        (_memberData!['rating'] is num) ? (_memberData!['rating'] as num).toDouble() : 0.0;
+    final int trips = int.tryParse(_memberData!['totalAcceptedCount']?.toString() ?? '0') ?? 0;
+    final int canceledTrips = int.tryParse(_memberData!['totalCancelledCount']?.toString() ?? '0') ?? 0;
+    final int complaintsCount = int.tryParse(_memberData!['complaintsCount']?.toString() ?? '0') ?? 0;
+
+    double cancellationRate = 0.0;
+    if ((trips + canceledTrips) > 0) {
+      cancellationRate = canceledTrips / (trips + canceledTrips);
+    }
+
+    int monthsJoined = 0;
+    try {
+      monthsJoined =
+          DateTime.now().difference(DateTime.parse(joinDateStr)).inDays ~/ 30;
+    } catch (e) {
+      monthsJoined = 0;
+    }
+
+    String newRank = "Bronze";
+    if (monthsJoined >= 24 && rating >= 4.8 && complaintsCount == 0) {
+      newRank = "Diamond";
+    } else if (monthsJoined >= 12 && rating >= 4.7 && cancellationRate < 0.05) {
+      newRank = "Platinum";
+    } else if (monthsJoined >= 6 && rating >= 4.5 && trips >= 200) {
+      newRank = "Gold";
+    } else if (monthsJoined >= 3 && rating >= 4.0 && trips >= 50) {
+      newRank = "Silver";
+    }
+
+    final String currentDbRank = _memberData!['rank']?.toString() ?? 'Bronze';
+    
+    if (newRank.toLowerCase() == currentDbRank.toLowerCase()) {
+      return;
+    }
+
+    try {
+      await _firestore.collection(collectionSource).doc(documentId).set({
+        'rank': newRank,
+      }, SetOptions(merge: true));
+
+      _memberData!['rank'] = newRank;
+      debugPrint('âœ… [PROFILE] Rank automatically synced to: $newRank');
+    } catch (e) {
+      debugPrint("Error syncing rank: $e");
+    }
   }
 
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
